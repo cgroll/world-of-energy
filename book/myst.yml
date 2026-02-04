@@ -25,6 +25,7 @@ project:
     - file: notebooks.ipynb
     - file: bibliography.md
 site:
+  base_url: /world-of-energy
   options:
     logo: logo.png
     favicon: fav.ico
