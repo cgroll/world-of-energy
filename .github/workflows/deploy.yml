@@ -1,39 +1,28 @@
 name: deploy
 
 on:
-  # Trigger the workflow on push to main branch
   push:
     branches:
       - main
 
-# This job installs dependencies, build the book, and pushes it to `gh-pages`
 jobs:
-  build-book:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ["3.11"]
+  build-and-deploy:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
-      # Install dependencies
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
 
-      # Build the book
+      - name: Set up Python
+        run: uv python install
+
       - name: Build the book
-        run: |
-          jupyter-book build .
+        run: uv run myst build --html
+        working-directory: book
 
-      # Deploy the book's HTML to gh-pages branch
-      - name: GitHub Pages action
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_build/html
+          publish_dir: book/_build/html

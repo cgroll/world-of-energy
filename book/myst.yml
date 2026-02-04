@@ -1,0 +1,32 @@
+version: 1
+project:
+  title: Jupyter Book Demo
+  authors:
+    - name: Qiusheng Wu
+  copyright: '2024'
+  exclude:
+    - _build
+    - Thumbs.db
+    - .DS_Store
+    - '**.ipynb_checkpoints'
+  github: giswqs/jupyter-book-demo
+  thebe:
+    binder:
+      repo: giswqs/jupyter-book-demo
+      provider: github
+      url: https://mybinder.org
+      ref: main
+  bibliography:
+    - references.bib
+  toc:
+    - file: index.md
+    - file: markdown.md
+    - file: introduction.md
+    - file: notebooks.ipynb
+    - file: bibliography.md
+site:
+  options:
+    logo: logo.png
+    favicon: fav.ico
+    folders: true
+  template: book-theme
