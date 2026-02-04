@@ -1,1 +1,1 @@
-import{a}from"/build/_shared/chunk-FC55AN3K.js";import"/build/_shared/chunk-OZE3FFNP.js";export default a();
+import{a}from"/world-of-energy/build/_shared/chunk-FC55AN3K.js";import"/world-of-energy/build/_shared/chunk-OZE3FFNP.js";export default a();
