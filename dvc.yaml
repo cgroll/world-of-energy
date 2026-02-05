@@ -17,4 +17,5 @@ stages:
       - pipeline/02_smard_DE_prices.py
       - data/downloads/smard/prices_de_lu.parquet
     outs:
-      - book/notebooks/02_smard_DE_prices.ipynb
+      - book/notebooks/02_smard_DE_prices.ipynb:
+          cache: false

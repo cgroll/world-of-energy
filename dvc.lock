@@ -40,5 +40,5 @@ stages:
     outs:
     - path: book/notebooks/02_smard_DE_prices.ipynb
       hash: md5
-      md5: cae6a24ea255c2aa839b5771f7401b0d
+      md5: 1082220ba5557ebc4b9ffa25a6c2e02d
       size: 185416
