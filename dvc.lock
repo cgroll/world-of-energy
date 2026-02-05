@@ -1,0 +1,44 @@
+schema: '2.0'
+stages:
+  download_smard_prices:
+    cmd: python pipeline/01_download_smard_DE_prices.py
+    deps:
+    - path: pipeline/01_download_smard_DE_prices.py
+      hash: md5
+      md5: 55dc545d791c4b6b6158783029743c3c
+      size: 4910
+    - path: woe/paths.py
+      hash: md5
+      md5: d049cf446faac7e411e74cff90528e83
+      size: 2899
+    - path: woe/smard/api.py
+      hash: md5
+      md5: c02064fa8acf43138169778269a8c2f0
+      size: 3245
+    - path: woe/smard/config.py
+      hash: md5
+      md5: 9ee10c8add293c031abbee0f066cd00d
+      size: 6793
+    outs:
+    - path: data/downloads/smard/prices_de_lu.parquet
+      hash: md5
+      md5: 247fac1902042be63cbf5508d5d0c8ed
+      size: 787806
+  process_smard_DE_prices:
+    cmd: "uv run jupytext --to notebook --output book/notebooks/02_smard_DE_prices.ipynb
+      pipeline/02_smard_DE_prices.py && uv run jupyter execute book/notebooks/02_smard_DE_prices.ipynb
+      --inplace\n"
+    deps:
+    - path: data/downloads/smard/prices_de_lu.parquet
+      hash: md5
+      md5: 247fac1902042be63cbf5508d5d0c8ed
+      size: 787806
+    - path: pipeline/02_smard_DE_prices.py
+      hash: md5
+      md5: ae39d4861518b82c2f71a32fd067bf19
+      size: 6231
+    outs:
+    - path: book/notebooks/02_smard_DE_prices.ipynb
+      hash: md5
+      md5: cae6a24ea255c2aa839b5771f7401b0d
+      size: 185416
