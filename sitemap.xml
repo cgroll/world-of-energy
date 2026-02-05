@@ -11,6 +11,9 @@
     <loc>http://localhost:3000/introduction</loc>
   </url>
   <url>
+    <loc>http://localhost:3000/notebooks/smard-de-prices</loc>
+  </url>
+  <url>
     <loc>http://localhost:3000/bibliography</loc>
   </url>
 </urlset>
