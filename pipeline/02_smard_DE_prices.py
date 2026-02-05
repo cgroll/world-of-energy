@@ -109,6 +109,16 @@
 # These dynamics illustrate why **flexibility** (storage, demand response, grid
 # expansion) is critical for integrating high shares of variable renewables.
 
+# %% [markdown]
+# ## Data Source
+#
+# The price data is downloaded from the SMARD API using the following function:
+#
+# ```{literalinclude} ../../woe/smard/api.py
+# :language: python
+# :lines: 8-91
+# ```
+
 # %%
 import pandas as pd
 import matplotlib.pyplot as plt

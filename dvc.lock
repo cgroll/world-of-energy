@@ -35,10 +35,10 @@ stages:
       size: 787806
     - path: pipeline/02_smard_DE_prices.py
       hash: md5
-      md5: ae39d4861518b82c2f71a32fd067bf19
-      size: 6231
+      md5: 872c1ec74c7a27ca5e2716d8ec2d975c
+      size: 6435
     outs:
     - path: book/notebooks/02_smard_DE_prices.ipynb
       hash: md5
-      md5: 1082220ba5557ebc4b9ffa25a6c2e02d
-      size: 185416
+      md5: 26b3197cd41ca70a3d1ea5edb104ff6e
+      size: 185755
