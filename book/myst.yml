@@ -17,6 +17,7 @@ project:
     - file: markdown.md
     - file: introduction.md
     - file: notebooks/02_smard_DE_prices.ipynb
+    - file: markdown/resources.md
     - file: bibliography.md
 site:
   options:
