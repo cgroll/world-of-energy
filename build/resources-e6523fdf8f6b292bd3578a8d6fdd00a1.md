@@ -4,6 +4,16 @@ Capture prices as published by [Netztransparenz](https://www.netztransparenz.de/
 
 ![](../assets/images/screenshots/2026-02-05-12-15-50.png)
 
+### Prices
+
+From [destatis](https://www.destatis.de/Europa/DE/Thema/GreenDeal/_Grafik/strompreise.html)
+![](../assets/images/screenshots/2026-02-05-18-03-30.png)
+
+From [smard](https://www.smard.de/page/home/topic-article/211972/212170/haushaltskundenpreise):
+![](../assets/images/screenshots/2026-02-05-18-04-20.png)
+
+From [trading economics](https://de.tradingeconomics.com/commodity/eu-natural-gas):
+![](../assets/images/screenshots/2026-02-05-18-05-02.png)
 
 ### Weather
 
