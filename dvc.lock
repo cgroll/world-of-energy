@@ -9,8 +9,8 @@ stages:
       size: 4910
     - path: woe/paths.py
       hash: md5
-      md5: d049cf446faac7e411e74cff90528e83
-      size: 2899
+      md5: 0b78768a165ea0e50efb2dcd6c312ef2
+      size: 3640
     - path: woe/smard/api.py
       hash: md5
       md5: c02064fa8acf43138169778269a8c2f0
@@ -42,3 +42,39 @@ stages:
       hash: md5
       md5: 26b3197cd41ca70a3d1ea5edb104ff6e
       size: 185755
+  download_residual_load:
+    cmd: python pipeline/03_download_residual_load.py
+    deps:
+    - path: pipeline/03_download_residual_load.py
+      hash: md5
+      md5: f742280168d8eaedc58e8cfd8b0313f4
+      size: 5875
+    - path: woe/paths.py
+      hash: md5
+      md5: 0b78768a165ea0e50efb2dcd6c312ef2
+      size: 3640
+    - path: woe/smard/api.py
+      hash: md5
+      md5: c02064fa8acf43138169778269a8c2f0
+      size: 3245
+    - path: woe/smard/config.py
+      hash: md5
+      md5: 9ee10c8add293c031abbee0f066cd00d
+      size: 6793
+    outs:
+    - path: data/downloads/smard/solar.parquet
+      hash: md5
+      md5: 2d167c549529925bc2487d41f536fd05
+      size: 965212
+    - path: data/downloads/smard/total_load.parquet
+      hash: md5
+      md5: b3d1bd65cbdb6c7bae7e1adaebd8487f
+      size: 970395
+    - path: data/downloads/smard/wind_offshore.parquet
+      hash: md5
+      md5: 01d0343fa8c7270e9fdf6ddb5eef95ec
+      size: 820177
+    - path: data/downloads/smard/wind_onshore.parquet
+      hash: md5
+      md5: 970d28b021112af36a612f26565ed3a4
+      size: 1107080

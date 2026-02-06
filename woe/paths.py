@@ -79,6 +79,26 @@ class ProjPaths:
         """Path to SMARD DE/LU prices parquet file."""
         return self.smard_downloads_path / "prices_de_lu.parquet"
 
+    @property
+    def smard_solar_file(self) -> Path:
+        """Path to SMARD solar generation parquet file."""
+        return self.smard_downloads_path / "solar.parquet"
+
+    @property
+    def smard_wind_onshore_file(self) -> Path:
+        """Path to SMARD wind onshore generation parquet file."""
+        return self.smard_downloads_path / "wind_onshore.parquet"
+
+    @property
+    def smard_wind_offshore_file(self) -> Path:
+        """Path to SMARD wind offshore generation parquet file."""
+        return self.smard_downloads_path / "wind_offshore.parquet"
+
+    @property
+    def smard_total_load_file(self) -> Path:
+        """Path to SMARD total load parquet file."""
+        return self.smard_downloads_path / "total_load.parquet"
+
     def ensure_directories(self) -> None:
         """Create all necessary directories if they don't exist."""
         directories = [

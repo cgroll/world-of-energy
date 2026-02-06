@@ -9,6 +9,22 @@ stages:
     outs:
       - data/downloads/smard/prices_de_lu.parquet:
           persist: true
+  download_residual_load:
+    cmd: python pipeline/03_download_residual_load.py
+    deps:
+      - pipeline/03_download_residual_load.py
+      - woe/smard/api.py
+      - woe/smard/config.py
+      - woe/paths.py
+    outs:
+      - data/downloads/smard/solar.parquet:
+          persist: true
+      - data/downloads/smard/wind_onshore.parquet:
+          persist: true
+      - data/downloads/smard/wind_offshore.parquet:
+          persist: true
+      - data/downloads/smard/total_load.parquet:
+          persist: true
   process_smard_DE_prices:
     cmd: >
       uv run jupytext --to notebook --output book/notebooks/02_smard_DE_prices.ipynb pipeline/02_smard_DE_prices.py &&
@@ -19,3 +35,4 @@ stages:
     outs:
       - book/notebooks/02_smard_DE_prices.ipynb:
           cache: false
+  
