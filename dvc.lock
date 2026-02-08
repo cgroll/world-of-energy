@@ -78,3 +78,63 @@ stages:
       hash: md5
       md5: 970d28b021112af36a612f26565ed3a4
       size: 1107080
+  download_capacities:
+    cmd: python pipeline/07_download_capacities.py
+    deps:
+    - path: pipeline/07_download_capacities.py
+      hash: md5
+      md5: fd80ee87dc67fe0018eab6cee712050c
+      size: 6091
+    - path: woe/paths.py
+      hash: md5
+      md5: 84ff61a59654d299ca4064eb67595043
+      size: 4591
+    - path: woe/smard/api.py
+      hash: md5
+      md5: c02064fa8acf43138169778269a8c2f0
+      size: 3245
+    - path: woe/smard/config.py
+      hash: md5
+      md5: 9ee10c8add293c031abbee0f066cd00d
+      size: 6793
+    outs:
+    - path: data/downloads/smard/capacities.parquet
+      hash: md5
+      md5: 09ff4edfc9e9bc8c5e6b42b1afe5a377
+      size: 9534
+  download_baseload_and_capacities:
+    cmd: python pipeline/07_download_baseload_and_capacities.py
+    deps:
+    - path: pipeline/07_download_baseload_and_capacities.py
+      hash: md5
+      md5: 2349a2be791d1375664945e2d5c3e4d8
+      size: 9825
+    - path: woe/paths.py
+      hash: md5
+      md5: d266f4c13f558f1c23397adfd42490f7
+      size: 5122
+    - path: woe/smard/api.py
+      hash: md5
+      md5: c02064fa8acf43138169778269a8c2f0
+      size: 3245
+    - path: woe/smard/config.py
+      hash: md5
+      md5: 9ee10c8add293c031abbee0f066cd00d
+      size: 6793
+    outs:
+    - path: data/downloads/smard/biomass.parquet
+      hash: md5
+      md5: 938602e2748d0d7d8dfc899bcd9cc14d
+      size: 878162
+    - path: data/downloads/smard/capacities.parquet
+      hash: md5
+      md5: 09ff4edfc9e9bc8c5e6b42b1afe5a377
+      size: 9534
+    - path: data/downloads/smard/hydro.parquet
+      hash: md5
+      md5: dffcb9456034b78fb541baa132c1d5a1
+      size: 886006
+    - path: data/downloads/smard/nuclear.parquet
+      hash: md5
+      md5: c19776a48e7a55da39b89e64bc29be11
+      size: 546315

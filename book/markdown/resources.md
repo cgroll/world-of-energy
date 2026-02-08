@@ -18,9 +18,28 @@ From [trading economics](https://de.tradingeconomics.com/commodity/eu-natural-ga
 
 ![](../assets/images/screenshots/2026-02-05-18-05-02.png)
 
+From [EMBER](https://ember-energy.org/data/european-electricity-prices-and-costs/): 
+
+![](../assets/images/screenshots/2026-02-06-20-27-46.png)
+
+Regarding SRMC:
+
+- https://support.montel.energy/how-are-short-run-marginal-costs-srmc-calculated-in-montel-online
+- https://ember-energy.org/data/european-electricity-prices-and-costs/#methodology
+
+
 ### Weather
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/xXMU5KyM8YY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/ljb83QyXVG0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+
+### Data
+
+Investing.com:
+
+- Carbon Emissions Futures Prices: https://www.investing.com/commodities/carbon-emissions-historical-data
+
+- Rotterdam Coal Futures Prices: https://www.investing.com/commodities/rotterdam-coal-futures-historical-data

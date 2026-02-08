@@ -25,6 +25,30 @@ stages:
           persist: true
       - data/downloads/smard/total_load.parquet:
           persist: true
+  download_ttf_gas:
+    cmd: python pipeline/05_download_ttf_gas.py
+    deps:
+      - pipeline/05_download_ttf_gas.py
+      - woe/paths.py
+    outs:
+      - data/downloads/ttf_gas_prices.parquet:
+          persist: true
+  download_baseload_and_capacities:
+    cmd: python pipeline/07_download_baseload_and_capacities.py
+    deps:
+      - pipeline/07_download_baseload_and_capacities.py
+      - woe/smard/api.py
+      - woe/smard/config.py
+      - woe/paths.py
+    outs:
+      - data/downloads/smard/nuclear.parquet:
+          persist: true
+      - data/downloads/smard/biomass.parquet:
+          persist: true
+      - data/downloads/smard/hydro.parquet:
+          persist: true
+      - data/downloads/smard/capacities.parquet:
+          persist: true
   process_smard_DE_prices:
     cmd: >
       uv run jupytext --to notebook --output book/notebooks/02_smard_DE_prices.ipynb pipeline/02_smard_DE_prices.py &&
@@ -35,4 +59,38 @@ stages:
     outs:
       - book/notebooks/02_smard_DE_prices.ipynb:
           cache: false
-  
+  process_srmc:
+    cmd: >
+      uv run jupytext --to notebook --output book/notebooks/06_srmc.ipynb pipeline/06_srmc.py &&
+      uv run jupyter execute book/notebooks/06_srmc.ipynb --inplace
+    deps:
+      - pipeline/06_srmc.py
+      - woe/paths.py
+      - data/downloads/ttf_gas_prices.parquet
+      - data/downloads/investing_com/rotterdam_coal_futures.csv
+      - data/downloads/investing_com/carbon_emissions_futures.csv
+    outs:
+      - book/notebooks/06_srmc.ipynb:
+          cache: false
+  process_reconstruct_prices:
+    cmd: >
+      uv run jupytext --to notebook --output book/notebooks/08_reconstruct_prices.ipynb pipeline/08_reconstruct_prices.py &&
+      uv run jupyter execute book/notebooks/08_reconstruct_prices.ipynb --inplace
+    deps:
+      - pipeline/08_reconstruct_prices.py
+      - woe/paths.py
+      - data/downloads/smard/prices_de_lu.parquet
+      - data/downloads/smard/solar.parquet
+      - data/downloads/smard/wind_onshore.parquet
+      - data/downloads/smard/wind_offshore.parquet
+      - data/downloads/smard/total_load.parquet
+      - data/downloads/smard/nuclear.parquet
+      - data/downloads/smard/biomass.parquet
+      - data/downloads/smard/hydro.parquet
+      - data/downloads/smard/capacities.parquet
+      - data/downloads/ttf_gas_prices.parquet
+      - data/downloads/investing_com/rotterdam_coal_futures.csv
+      - data/downloads/investing_com/carbon_emissions_futures.csv
+    outs:
+      - book/notebooks/08_reconstruct_prices.ipynb:
+          cache: false

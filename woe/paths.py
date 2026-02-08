@@ -99,6 +99,47 @@ class ProjPaths:
         """Path to SMARD total load parquet file."""
         return self.smard_downloads_path / "total_load.parquet"
 
+    @property
+    def smard_nuclear_file(self) -> Path:
+        """Path to SMARD nuclear generation parquet file."""
+        return self.smard_downloads_path / "nuclear.parquet"
+
+    @property
+    def smard_biomass_file(self) -> Path:
+        """Path to SMARD biomass generation parquet file."""
+        return self.smard_downloads_path / "biomass.parquet"
+
+    @property
+    def smard_hydro_file(self) -> Path:
+        """Path to SMARD hydro generation parquet file."""
+        return self.smard_downloads_path / "hydro.parquet"
+
+    @property
+    def smard_capacities_file(self) -> Path:
+        """Path to SMARD installed capacities parquet file."""
+        return self.smard_downloads_path / "capacities.parquet"
+
+    # Commodity price paths
+    @property
+    def ttf_gas_prices_file(self) -> Path:
+        """Path to TTF natural gas prices parquet file."""
+        return self.downloads_path / "ttf_gas_prices.parquet"
+
+    @property
+    def investing_com_path(self) -> Path:
+        """Investing.com downloads directory."""
+        return self.downloads_path / "investing_com"
+
+    @property
+    def rotterdam_coal_prices_file(self) -> Path:
+        """Path to API 2 Rotterdam coal futures prices CSV file."""
+        return self.investing_com_path / "rotterdam_coal_futures.csv"
+
+    @property
+    def eu_carbon_prices_file(self) -> Path:
+        """Path to EU ETS carbon allowance prices CSV file."""
+        return self.investing_com_path / "carbon_emissions_futures.csv"
+
     def ensure_directories(self) -> None:
         """Create all necessary directories if they don't exist."""
         directories = [
