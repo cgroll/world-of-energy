@@ -13,7 +13,11 @@ project:
   bibliography:
     - references.bib
   toc:
+    - file: markdown/index.md
     - file: notebooks/02_smard_DE_prices.ipynb
+    - file: notebooks/04_smard_residual_load.ipynb
+    - file: notebooks/06_srmc.ipynb
+    - file: notebooks/08_reconstruct_prices.ipynb
     - file: markdown/resources.md
     - file: bibliography.md
 site:

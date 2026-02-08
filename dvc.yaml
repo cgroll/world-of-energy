@@ -1,22 +1,14 @@
 stages:
-  download_smard_prices:
-    cmd: python pipeline/01_download_smard_DE_prices.py
+  download_smard_price_analysis_data:
+    cmd: python pipeline/01_download_smard_price_analysis_data.py
     deps:
-      - pipeline/01_download_smard_DE_prices.py
+      - pipeline/01_download_smard_price_analysis_data.py
       - woe/smard/api.py
       - woe/smard/config.py
       - woe/paths.py
     outs:
       - data/downloads/smard/prices_de_lu.parquet:
           persist: true
-  download_residual_load:
-    cmd: python pipeline/03_download_residual_load.py
-    deps:
-      - pipeline/03_download_residual_load.py
-      - woe/smard/api.py
-      - woe/smard/config.py
-      - woe/paths.py
-    outs:
       - data/downloads/smard/solar.parquet:
           persist: true
       - data/downloads/smard/wind_onshore.parquet:
@@ -25,22 +17,6 @@ stages:
           persist: true
       - data/downloads/smard/total_load.parquet:
           persist: true
-  download_ttf_gas:
-    cmd: python pipeline/05_download_ttf_gas.py
-    deps:
-      - pipeline/05_download_ttf_gas.py
-      - woe/paths.py
-    outs:
-      - data/downloads/ttf_gas_prices.parquet:
-          persist: true
-  download_baseload_and_capacities:
-    cmd: python pipeline/07_download_baseload_and_capacities.py
-    deps:
-      - pipeline/07_download_baseload_and_capacities.py
-      - woe/smard/api.py
-      - woe/smard/config.py
-      - woe/paths.py
-    outs:
       - data/downloads/smard/nuclear.parquet:
           persist: true
       - data/downloads/smard/biomass.parquet:
@@ -48,6 +24,14 @@ stages:
       - data/downloads/smard/hydro.parquet:
           persist: true
       - data/downloads/smard/capacities.parquet:
+          persist: true
+  download_ttf_gas:
+    cmd: python pipeline/05_download_ttf_gas.py
+    deps:
+      - pipeline/05_download_ttf_gas.py
+      - woe/paths.py
+    outs:
+      - data/downloads/ttf_gas_prices.parquet:
           persist: true
   process_smard_DE_prices:
     cmd: >

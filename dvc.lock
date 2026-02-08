@@ -9,8 +9,8 @@ stages:
       size: 4910
     - path: woe/paths.py
       hash: md5
-      md5: 0b78768a165ea0e50efb2dcd6c312ef2
-      size: 3640
+      md5: d266f4c13f558f1c23397adfd42490f7
+      size: 5122
     - path: woe/smard/api.py
       hash: md5
       md5: c02064fa8acf43138169778269a8c2f0
@@ -51,8 +51,8 @@ stages:
       size: 5875
     - path: woe/paths.py
       hash: md5
-      md5: 0b78768a165ea0e50efb2dcd6c312ef2
-      size: 3640
+      md5: d266f4c13f558f1c23397adfd42490f7
+      size: 5122
     - path: woe/smard/api.py
       hash: md5
       md5: c02064fa8acf43138169778269a8c2f0
@@ -138,3 +138,114 @@ stages:
       hash: md5
       md5: c19776a48e7a55da39b89e64bc29be11
       size: 546315
+  download_ttf_gas:
+    cmd: python pipeline/05_download_ttf_gas.py
+    deps:
+    - path: pipeline/05_download_ttf_gas.py
+      hash: md5
+      md5: 04661454b2d980fbcd83fea10a3530a2
+      size: 3762
+    - path: woe/paths.py
+      hash: md5
+      md5: d266f4c13f558f1c23397adfd42490f7
+      size: 5122
+    outs:
+    - path: data/downloads/ttf_gas_prices.parquet
+      hash: md5
+      md5: ad5d6258d3db66fb6761924fc609c851
+      size: 81567
+  process_srmc:
+    cmd: "uv run jupytext --to notebook --output book/notebooks/06_srmc.ipynb pipeline/06_srmc.py
+      && uv run jupyter execute book/notebooks/06_srmc.ipynb --inplace\n"
+    deps:
+    - path: data/downloads/investing_com/carbon_emissions_futures.csv
+      hash: md5
+      md5: 1defc0c22075c50c858604cab57a5e69
+      size: 143506
+    - path: data/downloads/investing_com/rotterdam_coal_futures.csv
+      hash: md5
+      md5: 06114f8bc08e64fcfb9e165ce54c2dbf
+      size: 145594
+    - path: data/downloads/ttf_gas_prices.parquet
+      hash: md5
+      md5: ad5d6258d3db66fb6761924fc609c851
+      size: 81567
+    - path: pipeline/06_srmc.py
+      hash: md5
+      md5: 8a1da0089c6a57378d9214c7a2f950d5
+      size: 10412
+    - path: woe/paths.py
+      hash: md5
+      md5: d266f4c13f558f1c23397adfd42490f7
+      size: 5122
+    outs:
+    - path: book/notebooks/06_srmc.ipynb
+      hash: md5
+      md5: b29db9ce5ca9b18eb2ca6f049112a660
+      size: 542044
+  process_reconstruct_prices:
+    cmd: "uv run jupytext --to notebook --output book/notebooks/08_reconstruct_prices.ipynb
+      pipeline/08_reconstruct_prices.py && uv run jupyter execute book/notebooks/08_reconstruct_prices.ipynb
+      --inplace\n"
+    deps:
+    - path: data/downloads/investing_com/carbon_emissions_futures.csv
+      hash: md5
+      md5: 1defc0c22075c50c858604cab57a5e69
+      size: 143506
+    - path: data/downloads/investing_com/rotterdam_coal_futures.csv
+      hash: md5
+      md5: 06114f8bc08e64fcfb9e165ce54c2dbf
+      size: 145594
+    - path: data/downloads/smard/biomass.parquet
+      hash: md5
+      md5: 938602e2748d0d7d8dfc899bcd9cc14d
+      size: 878162
+    - path: data/downloads/smard/capacities.parquet
+      hash: md5
+      md5: 09ff4edfc9e9bc8c5e6b42b1afe5a377
+      size: 9534
+    - path: data/downloads/smard/hydro.parquet
+      hash: md5
+      md5: dffcb9456034b78fb541baa132c1d5a1
+      size: 886006
+    - path: data/downloads/smard/nuclear.parquet
+      hash: md5
+      md5: c19776a48e7a55da39b89e64bc29be11
+      size: 546315
+    - path: data/downloads/smard/prices_de_lu.parquet
+      hash: md5
+      md5: 247fac1902042be63cbf5508d5d0c8ed
+      size: 787806
+    - path: data/downloads/smard/solar.parquet
+      hash: md5
+      md5: 2d167c549529925bc2487d41f536fd05
+      size: 965212
+    - path: data/downloads/smard/total_load.parquet
+      hash: md5
+      md5: b3d1bd65cbdb6c7bae7e1adaebd8487f
+      size: 970395
+    - path: data/downloads/smard/wind_offshore.parquet
+      hash: md5
+      md5: 01d0343fa8c7270e9fdf6ddb5eef95ec
+      size: 820177
+    - path: data/downloads/smard/wind_onshore.parquet
+      hash: md5
+      md5: 970d28b021112af36a612f26565ed3a4
+      size: 1107080
+    - path: data/downloads/ttf_gas_prices.parquet
+      hash: md5
+      md5: ad5d6258d3db66fb6761924fc609c851
+      size: 81567
+    - path: pipeline/08_reconstruct_prices.py
+      hash: md5
+      md5: 14c7f6dacb073ab49556db28f8e66721
+      size: 15046
+    - path: woe/paths.py
+      hash: md5
+      md5: d266f4c13f558f1c23397adfd42490f7
+      size: 5122
+    outs:
+    - path: book/notebooks/08_reconstruct_prices.ipynb
+      hash: md5
+      md5: dc21d172b51c3c08b3deb42f411e1d36
+      size: 878148
