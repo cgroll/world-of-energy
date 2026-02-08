@@ -5,6 +5,12 @@
     <loc>http://localhost:3000</loc>
   </url>
   <url>
+    <loc>http://localhost:3000/notebooks/smard-de-prices</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/notebooks/reconstruct-prices</loc>
+  </url>
+  <url>
     <loc>http://localhost:3000/markdown/resources</loc>
   </url>
   <url>
