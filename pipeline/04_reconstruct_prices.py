@@ -741,3 +741,5 @@ from datetime import datetime
 from IPython.display import Markdown
 
 Markdown(f"Last run: {datetime.now().strftime('%Y-%m-%d')}")
+
+# %%
