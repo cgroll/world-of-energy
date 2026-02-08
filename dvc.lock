@@ -25,20 +25,20 @@ stages:
       md5: 247fac1902042be63cbf5508d5d0c8ed
       size: 787806
   process_smard_DE_prices:
-    cmd: "uv run jupytext --to notebook --output book/notebooks/02_smard_DE_prices.ipynb
-      pipeline/02_smard_DE_prices.py && uv run jupyter execute book/notebooks/02_smard_DE_prices.ipynb
+    cmd: "uv run jupytext --to notebook --output book/notebooks/03_smard_DE_prices.ipynb
+      pipeline/03_smard_DE_prices.py && uv run jupyter execute book/notebooks/03_smard_DE_prices.ipynb
       --inplace\n"
     deps:
     - path: data/downloads/smard/prices_de_lu.parquet
       hash: md5
       md5: 247fac1902042be63cbf5508d5d0c8ed
       size: 787806
-    - path: pipeline/02_smard_DE_prices.py
+    - path: pipeline/03_smard_DE_prices.py
       hash: md5
       md5: 872c1ec74c7a27ca5e2716d8ec2d975c
       size: 6435
     outs:
-    - path: book/notebooks/02_smard_DE_prices.ipynb
+    - path: book/notebooks/03_smard_DE_prices.ipynb
       hash: md5
       md5: 26b3197cd41ca70a3d1ea5edb104ff6e
       size: 185755
@@ -139,9 +139,9 @@ stages:
       md5: c19776a48e7a55da39b89e64bc29be11
       size: 546315
   download_ttf_gas:
-    cmd: python pipeline/05_download_ttf_gas.py
+    cmd: python pipeline/02_download_ttf_gas.py
     deps:
-    - path: pipeline/05_download_ttf_gas.py
+    - path: pipeline/02_download_ttf_gas.py
       hash: md5
       md5: 04661454b2d980fbcd83fea10a3530a2
       size: 3762
@@ -154,38 +154,9 @@ stages:
       hash: md5
       md5: ad5d6258d3db66fb6761924fc609c851
       size: 81567
-  process_srmc:
-    cmd: "uv run jupytext --to notebook --output book/notebooks/06_srmc.ipynb pipeline/06_srmc.py
-      && uv run jupyter execute book/notebooks/06_srmc.ipynb --inplace\n"
-    deps:
-    - path: data/downloads/investing_com/carbon_emissions_futures.csv
-      hash: md5
-      md5: 1defc0c22075c50c858604cab57a5e69
-      size: 143506
-    - path: data/downloads/investing_com/rotterdam_coal_futures.csv
-      hash: md5
-      md5: 06114f8bc08e64fcfb9e165ce54c2dbf
-      size: 145594
-    - path: data/downloads/ttf_gas_prices.parquet
-      hash: md5
-      md5: ad5d6258d3db66fb6761924fc609c851
-      size: 81567
-    - path: pipeline/06_srmc.py
-      hash: md5
-      md5: 8a1da0089c6a57378d9214c7a2f950d5
-      size: 10412
-    - path: woe/paths.py
-      hash: md5
-      md5: d266f4c13f558f1c23397adfd42490f7
-      size: 5122
-    outs:
-    - path: book/notebooks/06_srmc.ipynb
-      hash: md5
-      md5: b29db9ce5ca9b18eb2ca6f049112a660
-      size: 542044
   process_reconstruct_prices:
-    cmd: "uv run jupytext --to notebook --output book/notebooks/08_reconstruct_prices.ipynb
-      pipeline/08_reconstruct_prices.py && uv run jupyter execute book/notebooks/08_reconstruct_prices.ipynb
+    cmd: "uv run jupytext --to notebook --output book/notebooks/04_reconstruct_prices.ipynb
+      pipeline/04_reconstruct_prices.py && uv run jupyter execute book/notebooks/04_reconstruct_prices.ipynb
       --inplace\n"
     deps:
     - path: data/downloads/investing_com/carbon_emissions_futures.csv
@@ -236,7 +207,7 @@ stages:
       hash: md5
       md5: ad5d6258d3db66fb6761924fc609c851
       size: 81567
-    - path: pipeline/08_reconstruct_prices.py
+    - path: pipeline/04_reconstruct_prices.py
       hash: md5
       md5: 14c7f6dacb073ab49556db28f8e66721
       size: 15046
@@ -245,7 +216,7 @@ stages:
       md5: d266f4c13f558f1c23397adfd42490f7
       size: 5122
     outs:
-    - path: book/notebooks/08_reconstruct_prices.ipynb
+    - path: book/notebooks/04_reconstruct_prices.ipynb
       hash: md5
       md5: dc21d172b51c3c08b3deb42f411e1d36
       size: 878148

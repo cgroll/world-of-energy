@@ -45,7 +45,7 @@ world-of-energy/
    - `.py` files with jupytext `# %%` cell markers
    - Get converted to `.ipynb` and executed by DVC
    - Final notebooks stored in `book/notebooks/`
-   - Example: `02_smard_DE_prices.py`
+   - Example: `03_smard_DE_prices.py`
 
 ### Jupytext Format
 
@@ -76,8 +76,8 @@ Example from `dvc.yaml`:
 ```yaml
 process_smard_DE_prices:
   cmd: >
-    uv run jupytext --to notebook --output book/notebooks/02_smard_DE_prices.ipynb pipeline/02_smard_DE_prices.py &&
-    uv run jupyter execute book/notebooks/02_smard_DE_prices.ipynb --inplace
+    uv run jupytext --to notebook --output book/notebooks/03_smard_DE_prices.ipynb pipeline/03_smard_DE_prices.py &&
+    uv run jupyter execute book/notebooks/03_smard_DE_prices.ipynb --inplace
 ```
 
 ## Path Conventions

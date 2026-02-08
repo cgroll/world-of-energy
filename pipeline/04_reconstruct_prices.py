@@ -1,23 +1,85 @@
 # %% [markdown]
-# # Price Reconstruction from Merit Order
+# # Fossil Fuel Costs and Electricity Price Reconstruction
 #
-# This notebook attempts to reconstruct electricity prices using a simplified
-# merit order model based on residual load and Short Run Marginal Costs (SRMC).
+# This notebook calculates the Short Run Marginal Costs (SRMC) of generating
+# electricity using hard coal and fossil gas, then uses a simplified merit
+# order model to reconstruct wholesale electricity prices.
 #
 # ## Approach
 #
-# 1. Calculate **Fossil Residual Load**: the demand that must be met by fossil plants
+# 1. Calculate **SRMC** for coal and gas power plants from commodity prices
+#
+# 2. Calculate **Fossil Residual Load**: the demand that must be met by fossil plants
 #    after accounting for renewables and baseload generation
 #
 # $$RL_{fossil} = \text{Load} - (\text{Wind} + \text{Solar}) - (\text{Nuclear} + \text{Biomass} + \text{Hydro}_{RoR})$$
 #
-# 2. Determine which fossil fuel (coal or gas) is cheaper based on SRMC
+# 3. Determine which fossil fuel (coal or gas) is cheaper based on SRMC
 #
-# 3. Assign price based on merit order:
+# 4. Assign price based on merit order:
 #    - If $RL_{fossil} \leq \text{cheaper capacity}$: price = cheaper SRMC
 #    - If $RL_{fossil} > \text{cheaper capacity}$: price = more expensive SRMC
 #
-# 4. Compare reconstructed prices with actual market prices
+# 5. Compare reconstructed prices with actual market prices
+
+# %% [markdown]
+# ## Short Run Marginal Costs (SRMC)
+#
+# The **Short Run Marginal Cost (SRMC)** represents the variable cost of producing
+# one additional MWh of electricity from a power plant. It determines the merit
+# order position of generators in wholesale electricity markets.
+#
+# ### Components of SRMC
+#
+# SRMC consists of three main components:
+#
+# 1. **Fuel costs** - The cost of the primary fuel (gas or coal) needed to
+#    generate electricity, adjusted for plant efficiency.
+#
+# 2. **Carbon costs** - The cost of CO2 emissions under the EU Emissions Trading
+#    Scheme (EU ETS), based on the carbon intensity of the fuel.
+#
+# 3. **Variable O&M costs** - Operating and maintenance costs that vary with
+#    electricity output.
+#
+# ### Price References
+#
+# **Fossil Gas:**
+# - Dutch Title Transfer Facility (TTF) is the benchmark for gas traded in Europe
+# - Other European hubs (CEGH VTP, THE, PSV, etc.) trade at spreads to TTF
+# - Prices sourced from commodity exchanges (e.g., ICE, EEX)
+#
+# **Hard Coal:**
+# - API 2 Rotterdam is the benchmark for coal imported into Northwest Europe
+# - Front month settlement prices in USD/metric ton
+# - Thermal content approximately 6,000 kcal/kg (NAR)
+#
+# **Carbon:**
+# - EU ETS allowance prices (EUA) for the front December contract
+# - Prices in EUR per tonne CO2
+#
+# ### Calculation Assumptions
+#
+# | Parameter | Hard Coal | Fossil Gas |
+# |-----------|-----------|------------|
+# | Efficiency (HHV) | 40% | 50% |
+# | Carbon intensity | 0.83 tCO2/MWh | 0.37 tCO2/MWh |
+# | Variable O&M | €2/MWh | €2/MWh |
+#
+# The carbon intensity values represent emissions per MWh of electricity generated,
+# accounting for the power plant efficiency.
+#
+# ### Why SRMC Matters
+#
+# In liberalized electricity markets, generators bid close to their marginal cost.
+# The SRMC comparison between coal and gas determines:
+#
+# - **Fuel switching** - When gas SRMC falls below coal, utilities switch from
+#   coal to gas, reducing emissions
+# - **Price formation** - The highest SRMC plant needed to meet demand often
+#   sets the wholesale electricity price
+# - **Investment signals** - Persistent SRMC relationships influence new build
+#   decisions and plant retirements
 
 # %%
 import pandas as pd
@@ -30,11 +92,9 @@ from woe.paths import ProjPaths
 
 # %% [markdown]
 # ## SRMC Calculation Parameters
-#
-# Using the same parameters as the SRMC analysis notebook.
 
 # %%
-# Power plant efficiency rates (Higher Heating Value)
+# Power plant efficiency rates (Higher Heating Value / Gross Calorific Value)
 COAL_EFFICIENCY = 0.40  # 40%
 GAS_EFFICIENCY = 0.50  # 50%
 
@@ -47,6 +107,7 @@ VOM_COST = 2.0
 
 # Coal thermal content (MWh per metric ton)
 # API 2 coal specification: 6,000 kcal/kg NAR
+# 6,000 kcal/kg = 6,000,000 kcal/t ÷ 860,421 kcal/MWh ≈ 6.98 MWh/t
 COAL_THERMAL_CONTENT = 6.98  # MWh/t
 
 # EUR/USD exchange rate (approximate)
@@ -72,7 +133,7 @@ print(f"Prices: {prices.index.min()} to {prices.index.max()}")
 print(f"Capacities: {capacities.index.min()} to {capacities.index.max()}")
 
 # %% [markdown]
-# ## Load Baseload Generation Data
+# ### Baseload Generation Data
 #
 # Nuclear, biomass, and hydro generation data for the fossil residual load calculation.
 
@@ -87,7 +148,7 @@ print(f"Biomass: {len(biomass)} records")
 print(f"Hydro: {len(hydro)} records")
 
 # %% [markdown]
-# ## Load Commodity Prices for SRMC Calculation
+# ### Commodity Prices
 
 # %%
 def load_investing_com_csv(filepath: str) -> pd.Series:
@@ -122,6 +183,16 @@ print(f"Carbon prices: {carbon_prices.index.min()} to {carbon_prices.index.max()
 
 # %% [markdown]
 # ## Calculate SRMC
+#
+# ### Gas SRMC
+# $$\text{Gas SRMC} = \frac{\text{Gas Price}}{\text{Efficiency}} + \text{Carbon Intensity} \times \text{Carbon Price} + \text{VOM}$$
+#
+# ### Coal SRMC
+# $$\text{Coal SRMC} = \frac{\text{Coal Price (EUR/MWh)}}{\text{Efficiency}} + \text{Carbon Intensity} \times \text{Carbon Price} + \text{VOM}$$
+#
+# Note: Coal prices in USD/t need to be converted to EUR/MWh using:
+# - Exchange rate (USD/EUR)
+# - Thermal content (MWh/t)
 
 # %%
 # Combine commodity prices (daily)
@@ -145,8 +216,160 @@ srmc_daily = pd.DataFrame(index=commodity_prices.index)
 srmc_daily["gas_srmc"] = gas_fuel_cost + gas_carbon_cost + VOM_COST
 srmc_daily["coal_srmc"] = coal_fuel_cost + coal_carbon_cost + VOM_COST
 
+# Store components for analysis
+srmc_daily["gas_fuel_cost"] = gas_fuel_cost
+srmc_daily["gas_carbon_cost"] = gas_carbon_cost
+srmc_daily["coal_fuel_cost"] = coal_fuel_cost
+srmc_daily["coal_carbon_cost"] = coal_carbon_cost
+
 print("SRMC Summary (EUR/MWh):")
-print(srmc_daily.describe().round(2))
+print(srmc_daily[["gas_srmc", "coal_srmc"]].describe().round(2))
+
+# %% [markdown]
+# ## SRMC Time Series
+
+# %%
+fig, ax = plt.subplots(figsize=(14, 6))
+
+ax.plot(srmc_daily.index, srmc_daily["gas_srmc"], label="Gas SRMC", linewidth=1, alpha=0.8)
+ax.plot(srmc_daily.index, srmc_daily["coal_srmc"], label="Coal SRMC", linewidth=1, alpha=0.8)
+
+ax.set_xlabel("Date")
+ax.set_ylabel("SRMC (EUR/MWh)")
+ax.set_title("Short Run Marginal Costs: Coal vs Gas")
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+fig.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ## Monthly Average SRMC
+
+# %%
+monthly_srmc = srmc_daily[["gas_srmc", "coal_srmc"]].resample("ME").mean()
+
+fig, ax = plt.subplots(figsize=(14, 6))
+
+ax.plot(
+    monthly_srmc.index,
+    monthly_srmc["gas_srmc"],
+    label="Gas SRMC",
+    marker="o",
+    markersize=3,
+)
+ax.plot(
+    monthly_srmc.index,
+    monthly_srmc["coal_srmc"],
+    label="Coal SRMC",
+    marker="o",
+    markersize=3,
+)
+
+ax.set_xlabel("Date")
+ax.set_ylabel("SRMC (EUR/MWh)")
+ax.set_title("Monthly Average Short Run Marginal Costs")
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+fig.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ## Fuel Switching Indicator
+#
+# When gas SRMC is lower than coal SRMC, it is economically favorable to dispatch
+# gas plants over coal plants, leading to lower emissions. This "fuel switching"
+# is a key mechanism for carbon price effectiveness.
+
+# %%
+# Calculate the spread (positive = gas cheaper than coal)
+srmc_daily["spread"] = srmc_daily["coal_srmc"] - srmc_daily["gas_srmc"]
+
+fig, axes = plt.subplots(2, 1, figsize=(14, 10), sharex=True)
+
+# SRMC comparison
+ax1 = axes[0]
+ax1.plot(srmc_daily.index, srmc_daily["gas_srmc"], label="Gas SRMC", linewidth=1, alpha=0.8)
+ax1.plot(srmc_daily.index, srmc_daily["coal_srmc"], label="Coal SRMC", linewidth=1, alpha=0.8)
+ax1.set_ylabel("SRMC (EUR/MWh)")
+ax1.set_title("Short Run Marginal Costs and Fuel Switching")
+ax1.legend()
+ax1.grid(True, alpha=0.3)
+
+# Spread (coal - gas)
+ax2 = axes[1]
+ax2.fill_between(
+    srmc_daily.index,
+    srmc_daily["spread"],
+    0,
+    where=srmc_daily["spread"] >= 0,
+    color="green",
+    alpha=0.5,
+    label="Gas cheaper (fuel switch)",
+)
+ax2.fill_between(
+    srmc_daily.index,
+    srmc_daily["spread"],
+    0,
+    where=srmc_daily["spread"] < 0,
+    color="red",
+    alpha=0.5,
+    label="Coal cheaper",
+)
+ax2.axhline(y=0, color="black", linestyle="-", linewidth=0.5)
+ax2.set_xlabel("Date")
+ax2.set_ylabel("Spread (EUR/MWh)")
+ax2.set_title("Coal-Gas Spread (positive = gas cheaper)")
+ax2.legend()
+ax2.grid(True, alpha=0.3)
+
+fig.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ## SRMC Cost Components
+#
+# Breaking down the SRMC into its fuel and carbon cost components shows the
+# relative importance of each driver.
+
+# %%
+fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+
+# Gas SRMC components
+ax1 = axes[0]
+ax1.stackplot(
+    srmc_daily.index,
+    srmc_daily["gas_fuel_cost"],
+    srmc_daily["gas_carbon_cost"],
+    [VOM_COST] * len(srmc_daily),
+    labels=["Fuel Cost", "Carbon Cost", "Variable O&M"],
+    alpha=0.8,
+)
+ax1.set_xlabel("Date")
+ax1.set_ylabel("Cost (EUR/MWh)")
+ax1.set_title("Gas SRMC Components")
+ax1.legend(loc="upper left")
+ax1.grid(True, alpha=0.3)
+
+# Coal SRMC components
+ax2 = axes[1]
+ax2.stackplot(
+    srmc_daily.index,
+    srmc_daily["coal_fuel_cost"],
+    srmc_daily["coal_carbon_cost"],
+    [VOM_COST] * len(srmc_daily),
+    labels=["Fuel Cost", "Carbon Cost", "Variable O&M"],
+    alpha=0.8,
+)
+ax2.set_xlabel("Date")
+ax2.set_ylabel("Cost (EUR/MWh)")
+ax2.set_title("Coal SRMC Components")
+ax2.legend(loc="upper left")
+ax2.grid(True, alpha=0.3)
+
+fig.tight_layout()
+plt.show()
 
 # %% [markdown]
 # ## Combine All Data
@@ -518,5 +741,3 @@ from datetime import datetime
 from IPython.display import Markdown
 
 Markdown(f"Last run: {datetime.now().strftime('%Y-%m-%d')}")
-
-# %%

@@ -26,42 +26,29 @@ stages:
       - data/downloads/smard/capacities.parquet:
           persist: true
   download_ttf_gas:
-    cmd: python pipeline/05_download_ttf_gas.py
+    cmd: python pipeline/02_download_ttf_gas.py
     deps:
-      - pipeline/05_download_ttf_gas.py
+      - pipeline/02_download_ttf_gas.py
       - woe/paths.py
     outs:
       - data/downloads/ttf_gas_prices.parquet:
           persist: true
   process_smard_DE_prices:
     cmd: >
-      uv run jupytext --to notebook --output book/notebooks/02_smard_DE_prices.ipynb pipeline/02_smard_DE_prices.py &&
-      uv run jupyter execute book/notebooks/02_smard_DE_prices.ipynb --inplace
+      uv run jupytext --to notebook --output book/notebooks/03_smard_DE_prices.ipynb pipeline/03_smard_DE_prices.py &&
+      uv run jupyter execute book/notebooks/03_smard_DE_prices.ipynb --inplace
     deps:
-      - pipeline/02_smard_DE_prices.py
+      - pipeline/03_smard_DE_prices.py
       - data/downloads/smard/prices_de_lu.parquet
     outs:
-      - book/notebooks/02_smard_DE_prices.ipynb:
-          cache: false
-  process_srmc:
-    cmd: >
-      uv run jupytext --to notebook --output book/notebooks/06_srmc.ipynb pipeline/06_srmc.py &&
-      uv run jupyter execute book/notebooks/06_srmc.ipynb --inplace
-    deps:
-      - pipeline/06_srmc.py
-      - woe/paths.py
-      - data/downloads/ttf_gas_prices.parquet
-      - data/downloads/investing_com/rotterdam_coal_futures.csv
-      - data/downloads/investing_com/carbon_emissions_futures.csv
-    outs:
-      - book/notebooks/06_srmc.ipynb:
+      - book/notebooks/03_smard_DE_prices.ipynb:
           cache: false
   process_reconstruct_prices:
     cmd: >
-      uv run jupytext --to notebook --output book/notebooks/08_reconstruct_prices.ipynb pipeline/08_reconstruct_prices.py &&
-      uv run jupyter execute book/notebooks/08_reconstruct_prices.ipynb --inplace
+      uv run jupytext --to notebook --output book/notebooks/04_reconstruct_prices.ipynb pipeline/04_reconstruct_prices.py &&
+      uv run jupyter execute book/notebooks/04_reconstruct_prices.ipynb --inplace
     deps:
-      - pipeline/08_reconstruct_prices.py
+      - pipeline/04_reconstruct_prices.py
       - woe/paths.py
       - data/downloads/smard/prices_de_lu.parquet
       - data/downloads/smard/solar.parquet
@@ -76,5 +63,5 @@ stages:
       - data/downloads/investing_com/rotterdam_coal_futures.csv
       - data/downloads/investing_com/carbon_emissions_futures.csv
     outs:
-      - book/notebooks/08_reconstruct_prices.ipynb:
+      - book/notebooks/04_reconstruct_prices.ipynb:
           cache: false
