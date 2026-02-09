@@ -28,6 +28,10 @@ Regarding SRMC:
 - https://ember-energy.org/data/european-electricity-prices-and-costs/#methodology
 
 
+SMARD API:
+
+https://smard.api.bund.dev/
+
 ### Weather
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/xXMU5KyM8YY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
