@@ -374,3 +374,66 @@ stages:
       hash: md5
       md5: 970d28b021112af36a612f26565ed3a4
       size: 1107080
+  process_load_seasonalities:
+    cmd: "MPLBACKEND=Agg python pipeline/05_load_seasonalities.py && uv run jupytext
+      --to md:myst --output book/notebooks/05_load_seasonalities.md pipeline/05_load_seasonalities.py
+      && sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
+      book/notebooks/05_load_seasonalities.md\n"
+    deps:
+    - path: data/downloads/smard/prices_de_lu.parquet
+      hash: md5
+      md5: cf091d3ecfb114e2564af97688b900d9
+      size: 788094
+    - path: data/downloads/smard/solar.parquet
+      hash: md5
+      md5: 2d167c549529925bc2487d41f536fd05
+      size: 965212
+    - path: data/downloads/smard/total_load.parquet
+      hash: md5
+      md5: b3d1bd65cbdb6c7bae7e1adaebd8487f
+      size: 970395
+    - path: data/downloads/smard/wind_offshore.parquet
+      hash: md5
+      md5: 01d0343fa8c7270e9fdf6ddb5eef95ec
+      size: 820177
+    - path: data/downloads/smard/wind_onshore.parquet
+      hash: md5
+      md5: 970d28b021112af36a612f26565ed3a4
+      size: 1107080
+    - path: pipeline/05_load_seasonalities.py
+      hash: md5
+      md5: 5d5f227eeb697421159a12e569a659b1
+      size: 6192
+    - path: woe/paths.py
+      hash: md5
+      md5: d266f4c13f558f1c23397adfd42490f7
+      size: 5122
+    outs:
+    - path: book/notebooks/05_load_seasonalities.md
+      hash: md5
+      md5: 5ee35b8df9545bc465c04ef46fe3c92a
+      size: 6121
+    - path: output/images/05_seasonality_load.png
+      hash: md5
+      md5: 7ae76610dcaebb7cb6213dede40a8d91
+      size: 86986
+    - path: output/images/05_seasonality_price.png
+      hash: md5
+      md5: 54d24619242db2ef5fbab90bfb42a996
+      size: 75597
+    - path: output/images/05_seasonality_renewables.png
+      hash: md5
+      md5: d932b49183c70831f375a380e1469c59
+      size: 90063
+    - path: output/images/05_seasonality_residual_load.png
+      hash: md5
+      md5: 403f6927a850652c3d278c80ee297145
+      size: 77850
+    - path: output/images/05_seasonality_solar.png
+      hash: md5
+      md5: a9d0c506e710223981f6683b67a6dcfa
+      size: 67947
+    - path: output/images/05_seasonality_wind.png
+      hash: md5
+      md5: 0f68a98e0c2f2d21ae8574ceb946e376
+      size: 82345

@@ -109,3 +109,31 @@ stages:
           cache: false
       - output/images/04_r2_comparison.png:
           cache: false
+  process_load_seasonalities:
+    cmd: >
+      MPLBACKEND=Agg python pipeline/05_load_seasonalities.py &&
+      uv run jupytext --to md:myst --output book/notebooks/05_load_seasonalities.md pipeline/05_load_seasonalities.py &&
+      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/05_load_seasonalities.md
+    deps:
+      - pipeline/05_load_seasonalities.py
+      - woe/paths.py
+      - data/downloads/smard/prices_de_lu.parquet
+      - data/downloads/smard/solar.parquet
+      - data/downloads/smard/wind_onshore.parquet
+      - data/downloads/smard/wind_offshore.parquet
+      - data/downloads/smard/total_load.parquet
+    outs:
+      - book/notebooks/05_load_seasonalities.md:
+          cache: false
+      - output/images/05_seasonality_solar.png:
+          cache: false
+      - output/images/05_seasonality_wind.png:
+          cache: false
+      - output/images/05_seasonality_renewables.png:
+          cache: false
+      - output/images/05_seasonality_load.png:
+          cache: false
+      - output/images/05_seasonality_residual_load.png:
+          cache: false
+      - output/images/05_seasonality_price.png:
+          cache: false
