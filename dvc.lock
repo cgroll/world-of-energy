@@ -26,7 +26,9 @@ stages:
       size: 787806
   process_smard_DE_prices:
     cmd: "MPLBACKEND=Agg python pipeline/03_smard_DE_prices.py && uv run jupytext
-      --to md:myst --output book/notebooks/03_smard_DE_prices.md pipeline/03_smard_DE_prices.py\n"
+      --to md:myst --output book/notebooks/03_smard_DE_prices.md pipeline/03_smard_DE_prices.py
+      && sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
+      book/notebooks/03_smard_DE_prices.md\n"
     deps:
     - path: data/downloads/smard/prices_de_lu.parquet
       hash: md5
@@ -54,8 +56,8 @@ stages:
       size: 81567
     - path: pipeline/03_smard_DE_prices.py
       hash: md5
-      md5: 1c30a4aa49ee8194e6088f01eb1ba561
-      size: 19308
+      md5: 3d57c414f2b507f425d561bca3db436f
+      size: 19465
     - path: woe/paths.py
       hash: md5
       md5: d266f4c13f558f1c23397adfd42490f7
@@ -63,8 +65,8 @@ stages:
     outs:
     - path: book/notebooks/03_smard_DE_prices.md
       hash: md5
-      md5: 662b1e0027fe163529e4f26b3cfa30a3
-      size: 18914
+      md5: 6f23af0537e9c3c882489f8e1fca730c
+      size: 19158
     - path: output/images/03_daily_profile.png
       hash: md5
       md5: 195604fd08232c9645a8ed48aa89168c
@@ -215,7 +217,9 @@ stages:
       size: 81567
   process_reconstruct_prices:
     cmd: "MPLBACKEND=Agg python pipeline/04_reconstruct_prices.py && uv run jupytext
-      --to md:myst --output book/notebooks/04_reconstruct_prices.md pipeline/04_reconstruct_prices.py\n"
+      --to md:myst --output book/notebooks/04_reconstruct_prices.md pipeline/04_reconstruct_prices.py
+      && sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
+      book/notebooks/04_reconstruct_prices.md\n"
     deps:
     - path: data/downloads/investing_com/carbon_emissions_futures.csv
       hash: md5
@@ -267,8 +271,8 @@ stages:
       size: 81567
     - path: pipeline/04_reconstruct_prices.py
       hash: md5
-      md5: 6c94e648fa67831a6ec34b1dc242baa0
-      size: 23867
+      md5: 615d92c07b83eb9366eef9b1a46ca9e9
+      size: 24024
     - path: woe/paths.py
       hash: md5
       md5: d266f4c13f558f1c23397adfd42490f7
@@ -276,8 +280,8 @@ stages:
     outs:
     - path: book/notebooks/04_reconstruct_prices.md
       hash: md5
-      md5: 452fc1c0ad874747232ac1e97d8ec1a0
-      size: 23468
+      md5: bd8b87a416f416f3e2158985ee209431
+      size: 23782
     - path: output/images/04_actual_vs_reconstructed.png
       hash: md5
       md5: 0aaeb6e6fc15f0bad725bfb34d7c16ba

@@ -50,15 +50,24 @@ stages:
     outs:
       - book/notebooks/03_smard_DE_prices.md:
           cache: false
-      - output/images/03_hourly_prices.png
-      - output/images/03_monthly_avg_prices.png
-      - output/images/03_intraday_3week.png
-      - output/images/03_daily_profile.png
-      - output/images/03_electricity_vs_gas.png
-      - output/images/03_renewables_vs_load.png
-      - output/images/03_monthly_residual_load.png
-      - output/images/03_price_vs_residual_recent.png
-      - output/images/03_price_vs_residual_2025.png
+      - output/images/03_hourly_prices.png:
+          cache: false
+      - output/images/03_monthly_avg_prices.png:
+          cache: false
+      - output/images/03_intraday_3week.png:
+          cache: false
+      - output/images/03_daily_profile.png:
+          cache: false
+      - output/images/03_electricity_vs_gas.png:
+          cache: false
+      - output/images/03_renewables_vs_load.png:
+          cache: false
+      - output/images/03_monthly_residual_load.png:
+          cache: false
+      - output/images/03_price_vs_residual_recent.png:
+          cache: false
+      - output/images/03_price_vs_residual_2025.png:
+          cache: false
   process_reconstruct_prices:
     cmd: >
       MPLBACKEND=Agg python pipeline/04_reconstruct_prices.py &&
@@ -82,12 +91,21 @@ stages:
     outs:
       - book/notebooks/04_reconstruct_prices.md:
           cache: false
-      - output/images/04_srmc_timeseries.png
-      - output/images/04_monthly_srmc.png
-      - output/images/04_fuel_switching.png
-      - output/images/04_srmc_components.png
-      - output/images/04_actual_vs_reconstructed.png
-      - output/images/04_scatter_reconstructed_vs_actual.png
-      - output/images/04_scatter_residual_load_vs_price.png
-      - output/images/04_scatter_fossil_rl_vs_price.png
-      - output/images/04_r2_comparison.png
+      - output/images/04_srmc_timeseries.png:
+          cache: false
+      - output/images/04_monthly_srmc.png:
+          cache: false
+      - output/images/04_fuel_switching.png:
+          cache: false
+      - output/images/04_srmc_components.png:
+          cache: false
+      - output/images/04_actual_vs_reconstructed.png:
+          cache: false
+      - output/images/04_scatter_reconstructed_vs_actual.png:
+          cache: false
+      - output/images/04_scatter_residual_load_vs_price.png:
+          cache: false
+      - output/images/04_scatter_fossil_rl_vs_price.png:
+          cache: false
+      - output/images/04_r2_comparison.png:
+          cache: false

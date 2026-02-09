@@ -1,3 +1,13 @@
+---
+jupytext:
+  text_representation:
+    format_name: percent
+kernelspec:
+  display_name: Python 3
+  language: python
+  name: python3
+---
+
 # Fossil Fuel Costs and Electricity Price Reconstruction
 
 This notebook calculates the Short Run Marginal Costs (SRMC) of generating
