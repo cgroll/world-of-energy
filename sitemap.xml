@@ -13,7 +13,4 @@
   <url>
     <loc>http://localhost:3000/markdown/resources</loc>
   </url>
-  <url>
-    <loc>http://localhost:3000/bibliography</loc>
-  </url>
 </urlset>
