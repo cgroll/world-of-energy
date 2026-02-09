@@ -25,23 +25,82 @@ stages:
       md5: 247fac1902042be63cbf5508d5d0c8ed
       size: 787806
   process_smard_DE_prices:
-    cmd: "uv run jupytext --to notebook --output book/notebooks/03_smard_DE_prices.ipynb
-      pipeline/03_smard_DE_prices.py && uv run jupyter execute book/notebooks/03_smard_DE_prices.ipynb
-      --inplace\n"
+    cmd: "MPLBACKEND=Agg python pipeline/03_smard_DE_prices.py && uv run jupytext
+      --to md:myst --output book/notebooks/03_smard_DE_prices.md pipeline/03_smard_DE_prices.py\n"
     deps:
     - path: data/downloads/smard/prices_de_lu.parquet
       hash: md5
       md5: cf091d3ecfb114e2564af97688b900d9
       size: 788094
+    - path: data/downloads/smard/solar.parquet
+      hash: md5
+      md5: 2d167c549529925bc2487d41f536fd05
+      size: 965212
+    - path: data/downloads/smard/total_load.parquet
+      hash: md5
+      md5: b3d1bd65cbdb6c7bae7e1adaebd8487f
+      size: 970395
+    - path: data/downloads/smard/wind_offshore.parquet
+      hash: md5
+      md5: 01d0343fa8c7270e9fdf6ddb5eef95ec
+      size: 820177
+    - path: data/downloads/smard/wind_onshore.parquet
+      hash: md5
+      md5: 970d28b021112af36a612f26565ed3a4
+      size: 1107080
+    - path: data/downloads/ttf_gas_prices.parquet
+      hash: md5
+      md5: ad5d6258d3db66fb6761924fc609c851
+      size: 81567
     - path: pipeline/03_smard_DE_prices.py
       hash: md5
-      md5: 370c7e95d028b223070648952f6874ca
-      size: 17029
-    outs:
-    - path: book/notebooks/03_smard_DE_prices.ipynb
+      md5: 1c30a4aa49ee8194e6088f01eb1ba561
+      size: 19308
+    - path: woe/paths.py
       hash: md5
-      md5: 7abc1153ca15ca3c8b428215df6806f3
-      size: 1054090
+      md5: d266f4c13f558f1c23397adfd42490f7
+      size: 5122
+    outs:
+    - path: book/notebooks/03_smard_DE_prices.md
+      hash: md5
+      md5: 662b1e0027fe163529e4f26b3cfa30a3
+      size: 18914
+    - path: output/images/03_daily_profile.png
+      hash: md5
+      md5: 195604fd08232c9645a8ed48aa89168c
+      size: 97784
+    - path: output/images/03_electricity_vs_gas.png
+      hash: md5
+      md5: 5e65e25a6679f562d3ab2231f8d368e7
+      size: 125507
+    - path: output/images/03_hourly_prices.png
+      hash: md5
+      md5: a14318fb3a96540a8c98a8c0a02ea3fb
+      size: 119299
+    - path: output/images/03_intraday_3week.png
+      hash: md5
+      md5: 3a207a50584d7fbbdbc2c93c686a3c42
+      size: 148388
+    - path: output/images/03_monthly_avg_prices.png
+      hash: md5
+      md5: a8b888482f44916bccd8464eea5c906e
+      size: 86701
+    - path: output/images/03_monthly_residual_load.png
+      hash: md5
+      md5: e28a9f31010e7a1453891eeed3cbe9fa
+      size: 106870
+    - path: output/images/03_price_vs_residual_2025.png
+      hash: md5
+      md5: 918289069adbe469732fdd6141f77169
+      size: 229394
+    - path: output/images/03_price_vs_residual_recent.png
+      hash: md5
+      md5: d0ea6c02a48aeb6ca30cbc6e2d8c9bd5
+      size: 195782
+    - path: output/images/03_renewables_vs_load.png
+      hash: md5
+      md5: 73dd7afcfb20865d20c5479190f4c88c
+      size: 166268
   download_residual_load:
     cmd: python pipeline/03_download_residual_load.py
     deps:
@@ -155,9 +214,8 @@ stages:
       md5: ad5d6258d3db66fb6761924fc609c851
       size: 81567
   process_reconstruct_prices:
-    cmd: "uv run jupytext --to notebook --output book/notebooks/04_reconstruct_prices.ipynb
-      pipeline/04_reconstruct_prices.py && uv run jupyter execute book/notebooks/04_reconstruct_prices.ipynb
-      --inplace\n"
+    cmd: "MPLBACKEND=Agg python pipeline/04_reconstruct_prices.py && uv run jupytext
+      --to md:myst --output book/notebooks/04_reconstruct_prices.md pipeline/04_reconstruct_prices.py\n"
     deps:
     - path: data/downloads/investing_com/carbon_emissions_futures.csv
       hash: md5
@@ -209,17 +267,53 @@ stages:
       size: 81567
     - path: pipeline/04_reconstruct_prices.py
       hash: md5
-      md5: 1095eca8996bdb377acc4ce7876b03cd
-      size: 21639
+      md5: 6c94e648fa67831a6ec34b1dc242baa0
+      size: 23867
     - path: woe/paths.py
       hash: md5
       md5: d266f4c13f558f1c23397adfd42490f7
       size: 5122
     outs:
-    - path: book/notebooks/04_reconstruct_prices.ipynb
+    - path: book/notebooks/04_reconstruct_prices.md
       hash: md5
-      md5: 8339c01aebc47343d071a9f6edb2e1e9
-      size: 1407337
+      md5: 452fc1c0ad874747232ac1e97d8ec1a0
+      size: 23468
+    - path: output/images/04_actual_vs_reconstructed.png
+      hash: md5
+      md5: 0aaeb6e6fc15f0bad725bfb34d7c16ba
+      size: 107915
+    - path: output/images/04_fuel_switching.png
+      hash: md5
+      md5: 591b5f2dc4de52eede978fd00bb14a81
+      size: 211868
+    - path: output/images/04_monthly_srmc.png
+      hash: md5
+      md5: bb0717ed8093a8612bece5ee4333bf9a
+      size: 107531
+    - path: output/images/04_r2_comparison.png
+      hash: md5
+      md5: b15d4d926b82ed915f5887b1047411a1
+      size: 45726
+    - path: output/images/04_scatter_fossil_rl_vs_price.png
+      hash: md5
+      md5: 6f3ba921a54436860b10f67ad743f81d
+      size: 413698
+    - path: output/images/04_scatter_reconstructed_vs_actual.png
+      hash: md5
+      md5: 83313f8c1999cbadf7c5a817321289a7
+      size: 203678
+    - path: output/images/04_scatter_residual_load_vs_price.png
+      hash: md5
+      md5: 2cb331ca970f0d4fe5dbc8bc995c5588
+      size: 416539
+    - path: output/images/04_srmc_components.png
+      hash: md5
+      md5: 9dc0cb13405f5d69c93962699ed28029
+      size: 190961
+    - path: output/images/04_srmc_timeseries.png
+      hash: md5
+      md5: 6dab96cae6549f9d150d207710db60a3
+      size: 130432
   download_smard_price_analysis_data:
     cmd: python pipeline/01_download_smard_price_analysis_data.py
     deps:

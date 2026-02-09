@@ -1,97 +1,87 @@
-# ---
-# jupytext:
-#   text_representation:
-#     format_name: percent
-# kernelspec:
-#   display_name: Python 3
-#   language: python
-#   name: python3
-# ---
+# Fossil Fuel Costs and Electricity Price Reconstruction
 
-# %% [markdown]
-# # Fossil Fuel Costs and Electricity Price Reconstruction
-#
-# This notebook calculates the Short Run Marginal Costs (SRMC) of generating
-# electricity using hard coal and fossil gas, then uses a simplified merit
-# order model to reconstruct wholesale electricity prices.
-#
-# ## Approach
-#
-# 1. Calculate **SRMC** for coal and gas power plants from commodity prices
-#
-# 2. Calculate **Fossil Residual Load**: the demand that must be met by fossil plants
-#    after accounting for renewables and baseload generation
-#
-# $$RL_{fossil} = \text{Load} - (\text{Wind} + \text{Solar}) - (\text{Nuclear} + \text{Biomass} + \text{Hydro}_{RoR})$$
-#
-# 3. Determine which fossil fuel (coal or gas) is cheaper based on SRMC
-#
-# 4. Assign price based on merit order:
-#    - If $RL_{fossil} \leq \text{cheaper capacity}$: price = cheaper SRMC
-#    - If $RL_{fossil} > \text{cheaper capacity}$: price = more expensive SRMC
-#
-# 5. Compare reconstructed prices with actual market prices
+This notebook calculates the Short Run Marginal Costs (SRMC) of generating
+electricity using hard coal and fossil gas, then uses a simplified merit
+order model to reconstruct wholesale electricity prices.
 
-# %% [markdown]
-# ## Short Run Marginal Costs (SRMC)
-#
-# The **Short Run Marginal Cost (SRMC)** represents the variable cost of producing
-# one additional MWh of electricity from a power plant. It determines the merit
-# order position of generators in wholesale electricity markets.
-#
-# ### Components of SRMC
-#
-# SRMC consists of three main components:
-#
-# 1. **Fuel costs** - The cost of the primary fuel (gas or coal) needed to
-#    generate electricity, adjusted for plant efficiency.
-#
-# 2. **Carbon costs** - The cost of CO2 emissions under the EU Emissions Trading
-#    Scheme (EU ETS), based on the carbon intensity of the fuel.
-#
-# 3. **Variable O&M costs** - Operating and maintenance costs that vary with
-#    electricity output.
-#
-# ### Price References
-#
-# **Fossil Gas:**
-# - Dutch Title Transfer Facility (TTF) is the benchmark for gas traded in Europe
-# - Other European hubs (CEGH VTP, THE, PSV, etc.) trade at spreads to TTF
-# - Prices sourced from commodity exchanges (e.g., ICE, EEX)
-#
-# **Hard Coal:**
-# - API 2 Rotterdam is the benchmark for coal imported into Northwest Europe
-# - Front month settlement prices in USD/metric ton
-# - Thermal content approximately 6,000 kcal/kg (NAR)
-#
-# **Carbon:**
-# - EU ETS allowance prices (EUA) for the front December contract
-# - Prices in EUR per tonne CO2
-#
-# ### Calculation Assumptions
-#
-# | Parameter | Hard Coal | Fossil Gas |
-# |-----------|-----------|------------|
-# | Efficiency (HHV) | 40% | 50% |
-# | Carbon intensity | 0.83 tCO2/MWh | 0.37 tCO2/MWh |
-# | Variable O&M | €2/MWh | €2/MWh |
-#
-# The carbon intensity values represent emissions per MWh of electricity generated,
-# accounting for the power plant efficiency.
-#
-# ### Why SRMC Matters
-#
-# In liberalized electricity markets, generators bid close to their marginal cost.
-# The SRMC comparison between coal and gas determines:
-#
-# - **Fuel switching** - When gas SRMC falls below coal, utilities switch from
-#   coal to gas, reducing emissions
-# - **Price formation** - The highest SRMC plant needed to meet demand often
-#   sets the wholesale electricity price
-# - **Investment signals** - Persistent SRMC relationships influence new build
-#   decisions and plant retirements
+## Approach
 
-# %%
+1. Calculate **SRMC** for coal and gas power plants from commodity prices
+
+2. Calculate **Fossil Residual Load**: the demand that must be met by fossil plants
+   after accounting for renewables and baseload generation
+
+$$RL_{fossil} = \text{Load} - (\text{Wind} + \text{Solar}) - (\text{Nuclear} + \text{Biomass} + \text{Hydro}_{RoR})$$
+
+3. Determine which fossil fuel (coal or gas) is cheaper based on SRMC
+
+4. Assign price based on merit order:
+   - If $RL_{fossil} \leq \text{cheaper capacity}$: price = cheaper SRMC
+   - If $RL_{fossil} > \text{cheaper capacity}$: price = more expensive SRMC
+
+5. Compare reconstructed prices with actual market prices
+
++++
+
+## Short Run Marginal Costs (SRMC)
+
+The **Short Run Marginal Cost (SRMC)** represents the variable cost of producing
+one additional MWh of electricity from a power plant. It determines the merit
+order position of generators in wholesale electricity markets.
+
+### Components of SRMC
+
+SRMC consists of three main components:
+
+1. **Fuel costs** - The cost of the primary fuel (gas or coal) needed to
+   generate electricity, adjusted for plant efficiency.
+
+2. **Carbon costs** - The cost of CO2 emissions under the EU Emissions Trading
+   Scheme (EU ETS), based on the carbon intensity of the fuel.
+
+3. **Variable O&M costs** - Operating and maintenance costs that vary with
+   electricity output.
+
+### Price References
+
+**Fossil Gas:**
+- Dutch Title Transfer Facility (TTF) is the benchmark for gas traded in Europe
+- Other European hubs (CEGH VTP, THE, PSV, etc.) trade at spreads to TTF
+- Prices sourced from commodity exchanges (e.g., ICE, EEX)
+
+**Hard Coal:**
+- API 2 Rotterdam is the benchmark for coal imported into Northwest Europe
+- Front month settlement prices in USD/metric ton
+- Thermal content approximately 6,000 kcal/kg (NAR)
+
+**Carbon:**
+- EU ETS allowance prices (EUA) for the front December contract
+- Prices in EUR per tonne CO2
+
+### Calculation Assumptions
+
+| Parameter | Hard Coal | Fossil Gas |
+|-----------|-----------|------------|
+| Efficiency (HHV) | 40% | 50% |
+| Carbon intensity | 0.83 tCO2/MWh | 0.37 tCO2/MWh |
+| Variable O&M | €2/MWh | €2/MWh |
+
+The carbon intensity values represent emissions per MWh of electricity generated,
+accounting for the power plant efficiency.
+
+### Why SRMC Matters
+
+In liberalized electricity markets, generators bid close to their marginal cost.
+The SRMC comparison between coal and gas determines:
+
+- **Fuel switching** - When gas SRMC falls below coal, utilities switch from
+  coal to gas, reducing emissions
+- **Price formation** - The highest SRMC plant needed to meet demand often
+  sets the wholesale electricity price
+- **Investment signals** - Persistent SRMC relationships influence new build
+  decisions and plant retirements
+
+```{code-cell} python
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -99,11 +89,11 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 
 from woe.paths import ProjPaths
+```
 
-# %% [markdown]
-# ## SRMC Calculation Parameters
+## SRMC Calculation Parameters
 
-# %%
+```{code-cell} python
 # Power plant efficiency rates (Higher Heating Value / Gross Calorific Value)
 COAL_EFFICIENCY = 0.40  # 40%
 GAS_EFFICIENCY = 0.50  # 50%
@@ -122,11 +112,11 @@ COAL_THERMAL_CONTENT = 6.98  # MWh/t
 
 # EUR/USD exchange rate (approximate)
 EURUSD_RATE = 1.08
+```
 
-# %% [markdown]
-# ## Load Data
+## Load Data
 
-# %%
+```{code-cell} python
 paths = ProjPaths()
 paths.images_path.mkdir(parents=True, exist_ok=True)
 
@@ -142,13 +132,13 @@ capacities = pd.read_parquet(paths.smard_capacities_file)
 print(f"Generation data: {solar.index.min()} to {solar.index.max()}")
 print(f"Prices: {prices.index.min()} to {prices.index.max()}")
 print(f"Capacities: {capacities.index.min()} to {capacities.index.max()}")
+```
 
-# %% [markdown]
-# ### Baseload Generation Data
-#
-# Nuclear, biomass, and hydro generation data for the fossil residual load calculation.
+### Baseload Generation Data
 
-# %%
+Nuclear, biomass, and hydro generation data for the fossil residual load calculation.
+
+```{code-cell} python
 print("Loading baseload generation data...")
 nuclear = pd.read_parquet(paths.smard_nuclear_file)
 biomass = pd.read_parquet(paths.smard_biomass_file)
@@ -157,11 +147,11 @@ hydro = pd.read_parquet(paths.smard_hydro_file)
 print(f"Nuclear: {len(nuclear)} records")
 print(f"Biomass: {len(biomass)} records")
 print(f"Hydro: {len(hydro)} records")
+```
 
-# %% [markdown]
-# ### Commodity Prices
+### Commodity Prices
 
-# %%
+```{code-cell} python
 def load_investing_com_csv(filepath: str) -> pd.Series:
     """Load price data from Investing.com CSV export."""
     df = pd.read_csv(
@@ -172,9 +162,9 @@ def load_investing_com_csv(filepath: str) -> pd.Series:
     )
     df = df.set_index("Date").sort_index()
     return df["Price"]
+```
 
-
-# %%
+```{code-cell} python
 # Load commodity prices
 print("Loading commodity prices...")
 gas_df = pd.read_parquet(paths.ttf_gas_prices_file)
@@ -191,21 +181,21 @@ carbon_prices = load_investing_com_csv(paths.eu_carbon_prices_file).rename(
 print(f"Gas prices: {gas_prices.index.min()} to {gas_prices.index.max()}")
 print(f"Coal prices: {coal_prices.index.min()} to {coal_prices.index.max()}")
 print(f"Carbon prices: {carbon_prices.index.min()} to {carbon_prices.index.max()}")
+```
 
-# %% [markdown]
-# ## Calculate SRMC
-#
-# ### Gas SRMC
-# $$\text{Gas SRMC} = \frac{\text{Gas Price}}{\text{Efficiency}} + \text{Carbon Intensity} \times \text{Carbon Price} + \text{VOM}$$
-#
-# ### Coal SRMC
-# $$\text{Coal SRMC} = \frac{\text{Coal Price (EUR/MWh)}}{\text{Efficiency}} + \text{Carbon Intensity} \times \text{Carbon Price} + \text{VOM}$$
-#
-# Note: Coal prices in USD/t need to be converted to EUR/MWh using:
-# - Exchange rate (USD/EUR)
-# - Thermal content (MWh/t)
+## Calculate SRMC
 
-# %%
+### Gas SRMC
+$$\text{Gas SRMC} = \frac{\text{Gas Price}}{\text{Efficiency}} + \text{Carbon Intensity} \times \text{Carbon Price} + \text{VOM}$$
+
+### Coal SRMC
+$$\text{Coal SRMC} = \frac{\text{Coal Price (EUR/MWh)}}{\text{Efficiency}} + \text{Carbon Intensity} \times \text{Carbon Price} + \text{VOM}$$
+
+Note: Coal prices in USD/t need to be converted to EUR/MWh using:
+- Exchange rate (USD/EUR)
+- Thermal content (MWh/t)
+
+```{code-cell} python
 # Combine commodity prices (daily)
 commodity_prices = pd.concat(
     [gas_prices, coal_prices, carbon_prices], axis=1, join="inner"
@@ -235,11 +225,11 @@ srmc_daily["coal_carbon_cost"] = coal_carbon_cost
 
 print("SRMC Summary (EUR/MWh):")
 print(srmc_daily[["gas_srmc", "coal_srmc"]].describe().round(2))
+```
 
-# %% [markdown]
-# ## SRMC Time Series
+## SRMC Time Series
 
-# %%
+```{code-cell} python
 fig, ax = plt.subplots(figsize=(14, 6))
 
 ax.plot(srmc_daily.index, srmc_daily["gas_srmc"], label="Gas SRMC", linewidth=1, alpha=0.8)
@@ -254,17 +244,18 @@ ax.grid(True, alpha=0.3)
 fig.tight_layout()
 fig.savefig(paths.images_path / "04_srmc_timeseries.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/04_srmc_timeseries.png
-# :name: fig-04-srmc-timeseries
-# Short Run Marginal Costs: Coal vs Gas
-# ```
+```{figure} ../../output/images/04_srmc_timeseries.png
+:name: fig-04-srmc-timeseries
+Short Run Marginal Costs: Coal vs Gas
+```
 
-# %% [markdown]
-# ## Monthly Average SRMC
++++
 
-# %%
+## Monthly Average SRMC
+
+```{code-cell} python
 monthly_srmc = srmc_daily[["gas_srmc", "coal_srmc"]].resample("ME").mean()
 
 fig, ax = plt.subplots(figsize=(14, 6))
@@ -293,21 +284,22 @@ ax.grid(True, alpha=0.3)
 fig.tight_layout()
 fig.savefig(paths.images_path / "04_monthly_srmc.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/04_monthly_srmc.png
-# :name: fig-04-monthly-srmc
-# Monthly Average Short Run Marginal Costs
-# ```
+```{figure} ../../output/images/04_monthly_srmc.png
+:name: fig-04-monthly-srmc
+Monthly Average Short Run Marginal Costs
+```
 
-# %% [markdown]
-# ## Fuel Switching Indicator
-#
-# When gas SRMC is lower than coal SRMC, it is economically favorable to dispatch
-# gas plants over coal plants, leading to lower emissions. This "fuel switching"
-# is a key mechanism for carbon price effectiveness.
++++
 
-# %%
+## Fuel Switching Indicator
+
+When gas SRMC is lower than coal SRMC, it is economically favorable to dispatch
+gas plants over coal plants, leading to lower emissions. This "fuel switching"
+is a key mechanism for carbon price effectiveness.
+
+```{code-cell} python
 # Calculate the spread (positive = gas cheaper than coal)
 srmc_daily["spread"] = srmc_daily["coal_srmc"] - srmc_daily["gas_srmc"]
 
@@ -352,20 +344,21 @@ ax2.grid(True, alpha=0.3)
 fig.tight_layout()
 fig.savefig(paths.images_path / "04_fuel_switching.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/04_fuel_switching.png
-# :name: fig-04-fuel-switching
-# Short Run Marginal Costs and Fuel Switching Indicator
-# ```
+```{figure} ../../output/images/04_fuel_switching.png
+:name: fig-04-fuel-switching
+Short Run Marginal Costs and Fuel Switching Indicator
+```
 
-# %% [markdown]
-# ## SRMC Cost Components
-#
-# Breaking down the SRMC into its fuel and carbon cost components shows the
-# relative importance of each driver.
++++
 
-# %%
+## SRMC Cost Components
+
+Breaking down the SRMC into its fuel and carbon cost components shows the
+relative importance of each driver.
+
+```{code-cell} python
 fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
 # Gas SRMC components
@@ -403,19 +396,20 @@ ax2.grid(True, alpha=0.3)
 fig.tight_layout()
 fig.savefig(paths.images_path / "04_srmc_components.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/04_srmc_components.png
-# :name: fig-04-srmc-components
-# SRMC Cost Components (Gas and Coal)
-# ```
+```{figure} ../../output/images/04_srmc_components.png
+:name: fig-04-srmc-components
+SRMC Cost Components (Gas and Coal)
+```
 
-# %% [markdown]
-# ## Combine All Data
-#
-# Align all data to hourly resolution by forward-filling daily/monthly data.
++++
 
-# %%
+## Combine All Data
+
+Align all data to hourly resolution by forward-filling daily/monthly data.
+
+```{code-cell} python
 # Combine generation data into single DataFrame
 df = pd.concat(
     [
@@ -435,8 +429,9 @@ df = pd.concat(
 df = df.dropna()
 print(f"Combined hourly data: {len(df)} records")
 print(f"Date range: {df.index.min()} to {df.index.max()}")
+```
 
-# %%
+```{code-cell} python
 # Forward-fill SRMC to hourly
 # Normalize index to date only for merging
 df["date"] = df.index.date
@@ -458,8 +453,9 @@ df["coal_srmc"] = df["coal_srmc"].ffill()
 # Drop rows without SRMC data
 df = df.dropna(subset=["gas_srmc", "coal_srmc"])
 print(f"After SRMC merge: {len(df)} records")
+```
 
-# %%
+```{code-cell} python
 # Forward-fill capacities to hourly
 # Capacities are monthly, so we need to reindex and forward-fill
 capacities_hourly = capacities.reindex(df.index, method="ffill")
@@ -475,13 +471,13 @@ df["capacity_gas"] = capacities_hourly["natural_gas"].fillna(0)
 df = df.dropna(subset=["capacity_coal", "capacity_gas"])
 print(f"After capacity merge: {len(df)} records")
 print(f"Final date range: {df.index.min()} to {df.index.max()}")
+```
 
-# %% [markdown]
-# ## Calculate Fossil Residual Load
-#
-# $$RL_{fossil} = \text{Load} - (\text{Wind} + \text{Solar}) - (\text{Nuclear} + \text{Biomass} + \text{Hydro})$$
+## Calculate Fossil Residual Load
 
-# %%
+$$RL_{fossil} = \text{Load} - (\text{Wind} + \text{Solar}) - (\text{Nuclear} + \text{Biomass} + \text{Hydro})$$
+
+```{code-cell} python
 # Calculate components
 df["wind"] = df["wind_onshore"] + df["wind_offshore"]
 df["renewables"] = df["solar"] + df["wind"]
@@ -499,16 +495,16 @@ print(df["rl_fossil"].describe().round(0))
 # Count negative fossil residual load hours
 negative_hours = (df["rl_fossil"] < 0).sum()
 print(f"\nHours with negative RL_fossil: {negative_hours} ({100*negative_hours/len(df):.1f}%)")
+```
 
-# %% [markdown]
-# ## Reconstruct Prices Using Merit Order
-#
-# For each hour:
-# 1. Determine which fuel (coal or gas) has lower SRMC
-# 2. If fossil residual load can be met by cheaper fuel capacity alone, use cheaper SRMC
-# 3. Otherwise, use more expensive SRMC as the marginal price
+## Reconstruct Prices Using Merit Order
 
-# %%
+For each hour:
+1. Determine which fuel (coal or gas) has lower SRMC
+2. If fossil residual load can be met by cheaper fuel capacity alone, use cheaper SRMC
+3. Otherwise, use more expensive SRMC as the marginal price
+
+```{code-cell} python
 def reconstruct_price(row):
     """Reconstruct electricity price based on merit order."""
     rl_fossil = row["rl_fossil"]
@@ -538,9 +534,9 @@ def reconstruct_price(row):
         return cheaper_srmc
     else:
         return expensive_srmc
+```
 
-
-# %%
+```{code-cell} python
 # Apply reconstruction
 print("Reconstructing prices...")
 df["price_reconstructed"] = df.apply(reconstruct_price, axis=1)
@@ -550,11 +546,11 @@ print(df["price_reconstructed"].describe().round(2))
 
 print("\nActual Price Statistics (EUR/MWh):")
 print(df["price"].describe().round(2))
+```
 
-# %% [markdown]
-# ## Compare Reconstructed vs Actual Prices
+## Compare Reconstructed vs Actual Prices
 
-# %%
+```{code-cell} python
 # Time series comparison (monthly averages)
 monthly = df[["price", "price_reconstructed"]].resample("ME").mean()
 
@@ -578,25 +574,26 @@ ax.grid(True, alpha=0.3)
 fig.tight_layout()
 fig.savefig(paths.images_path / "04_actual_vs_reconstructed.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/04_actual_vs_reconstructed.png
-# :name: fig-04-actual-vs-reconstructed
-# Monthly Average: Actual vs Reconstructed Electricity Prices
-# ```
+```{figure} ../../output/images/04_actual_vs_reconstructed.png
+:name: fig-04-actual-vs-reconstructed
+Monthly Average: Actual vs Reconstructed Electricity Prices
+```
 
-# %% [markdown]
-# ## Scatterplots
++++
 
-# %%
+## Scatterplots
+
+```{code-cell} python
 # Sample data for scatterplots (performance)
 sample_size = min(50000, len(df))
 sample = df.sample(sample_size, random_state=42)
+```
 
-# %% [markdown]
-# ### Reconstructed Prices vs Actual Prices
+### Reconstructed Prices vs Actual Prices
 
-# %%
+```{code-cell} python
 fig, ax = plt.subplots(figsize=(10, 10))
 
 ax.scatter(
@@ -634,17 +631,18 @@ ax.text(
 fig.tight_layout()
 fig.savefig(paths.images_path / "04_scatter_reconstructed_vs_actual.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/04_scatter_reconstructed_vs_actual.png
-# :name: fig-04-scatter-reconstructed-vs-actual
-# Reconstructed vs Actual Electricity Prices
-# ```
+```{figure} ../../output/images/04_scatter_reconstructed_vs_actual.png
+:name: fig-04-scatter-reconstructed-vs-actual
+Reconstructed vs Actual Electricity Prices
+```
 
-# %% [markdown]
-# ### Residual Load vs Actual Prices
++++
 
-# %%
+### Residual Load vs Actual Prices
+
+```{code-cell} python
 fig, ax = plt.subplots(figsize=(10, 10))
 
 ax.scatter(
@@ -674,17 +672,18 @@ ax.text(
 fig.tight_layout()
 fig.savefig(paths.images_path / "04_scatter_residual_load_vs_price.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/04_scatter_residual_load_vs_price.png
-# :name: fig-04-scatter-residual-load-vs-price
-# Residual Load vs Electricity Price
-# ```
+```{figure} ../../output/images/04_scatter_residual_load_vs_price.png
+:name: fig-04-scatter-residual-load-vs-price
+Residual Load vs Electricity Price
+```
 
-# %% [markdown]
-# ### Fossil Residual Load vs Actual Prices
++++
 
-# %%
+### Fossil Residual Load vs Actual Prices
+
+```{code-cell} python
 fig, ax = plt.subplots(figsize=(10, 10))
 
 ax.scatter(
@@ -714,19 +713,20 @@ ax.text(
 fig.tight_layout()
 fig.savefig(paths.images_path / "04_scatter_fossil_rl_vs_price.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/04_scatter_fossil_rl_vs_price.png
-# :name: fig-04-scatter-fossil-rl-vs-price
-# Fossil Residual Load vs Electricity Price
-# ```
+```{figure} ../../output/images/04_scatter_fossil_rl_vs_price.png
+:name: fig-04-scatter-fossil-rl-vs-price
+Fossil Residual Load vs Electricity Price
+```
 
-# %% [markdown]
-# ## Variance Explained (R²)
-#
-# How much of the price variation is explained by each model?
++++
 
-# %%
+## Variance Explained (R²)
+
+How much of the price variation is explained by each model?
+
+```{code-cell} python
 # Prepare data for regression (drop NaN and infinite values)
 df_clean = df[["price", "residual_load", "rl_fossil", "price_reconstructed"]].copy()
 df_clean = df_clean.replace([np.inf, -np.inf], np.nan).dropna()
@@ -752,11 +752,11 @@ print(f"\nResidual Load (linear regression):      R² = {r2_residual:.4f}")
 print(f"Fossil Residual Load (linear regression): R² = {r2_fossil:.4f}")
 print(f"Reconstructed Prices (merit order model): R² = {r2_reconstructed:.4f}")
 print()
+```
 
-# %% [markdown]
-# ## Summary Statistics
+## Summary Statistics
 
-# %%
+```{code-cell} python
 # Calculate additional metrics
 mae = np.abs(df_clean["price"] - df_clean["price_reconstructed"]).mean()
 rmse = np.sqrt(((df_clean["price"] - df_clean["price_reconstructed"]) ** 2).mean())
@@ -769,11 +769,11 @@ print(f"Root Mean Square Error (RMSE): {rmse:.2f} EUR/MWh")
 print(f"\nActual price mean:        {df_clean['price'].mean():.2f} EUR/MWh")
 print(f"Reconstructed price mean: {df_clean['price_reconstructed'].mean():.2f} EUR/MWh")
 print()
+```
 
-# %% [markdown]
-# ## Comparison Chart: What Explains Price Variation?
+## Comparison Chart: What Explains Price Variation?
 
-# %%
+```{code-cell} python
 fig, ax = plt.subplots(figsize=(10, 6))
 
 models = ["Residual Load\n(Linear)", "Fossil RL\n(Linear)", "Merit Order\n(Reconstructed)"]
@@ -803,9 +803,9 @@ ax.grid(True, alpha=0.3, axis="y")
 fig.tight_layout()
 fig.savefig(paths.images_path / "04_r2_comparison.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/04_r2_comparison.png
-# :name: fig-04-r2-comparison
-# How Much Price Variation is Explained?
-# ```
+```{figure} ../../output/images/04_r2_comparison.png
+:name: fig-04-r2-comparison
+How Much Price Variation is Explained?
+```

@@ -10,14 +10,11 @@ project:
     - .DS_Store
     - '**.ipynb_checkpoints'
   github: cgroll/world-of-energy
-  bibliography:
-    - references.bib
   toc:
     - file: markdown/index.md
-    - file: notebooks/03_smard_DE_prices.ipynb
-    - file: notebooks/04_reconstruct_prices.ipynb
+    - file: notebooks/03_smard_DE_prices.md
+    - file: notebooks/04_reconstruct_prices.md
     - file: markdown/resources.md
-    - file: bibliography.md
 site:
   options:
     logo: logo.png

@@ -1,3 +1,13 @@
+# ---
+# jupytext:
+#   text_representation:
+#     format_name: percent
+# kernelspec:
+#   display_name: Python 3
+#   language: python
+#   name: python3
+# ---
+
 # %% [markdown]
 # # Electricity prices in Germany
 
@@ -128,6 +138,7 @@ from woe.paths import ProjPaths
 # %%
 # Load the price data
 paths = ProjPaths()
+paths.images_path.mkdir(parents=True, exist_ok=True)
 prices_file = paths.smard_prices_file
 
 print(f"Loading data from: {prices_file}")
@@ -148,7 +159,14 @@ ax.set_title("DE/LU Day-Ahead Electricity Prices")
 ax.grid(True, alpha=0.3)
 
 fig.tight_layout()
+fig.savefig(paths.images_path / "03_hourly_prices.png", dpi=150, bbox_inches="tight")
 plt.show()
+
+# %% [markdown]
+# ```{figure} ../../output/images/03_hourly_prices.png
+# :name: fig-03-hourly-prices
+# DE/LU Day-Ahead Electricity Prices
+# ```
 
 # %%
 # Monthly average prices
@@ -163,8 +181,14 @@ ax.set_title("DE/LU Monthly Average Electricity Prices")
 ax.grid(True, alpha=0.3)
 
 fig.tight_layout()
+fig.savefig(paths.images_path / "03_monthly_avg_prices.png", dpi=150, bbox_inches="tight")
 plt.show()
 
+# %% [markdown]
+# ```{figure} ../../output/images/03_monthly_avg_prices.png
+# :name: fig-03-monthly-avg-prices
+# DE/LU Monthly Average Electricity Prices
+# ```
 
 # %% [markdown]
 # ## Intraday Seasonality
@@ -219,7 +243,14 @@ for dt in pd.date_range(start_date, end_date, freq="D"):
 
 ax.legend(["Price", "Weekend"], loc="upper right")
 fig.tight_layout()
+fig.savefig(paths.images_path / "03_intraday_3week.png", dpi=150, bbox_inches="tight")
 plt.show()
+
+# %% [markdown]
+# ```{figure} ../../output/images/03_intraday_3week.png
+# :name: fig-03-intraday-3week
+# Hourly DE/LU Day-Ahead Prices (3-week window)
+# ```
 
 # %%
 # Average daily profile across the 3-week window
@@ -248,7 +279,14 @@ ax.grid(True, alpha=0.3)
 sub_prices.drop(columns=["hour", "is_weekend"], inplace=True)
 
 fig.tight_layout()
+fig.savefig(paths.images_path / "03_daily_profile.png", dpi=150, bbox_inches="tight")
 plt.show()
+
+# %% [markdown]
+# ```{figure} ../../output/images/03_daily_profile.png
+# :name: fig-03-daily-profile
+# Average Daily Price Profile (weekday vs weekend)
+# ```
 
 # %% [markdown]
 # ## Electricity Prices and Natural Gas
@@ -304,7 +342,14 @@ lines2, labels2 = ax2.get_legend_handles_labels()
 ax1.legend(lines1 + lines2, labels1 + labels2, loc="upper left")
 
 fig.tight_layout()
+fig.savefig(paths.images_path / "03_electricity_vs_gas.png", dpi=150, bbox_inches="tight")
 plt.show()
+
+# %% [markdown]
+# ```{figure} ../../output/images/03_electricity_vs_gas.png
+# :name: fig-03-electricity-vs-gas
+# Monthly Average Electricity vs Natural Gas Prices
+# ```
 
 # %% [markdown]
 # ## Renewable Generation and Residual Load
@@ -372,7 +417,14 @@ ax.legend(loc="upper left")
 ax.grid(True, alpha=0.3)
 
 fig.tight_layout()
+fig.savefig(paths.images_path / "03_renewables_vs_load.png", dpi=150, bbox_inches="tight")
 plt.show()
+
+# %% [markdown]
+# ```{figure} ../../output/images/03_renewables_vs_load.png
+# :name: fig-03-renewables-vs-load
+# Renewable Generation vs Total Load (Monthly Averages)
+# ```
 
 # %%
 # Monthly average residual load
@@ -386,7 +438,14 @@ ax.set_title("Monthly Average Residual Load")
 ax.grid(True, alpha=0.3)
 
 fig.tight_layout()
+fig.savefig(paths.images_path / "03_monthly_residual_load.png", dpi=150, bbox_inches="tight")
 plt.show()
+
+# %% [markdown]
+# ```{figure} ../../output/images/03_monthly_residual_load.png
+# :name: fig-03-monthly-residual-load
+# Monthly Average Residual Load
+# ```
 
 # %% [markdown]
 # ## Residual Load vs Electricity Price
@@ -407,7 +466,7 @@ import numpy as np
 price_res = df[["PRICE_DE_LU"]].join(gen[["residual_load"]], how="inner").dropna()
 
 
-def plot_price_vs_residual(price_res_window, title_dates):
+def plot_price_vs_residual(price_res_window, title_dates, save_path=None):
     """Plot price and residual load with axes aligned via a linear fit."""
     X = price_res_window["residual_load"].values
     y = price_res_window["PRICE_DE_LU"].values
@@ -442,6 +501,8 @@ def plot_price_vs_residual(price_res_window, title_dates):
     ax1.legend(lines1 + lines2, labels1 + labels2, loc="upper left")
 
     fig.tight_layout()
+    if save_path:
+        fig.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.show()
 
 
@@ -453,7 +514,14 @@ print(f"Matched records: {len(price_res_sub)}")
 plot_price_vs_residual(
     price_res_sub,
     f"{start_date.strftime('%d %b')} – {end_date.strftime('%d %b %Y')}",
+    save_path=paths.images_path / "03_price_vs_residual_recent.png",
 )
+
+# %% [markdown]
+# ```{figure} ../../output/images/03_price_vs_residual_recent.png
+# :name: fig-03-price-vs-residual-recent
+# Residual Load and Electricity Price (recent 3-week window)
+# ```
 
 # %%
 # A second 3-week window in 2025 for comparison
@@ -466,9 +534,11 @@ print(f"Matched records (2025 window): {len(price_res_2025)}")
 plot_price_vs_residual(
     price_res_2025,
     f"{start_2025.strftime('%d %b')} – {end_2025.strftime('%d %b %Y')}",
+    save_path=paths.images_path / "03_price_vs_residual_2025.png",
 )
 
-# %% tags=["remove-input"]
-from IPython.display import Markdown
-
-Markdown(f"Last run: {datetime.now().strftime('%Y-%m-%d')}")
+# %% [markdown]
+# ```{figure} ../../output/images/03_price_vs_residual_2025.png
+# :name: fig-03-price-vs-residual-2025
+# Residual Load and Electricity Price (June 2025 window)
+# ```

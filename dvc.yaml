@@ -35,18 +35,35 @@ stages:
           persist: true
   process_smard_DE_prices:
     cmd: >
-      uv run jupytext --to notebook --output book/notebooks/03_smard_DE_prices.ipynb pipeline/03_smard_DE_prices.py &&
-      uv run jupyter execute book/notebooks/03_smard_DE_prices.ipynb --inplace
+      MPLBACKEND=Agg python pipeline/03_smard_DE_prices.py &&
+      uv run jupytext --to md:myst --output book/notebooks/03_smard_DE_prices.md pipeline/03_smard_DE_prices.py &&
+      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/03_smard_DE_prices.md
     deps:
       - pipeline/03_smard_DE_prices.py
+      - woe/paths.py
       - data/downloads/smard/prices_de_lu.parquet
+      - data/downloads/smard/solar.parquet
+      - data/downloads/smard/wind_onshore.parquet
+      - data/downloads/smard/wind_offshore.parquet
+      - data/downloads/smard/total_load.parquet
+      - data/downloads/ttf_gas_prices.parquet
     outs:
-      - book/notebooks/03_smard_DE_prices.ipynb:
+      - book/notebooks/03_smard_DE_prices.md:
           cache: false
+      - output/images/03_hourly_prices.png
+      - output/images/03_monthly_avg_prices.png
+      - output/images/03_intraday_3week.png
+      - output/images/03_daily_profile.png
+      - output/images/03_electricity_vs_gas.png
+      - output/images/03_renewables_vs_load.png
+      - output/images/03_monthly_residual_load.png
+      - output/images/03_price_vs_residual_recent.png
+      - output/images/03_price_vs_residual_2025.png
   process_reconstruct_prices:
     cmd: >
-      uv run jupytext --to notebook --output book/notebooks/04_reconstruct_prices.ipynb pipeline/04_reconstruct_prices.py &&
-      uv run jupyter execute book/notebooks/04_reconstruct_prices.ipynb --inplace
+      MPLBACKEND=Agg python pipeline/04_reconstruct_prices.py &&
+      uv run jupytext --to md:myst --output book/notebooks/04_reconstruct_prices.md pipeline/04_reconstruct_prices.py &&
+      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/04_reconstruct_prices.md
     deps:
       - pipeline/04_reconstruct_prices.py
       - woe/paths.py
@@ -63,5 +80,14 @@ stages:
       - data/downloads/investing_com/rotterdam_coal_futures.csv
       - data/downloads/investing_com/carbon_emissions_futures.csv
     outs:
-      - book/notebooks/04_reconstruct_prices.ipynb:
+      - book/notebooks/04_reconstruct_prices.md:
           cache: false
+      - output/images/04_srmc_timeseries.png
+      - output/images/04_monthly_srmc.png
+      - output/images/04_fuel_switching.png
+      - output/images/04_srmc_components.png
+      - output/images/04_actual_vs_reconstructed.png
+      - output/images/04_scatter_reconstructed_vs_actual.png
+      - output/images/04_scatter_residual_load_vs_price.png
+      - output/images/04_scatter_fossil_rl_vs_price.png
+      - output/images/04_r2_comparison.png
