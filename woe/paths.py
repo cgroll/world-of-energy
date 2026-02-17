@@ -114,6 +114,43 @@ class ProjPaths:
         """Path to SMARD hydro generation parquet file."""
         return self.smard_downloads_path / "hydro.parquet"
 
+    # SMARD forecast paths (day-ahead)
+    @property
+    def smard_forecast_da_solar_file(self) -> Path:
+        """Path to SMARD day-ahead solar forecast parquet file."""
+        return self.smard_downloads_path / "forecast_da_solar.parquet"
+
+    @property
+    def smard_forecast_da_wind_onshore_file(self) -> Path:
+        """Path to SMARD day-ahead wind onshore forecast parquet file."""
+        return self.smard_downloads_path / "forecast_da_wind_onshore.parquet"
+
+    @property
+    def smard_forecast_da_wind_offshore_file(self) -> Path:
+        """Path to SMARD day-ahead wind offshore forecast parquet file."""
+        return self.smard_downloads_path / "forecast_da_wind_offshore.parquet"
+
+    @property
+    def smard_forecast_da_load_file(self) -> Path:
+        """Path to SMARD day-ahead load forecast parquet file."""
+        return self.smard_downloads_path / "forecast_da_load.parquet"
+
+    # SMARD forecast paths (intraday)
+    @property
+    def smard_forecast_id_solar_file(self) -> Path:
+        """Path to SMARD intraday solar forecast parquet file."""
+        return self.smard_downloads_path / "forecast_id_solar.parquet"
+
+    @property
+    def smard_forecast_id_wind_onshore_file(self) -> Path:
+        """Path to SMARD intraday wind onshore forecast parquet file."""
+        return self.smard_downloads_path / "forecast_id_wind_onshore.parquet"
+
+    @property
+    def smard_forecast_id_wind_offshore_file(self) -> Path:
+        """Path to SMARD intraday wind offshore forecast parquet file."""
+        return self.smard_downloads_path / "forecast_id_wind_offshore.parquet"
+
     @property
     def smard_capacities_file(self) -> Path:
         """Path to SMARD installed capacities parquet file."""

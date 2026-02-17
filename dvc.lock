@@ -36,32 +36,32 @@ stages:
       size: 788094
     - path: data/downloads/smard/solar.parquet
       hash: md5
-      md5: 2d167c549529925bc2487d41f536fd05
-      size: 965212
+      md5: e4e47c88ae22d08959fa3bffb8a595d0
+      size: 965503
     - path: data/downloads/smard/total_load.parquet
       hash: md5
-      md5: b3d1bd65cbdb6c7bae7e1adaebd8487f
-      size: 970395
+      md5: 938685177e69ea6c964a0f0679dbef2b
+      size: 970693
     - path: data/downloads/smard/wind_offshore.parquet
       hash: md5
-      md5: 01d0343fa8c7270e9fdf6ddb5eef95ec
-      size: 820177
+      md5: f42de75296c83e34d0158366076bc0d8
+      size: 820468
     - path: data/downloads/smard/wind_onshore.parquet
       hash: md5
-      md5: 970d28b021112af36a612f26565ed3a4
-      size: 1107080
+      md5: f66f1e142f63e91293cb7b716c368bdb
+      size: 1107429
     - path: data/downloads/ttf_gas_prices.parquet
       hash: md5
-      md5: ad5d6258d3db66fb6761924fc609c851
-      size: 81567
+      md5: 4eb34b88f8ef89d3f1c126be75a41555
+      size: 81588
     - path: pipeline/03_smard_DE_prices.py
       hash: md5
       md5: 3d57c414f2b507f425d561bca3db436f
       size: 19465
     - path: woe/paths.py
       hash: md5
-      md5: d266f4c13f558f1c23397adfd42490f7
-      size: 5122
+      md5: e225909b00b81405a77978c7fa49a19c
+      size: 6718
     outs:
     - path: book/notebooks/03_smard_DE_prices.md
       hash: md5
@@ -73,8 +73,8 @@ stages:
       size: 97784
     - path: output/images/03_electricity_vs_gas.png
       hash: md5
-      md5: 5e65e25a6679f562d3ab2231f8d368e7
-      size: 125507
+      md5: 388b67b5f6bcf82a6ab33763dfb84e08
+      size: 125520
     - path: output/images/03_hourly_prices.png
       hash: md5
       md5: a14318fb3a96540a8c98a8c0a02ea3fb
@@ -89,20 +89,20 @@ stages:
       size: 86701
     - path: output/images/03_monthly_residual_load.png
       hash: md5
-      md5: e28a9f31010e7a1453891eeed3cbe9fa
-      size: 106870
+      md5: 3f996eab5512ad4b77cd3c362c2aa187
+      size: 106604
     - path: output/images/03_price_vs_residual_2025.png
       hash: md5
       md5: 918289069adbe469732fdd6141f77169
       size: 229394
     - path: output/images/03_price_vs_residual_recent.png
       hash: md5
-      md5: d0ea6c02a48aeb6ca30cbc6e2d8c9bd5
-      size: 195782
+      md5: c3d08253094e5f36ec246d1a4a1a43ad
+      size: 193622
     - path: output/images/03_renewables_vs_load.png
       hash: md5
-      md5: 73dd7afcfb20865d20c5479190f4c88c
-      size: 166268
+      md5: 433dc4655235b7b6db5c77a0dd77e27a
+      size: 166043
   download_residual_load:
     cmd: python pipeline/03_download_residual_load.py
     deps:
@@ -208,13 +208,13 @@ stages:
       size: 3762
     - path: woe/paths.py
       hash: md5
-      md5: d266f4c13f558f1c23397adfd42490f7
-      size: 5122
+      md5: e225909b00b81405a77978c7fa49a19c
+      size: 6718
     outs:
     - path: data/downloads/ttf_gas_prices.parquet
       hash: md5
-      md5: ad5d6258d3db66fb6761924fc609c851
-      size: 81567
+      md5: 4eb34b88f8ef89d3f1c126be75a41555
+      size: 81588
   process_reconstruct_prices:
     cmd: "MPLBACKEND=Agg python pipeline/04_reconstruct_prices.py && uv run jupytext
       --to md:myst --output book/notebooks/04_reconstruct_prices.md pipeline/04_reconstruct_prices.py
@@ -231,16 +231,16 @@ stages:
       size: 145594
     - path: data/downloads/smard/biomass.parquet
       hash: md5
-      md5: 938602e2748d0d7d8dfc899bcd9cc14d
-      size: 878162
+      md5: 707834dd4e428a8c159c319c0434a0d7
+      size: 878453
     - path: data/downloads/smard/capacities.parquet
       hash: md5
       md5: 09ff4edfc9e9bc8c5e6b42b1afe5a377
       size: 9534
     - path: data/downloads/smard/hydro.parquet
       hash: md5
-      md5: dffcb9456034b78fb541baa132c1d5a1
-      size: 886006
+      md5: 8a67ca752c1fd3f02e82ade5d8cf9c69
+      size: 886283
     - path: data/downloads/smard/nuclear.parquet
       hash: md5
       md5: c19776a48e7a55da39b89e64bc29be11
@@ -251,32 +251,32 @@ stages:
       size: 788094
     - path: data/downloads/smard/solar.parquet
       hash: md5
-      md5: 2d167c549529925bc2487d41f536fd05
-      size: 965212
+      md5: e4e47c88ae22d08959fa3bffb8a595d0
+      size: 965503
     - path: data/downloads/smard/total_load.parquet
       hash: md5
-      md5: b3d1bd65cbdb6c7bae7e1adaebd8487f
-      size: 970395
+      md5: 938685177e69ea6c964a0f0679dbef2b
+      size: 970693
     - path: data/downloads/smard/wind_offshore.parquet
       hash: md5
-      md5: 01d0343fa8c7270e9fdf6ddb5eef95ec
-      size: 820177
+      md5: f42de75296c83e34d0158366076bc0d8
+      size: 820468
     - path: data/downloads/smard/wind_onshore.parquet
       hash: md5
-      md5: 970d28b021112af36a612f26565ed3a4
-      size: 1107080
+      md5: f66f1e142f63e91293cb7b716c368bdb
+      size: 1107429
     - path: data/downloads/ttf_gas_prices.parquet
       hash: md5
-      md5: ad5d6258d3db66fb6761924fc609c851
-      size: 81567
+      md5: 4eb34b88f8ef89d3f1c126be75a41555
+      size: 81588
     - path: pipeline/04_reconstruct_prices.py
       hash: md5
       md5: 615d92c07b83eb9366eef9b1a46ca9e9
       size: 24024
     - path: woe/paths.py
       hash: md5
-      md5: d266f4c13f558f1c23397adfd42490f7
-      size: 5122
+      md5: e225909b00b81405a77978c7fa49a19c
+      size: 6718
     outs:
     - path: book/notebooks/04_reconstruct_prices.md
       hash: md5
@@ -327,29 +327,29 @@ stages:
       size: 12013
     - path: woe/paths.py
       hash: md5
-      md5: d266f4c13f558f1c23397adfd42490f7
-      size: 5122
+      md5: e225909b00b81405a77978c7fa49a19c
+      size: 6718
     - path: woe/smard/api.py
       hash: md5
       md5: c02064fa8acf43138169778269a8c2f0
       size: 3245
     - path: woe/smard/config.py
       hash: md5
-      md5: 9ee10c8add293c031abbee0f066cd00d
-      size: 6793
+      md5: c97b7ad4729aad7045e5b9a11bcc4042
+      size: 7258
     outs:
     - path: data/downloads/smard/biomass.parquet
       hash: md5
-      md5: 938602e2748d0d7d8dfc899bcd9cc14d
-      size: 878162
+      md5: 707834dd4e428a8c159c319c0434a0d7
+      size: 878453
     - path: data/downloads/smard/capacities.parquet
       hash: md5
       md5: 09ff4edfc9e9bc8c5e6b42b1afe5a377
       size: 9534
     - path: data/downloads/smard/hydro.parquet
       hash: md5
-      md5: dffcb9456034b78fb541baa132c1d5a1
-      size: 886006
+      md5: 8a67ca752c1fd3f02e82ade5d8cf9c69
+      size: 886283
     - path: data/downloads/smard/nuclear.parquet
       hash: md5
       md5: c19776a48e7a55da39b89e64bc29be11
@@ -360,20 +360,20 @@ stages:
       size: 788094
     - path: data/downloads/smard/solar.parquet
       hash: md5
-      md5: 2d167c549529925bc2487d41f536fd05
-      size: 965212
+      md5: e4e47c88ae22d08959fa3bffb8a595d0
+      size: 965503
     - path: data/downloads/smard/total_load.parquet
       hash: md5
-      md5: b3d1bd65cbdb6c7bae7e1adaebd8487f
-      size: 970395
+      md5: 938685177e69ea6c964a0f0679dbef2b
+      size: 970693
     - path: data/downloads/smard/wind_offshore.parquet
       hash: md5
-      md5: 01d0343fa8c7270e9fdf6ddb5eef95ec
-      size: 820177
+      md5: f42de75296c83e34d0158366076bc0d8
+      size: 820468
     - path: data/downloads/smard/wind_onshore.parquet
       hash: md5
-      md5: 970d28b021112af36a612f26565ed3a4
-      size: 1107080
+      md5: f66f1e142f63e91293cb7b716c368bdb
+      size: 1107429
   process_load_seasonalities:
     cmd: "MPLBACKEND=Agg python pipeline/05_load_seasonalities.py && uv run jupytext
       --to md:myst --output book/notebooks/05_load_seasonalities.md pipeline/05_load_seasonalities.py
@@ -386,28 +386,28 @@ stages:
       size: 788094
     - path: data/downloads/smard/solar.parquet
       hash: md5
-      md5: 2d167c549529925bc2487d41f536fd05
-      size: 965212
+      md5: e4e47c88ae22d08959fa3bffb8a595d0
+      size: 965503
     - path: data/downloads/smard/total_load.parquet
       hash: md5
-      md5: b3d1bd65cbdb6c7bae7e1adaebd8487f
-      size: 970395
+      md5: 938685177e69ea6c964a0f0679dbef2b
+      size: 970693
     - path: data/downloads/smard/wind_offshore.parquet
       hash: md5
-      md5: 01d0343fa8c7270e9fdf6ddb5eef95ec
-      size: 820177
+      md5: f42de75296c83e34d0158366076bc0d8
+      size: 820468
     - path: data/downloads/smard/wind_onshore.parquet
       hash: md5
-      md5: 970d28b021112af36a612f26565ed3a4
-      size: 1107080
+      md5: f66f1e142f63e91293cb7b716c368bdb
+      size: 1107429
     - path: pipeline/05_load_seasonalities.py
       hash: md5
       md5: 5d5f227eeb697421159a12e569a659b1
       size: 6192
     - path: woe/paths.py
       hash: md5
-      md5: d266f4c13f558f1c23397adfd42490f7
-      size: 5122
+      md5: e225909b00b81405a77978c7fa49a19c
+      size: 6718
     outs:
     - path: book/notebooks/05_load_seasonalities.md
       hash: md5
@@ -415,25 +415,73 @@ stages:
       size: 6121
     - path: output/images/05_seasonality_load.png
       hash: md5
-      md5: 7ae76610dcaebb7cb6213dede40a8d91
-      size: 86986
+      md5: 4b04dafa4ee44618032dbbf78b6d58a2
+      size: 86981
     - path: output/images/05_seasonality_price.png
       hash: md5
-      md5: 54d24619242db2ef5fbab90bfb42a996
-      size: 75597
+      md5: d998e60f8628fc89644612f30a6ee37b
+      size: 75608
     - path: output/images/05_seasonality_renewables.png
       hash: md5
-      md5: d932b49183c70831f375a380e1469c59
-      size: 90063
+      md5: b8dd672e04b840c04ba5e2f39824ba84
+      size: 90051
     - path: output/images/05_seasonality_residual_load.png
       hash: md5
-      md5: 403f6927a850652c3d278c80ee297145
-      size: 77850
+      md5: 6cfa03a88deca8a50348826c969b7c16
+      size: 77839
     - path: output/images/05_seasonality_solar.png
       hash: md5
-      md5: a9d0c506e710223981f6683b67a6dcfa
+      md5: 5da112ea3617d1c59ae998b9a3a22f28
       size: 67947
     - path: output/images/05_seasonality_wind.png
       hash: md5
-      md5: 0f68a98e0c2f2d21ae8574ceb946e376
-      size: 82345
+      md5: 1637ca45d91d00d4f50f11a9208e1512
+      size: 82352
+  download_smard_forecasts:
+    cmd: python pipeline/06_download_smard_forecasts.py
+    deps:
+    - path: pipeline/06_download_smard_forecasts.py
+      hash: md5
+      md5: 7b70a77029b3b08b76e948da9bcad6c1
+      size: 7732
+    - path: woe/paths.py
+      hash: md5
+      md5: e225909b00b81405a77978c7fa49a19c
+      size: 6718
+    - path: woe/smard/api.py
+      hash: md5
+      md5: c02064fa8acf43138169778269a8c2f0
+      size: 3245
+    - path: woe/smard/config.py
+      hash: md5
+      md5: c97b7ad4729aad7045e5b9a11bcc4042
+      size: 7258
+    outs:
+    - path: data/downloads/smard/forecast_da_load.parquet
+      hash: md5
+      md5: c24c6682976ae86b6e1c7cc6883684a5
+      size: 3691359
+    - path: data/downloads/smard/forecast_da_solar.parquet
+      hash: md5
+      md5: f84fd8a97cbec7f6a1a025c009da8644
+      size: 3300565
+    - path: data/downloads/smard/forecast_da_wind_offshore.parquet
+      hash: md5
+      md5: 0207963dd9e14ae7fc94f6aa2e25c7ae
+      size: 3391063
+    - path: data/downloads/smard/forecast_da_wind_onshore.parquet
+      hash: md5
+      md5: 5a4807a705a6a0f12dc74430fbe56cd3
+      size: 3670243
+    - path: data/downloads/smard/forecast_id_solar.parquet
+      hash: md5
+      md5: dee39112eee5830222df5a233fbb4880
+      size: 3036012
+    - path: data/downloads/smard/forecast_id_wind_offshore.parquet
+      hash: md5
+      md5: 7fec438fde86b0132458e6f07d8e98c7
+      size: 3123690
+    - path: data/downloads/smard/forecast_id_wind_onshore.parquet
+      hash: md5
+      md5: 127245b10833a978422e79b257f9250d
+      size: 3379514

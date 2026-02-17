@@ -28,3 +28,5 @@ wheels/
 .installed.cfg
 *.egg
 *.pdf
+
+.env

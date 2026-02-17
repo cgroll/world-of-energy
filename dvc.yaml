@@ -33,6 +33,28 @@ stages:
     outs:
       - data/downloads/ttf_gas_prices.parquet:
           persist: true
+  download_smard_forecasts:
+    cmd: python pipeline/06_download_smard_forecasts.py
+    deps:
+      - pipeline/06_download_smard_forecasts.py
+      - woe/smard/api.py
+      - woe/smard/config.py
+      - woe/paths.py
+    outs:
+      - data/downloads/smard/forecast_da_solar.parquet:
+          persist: true
+      - data/downloads/smard/forecast_da_wind_onshore.parquet:
+          persist: true
+      - data/downloads/smard/forecast_da_wind_offshore.parquet:
+          persist: true
+      - data/downloads/smard/forecast_da_load.parquet:
+          persist: true
+      - data/downloads/smard/forecast_id_solar.parquet:
+          persist: true
+      - data/downloads/smard/forecast_id_wind_onshore.parquet:
+          persist: true
+      - data/downloads/smard/forecast_id_wind_offshore.parquet:
+          persist: true
   process_smard_DE_prices:
     cmd: >
       MPLBACKEND=Agg python pipeline/03_smard_DE_prices.py &&

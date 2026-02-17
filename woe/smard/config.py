@@ -76,13 +76,22 @@ class Variable(int, Enum):
     PRICE_CZ = 261
     PRICE_HU = 262
 
-    # Forecasts
+    # Forecasts - day-ahead (generation)
     FORECAST_OFFSHORE = 3791
     FORECAST_ONSHORE = 123
     FORECAST_SOLAR = 125
     FORECAST_OTHER = 715
     FORECAST_WIND_SOLAR = 5097
     FORECAST_TOTAL = 122
+
+    # Forecasts - day-ahead (consumption)
+    FORECAST_LOAD = 411
+
+    # Forecasts - intraday (generation)
+    FORECAST_INTRADAY_SOLAR = 5126
+    FORECAST_INTRADAY_ONSHORE = 5127
+    FORECAST_INTRADAY_OFFSHORE = 5128
+    FORECAST_INTRADAY_WIND_SOLAR = 5129
     
     # Capacity
     CAPACITY_BIOMASS = 189
@@ -177,7 +186,10 @@ class Variable(int, Enum):
         """
         forecast_vars = [
             cls.FORECAST_OFFSHORE, cls.FORECAST_ONSHORE, cls.FORECAST_SOLAR,
-            cls.FORECAST_OTHER, cls.FORECAST_WIND_SOLAR, cls.FORECAST_TOTAL
+            cls.FORECAST_OTHER, cls.FORECAST_WIND_SOLAR, cls.FORECAST_TOTAL,
+            cls.FORECAST_LOAD,
+            cls.FORECAST_INTRADAY_SOLAR, cls.FORECAST_INTRADAY_ONSHORE,
+            cls.FORECAST_INTRADAY_OFFSHORE, cls.FORECAST_INTRADAY_WIND_SOLAR,
         ]
         return [var.value for var in forecast_vars]
 
