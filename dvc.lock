@@ -485,3 +485,58 @@ stages:
       hash: md5
       md5: 127245b10833a978422e79b257f9250d
       size: 3379514
+  process_earth_seasons:
+    cmd: "MPLBACKEND=Agg python pipeline/10_earth_seasons.py && uv run jupytext --to
+      md:myst --output book/notebooks/10_earth_seasons.md pipeline/10_earth_seasons.py
+      && sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
+      book/notebooks/10_earth_seasons.md\n"
+    deps:
+    - path: pipeline/10_earth_seasons.py
+      hash: md5
+      md5: 7401f2b575250551845b8d18654b75a4
+      size: 26224
+    - path: woe/paths.py
+      hash: md5
+      md5: e225909b00b81405a77978c7fa49a19c
+      size: 6718
+    outs:
+    - path: book/notebooks/10_earth_seasons.md
+      hash: md5
+      md5: 1441dc53b645d92b3e9de0db7c593b8c
+      size: 25971
+    - path: output/images/10_ee_ndvi_africa_by_doy.gif
+      hash: md5
+      md5: ad67b5238811e9e66a68594cb94c8f56
+      size: 2770278
+    - path: output/images/10_ee_ndvi_by_doy.gif
+      hash: md5
+      md5: bf7dec085b5cd23d52c1819c2af30406
+      size: 562875
+    - path: output/images/10_ee_temperature_by_hour.gif
+      hash: md5
+      md5: df1790a6e94d942bd70ea0c11219a2e6
+      size: 1213302
+    - path: output/images/10_ee_temperature_by_month.gif
+      hash: md5
+      md5: 7bedd851b723146a644a7f2e8d28207b
+      size: 381462
+    - path: output/images/10_elevation_heatmap_munich.png
+      hash: md5
+      md5: 05dafa8cba00168e0e30b6d04b0461c7
+      size: 158043
+    - path: output/images/10_elevation_heatmap_sydney.png
+      hash: md5
+      md5: 3ca59faef656fdef27fc94d0ae1bd0b3
+      size: 157666
+    - path: output/images/10_subsolar_migration.gif
+      hash: md5
+      md5: 7b424d20457b989fb1ce17fd133b4472
+      size: 28116592
+    - path: output/images/10_sunlight_animation_2025_06_21.gif
+      hash: md5
+      md5: 20ad5fbd34895f82d2f3b394900dd8e8
+      size: 34902536
+    - path: output/images/10_sunlight_animation_2025_12_21.gif
+      hash: md5
+      md5: 192bc1b0f84a403bc4b73a364c02428d
+      size: 36449435

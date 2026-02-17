@@ -15,6 +15,7 @@ project:
     - file: notebooks/03_smard_DE_prices.md
     - file: notebooks/04_reconstruct_prices.md
     - file: notebooks/05_load_seasonalities.md
+    - file: notebooks/10_earth_seasons.md
     - file: markdown/resources.md
 site:
   options:
