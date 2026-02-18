@@ -159,26 +159,16 @@ stages:
           cache: false
       - output/images/05_seasonality_price.png:
           cache: false
-  process_earth_seasons:
+  process_ee_seasons:
     cmd: >
-      MPLBACKEND=Agg python pipeline/10_earth_seasons.py &&
-      uv run jupytext --to md:myst --output book/notebooks/10_earth_seasons.md pipeline/10_earth_seasons.py &&
-      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/10_earth_seasons.md
+      python pipeline/10_ee_seasons.py &&
+      uv run jupytext --to md:myst --output book/notebooks/10_ee_seasons.md pipeline/10_ee_seasons.py &&
+      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/10_ee_seasons.md
     deps:
-      - pipeline/10_earth_seasons.py
+      - pipeline/10_ee_seasons.py
       - woe/paths.py
     outs:
-      - book/notebooks/10_earth_seasons.md:
-          cache: false
-      - output/images/10_sunlight_animation_2025_06_21.gif:
-          cache: false
-      - output/images/10_sunlight_animation_2025_12_21.gif:
-          cache: false
-      - output/images/10_subsolar_migration.gif:
-          cache: false
-      - output/images/10_elevation_heatmap_munich.png:
-          cache: false
-      - output/images/10_elevation_heatmap_sydney.png:
+      - book/notebooks/10_ee_seasons.md:
           cache: false
       - output/images/10_ee_temperature_by_hour.gif:
           cache: false

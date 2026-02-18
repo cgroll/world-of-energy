@@ -540,3 +540,37 @@ stages:
       hash: md5
       md5: 192bc1b0f84a403bc4b73a364c02428d
       size: 36449435
+  process_ee_seasons:
+    cmd: "python pipeline/10_ee_seasons.py && uv run jupytext --to md:myst --output
+      book/notebooks/10_ee_seasons.md pipeline/10_ee_seasons.py && sed -i -e 's/```{code-cell}/```{code-cell}
+      python/g' -e '/root_level_metadata_filter/d' book/notebooks/10_ee_seasons.md\n"
+    deps:
+    - path: pipeline/10_ee_seasons.py
+      hash: md5
+      md5: 0b30963b9509399451bd8255cf5733b0
+      size: 10094
+    - path: woe/paths.py
+      hash: md5
+      md5: e225909b00b81405a77978c7fa49a19c
+      size: 6718
+    outs:
+    - path: book/notebooks/10_ee_seasons.md
+      hash: md5
+      md5: 56f63f531dd49719f9c5f226ff49e07d
+      size: 10100
+    - path: output/images/10_ee_ndvi_africa_by_doy.gif
+      hash: md5
+      md5: ad67b5238811e9e66a68594cb94c8f56
+      size: 2770278
+    - path: output/images/10_ee_ndvi_by_doy.gif
+      hash: md5
+      md5: bf7dec085b5cd23d52c1819c2af30406
+      size: 562875
+    - path: output/images/10_ee_temperature_by_hour.gif
+      hash: md5
+      md5: df1790a6e94d942bd70ea0c11219a2e6
+      size: 1213302
+    - path: output/images/10_ee_temperature_by_month.gif
+      hash: md5
+      md5: 7bedd851b723146a644a7f2e8d28207b
+      size: 381462
