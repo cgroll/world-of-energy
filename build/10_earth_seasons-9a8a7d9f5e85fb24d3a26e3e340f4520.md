@@ -358,11 +358,12 @@ Forecasts (ECMWF) that combines weather observations with numerical models.
 The variable shown is **2-metre temperature** (the air temperature at 2 m
 above the surface), which is the standard measure of surface air temperature.
 
-A key feature visible in the diurnal animation is the difference between
-**land and ocean**: land heats and cools much faster than water due to its
-lower heat capacity. This is why continents show a large day-night temperature
-swing while ocean temperatures barely change over 24 hours. This also
-explains why coastal cities have milder climates than continental interiors.
+Note that this dataset is **ERA5-Land**, which only covers land surfaces —
+oceans appear black (no data). A key feature visible in the animation is how
+quickly continents heat and cool: land has a low heat capacity, so
+temperatures swing sharply between day and night. Oceans, by contrast, change
+temperature much more slowly, which is why coastal cities have milder
+climates than continental interiors.
 
 ```{code-cell} python
 import ee
@@ -435,9 +436,9 @@ print(f"Annotated GIF saved to {gif_path}")
 ```{figure} ../../output/images/10_ee_temperature_by_hour.gif
 :name: fig-10-temperature-diurnal
 Average 2-metre temperature by hour of day (UTC), computed from a full year
-of ERA5 reanalysis data. The "heat wave" sweeps westward as the Sun moves,
-and the land-sea contrast is clearly visible: continents show a large
-day-night swing, while oceans remain nearly constant.
+of ERA5-Land reanalysis data. The "heat wave" sweeps westward as the Sun
+moves, and the large day-night temperature swing over continents is clearly
+visible. Oceans appear black because ERA5-Land only covers land surfaces.
 ```
 
 +++
@@ -518,10 +519,10 @@ print(f"Annotated monthly GIF saved to {gif_monthly_path}")
 
 ```{figure} ../../output/images/10_ee_temperature_by_month.gif
 :name: fig-10-temperature-seasonal
-Average 2-metre temperature by month, computed from ERA5 noon snapshots
+Average 2-metre temperature by month, computed from ERA5-Land noon snapshots
 across 2022–2024. The hemispheric temperature contrast shifts as the
 subsolar latitude migrates. Continental interiors show the most extreme
-seasonal swings, while oceans remain comparatively stable.
+seasonal swings. Oceans are not shown (ERA5-Land covers land only).
 ```
 
 +++
