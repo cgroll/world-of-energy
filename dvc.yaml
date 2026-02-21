@@ -178,3 +178,26 @@ stages:
           cache: false
       - output/images/10_ee_ndvi_africa_by_doy.gif:
           cache: false
+  download_monthly_era5:
+    cmd: python pipeline/13_download_monthly_era5.py
+    deps:
+      - pipeline/13_download_monthly_era5.py
+      - woe/paths.py
+    outs:
+      - data/downloads/era5/monthly_aggregates/nc/era5_sl_climate.nc:
+          persist: true
+      - data/downloads/era5/monthly_aggregates/nc/era5_sl_wind_solar.nc:
+          persist: true
+      - data/downloads/era5/monthly_aggregates/nc/era5_monthly_pressure_levels.nc:
+          persist: true
+  nc_to_zarr:
+    cmd: python pipeline/14_nc_to_zarr.py
+    deps:
+      - pipeline/14_nc_to_zarr.py
+      - woe/paths.py
+      - data/downloads/era5/monthly_aggregates/nc/era5_sl_climate.nc
+      - data/downloads/era5/monthly_aggregates/nc/era5_sl_wind_solar.nc
+      - data/downloads/era5/monthly_aggregates/nc/era5_monthly_pressure_levels.nc
+    outs:
+      - data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr:
+          persist: true

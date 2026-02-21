@@ -574,3 +574,58 @@ stages:
       hash: md5
       md5: 7bedd851b723146a644a7f2e8d28207b
       size: 381462
+  download_monthly_era5:
+    cmd: python pipeline/13_download_monthly_era5.py
+    deps:
+    - path: pipeline/13_download_monthly_era5.py
+      hash: md5
+      md5: 70f94e409f9d94b5a04a0b2ef943053c
+      size: 4295
+    - path: woe/paths.py
+      hash: md5
+      md5: b62946aa1a66564680993c3e56dc4113
+      size: 8172
+    outs:
+    - path: 
+        data/downloads/era5/monthly_aggregates/nc/era5_monthly_pressure_levels.nc
+      hash: md5
+      md5: b873003c16c57cbfe6f8762da6ae5be9
+      size: 1169824773
+    - path: data/downloads/era5/monthly_aggregates/nc/era5_sl_climate.nc
+      hash: md5
+      md5: b59ce54265313e967026df226df136ff
+      size: 363626248
+    - path: data/downloads/era5/monthly_aggregates/nc/era5_sl_wind_solar.nc
+      hash: md5
+      md5: b2c4793d9cfcb4bce4d0d950ade2bffb
+      size: 507844665
+  nc_to_zarr:
+    cmd: python pipeline/14_nc_to_zarr.py
+    deps:
+    - path: 
+        data/downloads/era5/monthly_aggregates/nc/era5_monthly_pressure_levels.nc
+      hash: md5
+      md5: b873003c16c57cbfe6f8762da6ae5be9
+      size: 1169824773
+    - path: data/downloads/era5/monthly_aggregates/nc/era5_sl_climate.nc
+      hash: md5
+      md5: b59ce54265313e967026df226df136ff
+      size: 363626248
+    - path: data/downloads/era5/monthly_aggregates/nc/era5_sl_wind_solar.nc
+      hash: md5
+      md5: b2c4793d9cfcb4bce4d0d950ade2bffb
+      size: 507844665
+    - path: pipeline/14_nc_to_zarr.py
+      hash: md5
+      md5: a2bcfbdd1a0dbce391ab847e942bf41e
+      size: 2378
+    - path: woe/paths.py
+      hash: md5
+      md5: b62946aa1a66564680993c3e56dc4113
+      size: 8172
+    outs:
+    - path: data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
+      hash: md5
+      md5: d150ae19c2ef683cb08fb493b8940b31.dir
+      size: 2947867137
+      nfiles: 698
