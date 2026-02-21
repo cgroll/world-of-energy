@@ -1,22 +1,27 @@
 """Download monthly ERA5 reanalysis data via the CDS API.
 
-Downloads three datasets from the Copernicus Climate Data Store:
+Downloads four datasets from the Copernicus Climate Data Store:
 
-1. Single-level monthly means (climate variables):
+1. Single-level monthly means (instantaneous climate variables):
    - Mean sea level pressure (MSLP)
    - 2 m temperature
+
+2. Single-level monthly means (instantaneous wind variables):
+   - 100 m U/V wind components
+
+3. Single-level monthly means (accumulated flux variables):
    - Total precipitation
    - Snowfall
-
-2. Single-level monthly means (wind & solar variables):
-   - 100 m U/V wind components
    - Surface solar radiation downwards
 
-3. Pressure-level monthly means:
+4. Pressure-level monthly means:
    - Geopotential at 500 hPa
    - U/V wind components at 250 and 500 hPa
 
-Split into separate requests to stay within CDS API size limits.
+Instantaneous and accumulated variables are split into separate requests
+because the CDS API returns them as separate files inside a zip archive.
+Keeping the groups homogeneous avoids silent data loss during extraction.
+
 Output files are stored as NetCDF in data/downloads/era5/.
 
 Prerequisites:
@@ -26,10 +31,12 @@ Prerequisites:
 """
 
 # %%
+import tempfile
 import zipfile
 from pathlib import Path
 
 import cdsapi
+import xarray as xr
 
 from woe.paths import ProjPaths
 
@@ -46,7 +53,12 @@ MONTHS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"
 
 # %%
 def extract_if_zipped(path: Path) -> None:
-    """If `path` is a zip archive, replace it with the first .nc file inside."""
+    """If `path` is a zip archive, replace it with a merged NetCDF of all .nc files inside.
+
+    The CDS API may return instant and accumulated variables in separate .nc
+    files inside a zip even when download_format='unarchived' is requested.
+    This function merges all .nc files so no variables are silently dropped.
+    """
     if not zipfile.is_zipfile(path):
         return
     print(f"  Extracting zip archive at {path.name}...")
@@ -54,12 +66,26 @@ def extract_if_zipped(path: Path) -> None:
         nc_files = [n for n in zf.namelist() if n.endswith(".nc")]
         if not nc_files:
             raise RuntimeError(f"No .nc file found inside zip: {path}")
-        path.write_bytes(zf.read(nc_files[0]))
-    print(f"  Extracted {nc_files[0]}")
+        if len(nc_files) == 1:
+            path.write_bytes(zf.read(nc_files[0]))
+            print(f"  Extracted {nc_files[0]}")
+            return
+        # Multiple nc files: extract all to a temp dir, merge, write back
+        print(f"  Merging {len(nc_files)} nc files: {nc_files}")
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            datasets = []
+            for nc_name in nc_files:
+                p = tmp_path / Path(nc_name).name
+                p.write_bytes(zf.read(nc_name))
+                datasets.append(xr.open_dataset(p))
+            merged = xr.merge(datasets)
+        merged.to_netcdf(path)
+        print(f"  Merged and saved to {path.name}")
 
 
 # %%
-# Single-level group A: climate variables (MSLP, T2m, precipitation, snowfall)
+# Single-level group A: instantaneous climate variables (MSLP, T2m)
 output_climate = paths.era5_sl_climate_file
 print(f"Downloading single-level climate variables -> {output_climate}")
 
@@ -70,8 +96,6 @@ client.retrieve(
         "variable": [
             "mean_sea_level_pressure", # NAO Index
             "2m_temperature",          # Heating demand
-            "total_precipitation",     # Hydrology
-            "snowfall",                # Hydrology / Albedo
         ],
         "year": YEARS,
         "month": MONTHS,
@@ -88,18 +112,17 @@ extract_if_zipped(output_climate)
 print(f"Saved to {output_climate}")
 
 # %%
-# Single-level group B: wind and solar variables
+# Single-level group B: instantaneous wind variables (100 m U/V)
 output_wind_solar = paths.era5_sl_wind_solar_file
-print(f"Downloading single-level wind/solar variables -> {output_wind_solar}")
+print(f"Downloading single-level wind variables -> {output_wind_solar}")
 
 client.retrieve(
     "reanalysis-era5-single-levels-monthly-means",
     {
         "product_type": "monthly_averaged_reanalysis",
         "variable": [
-            "100m_u_component_of_wind",          # Wind power (Zonal)
-            "100m_v_component_of_wind",          # Wind power (Meridional)
-            "surface_solar_radiation_downwards", # Solar power
+            "100m_u_component_of_wind", # Wind power (Zonal)
+            "100m_v_component_of_wind", # Wind power (Meridional)
         ],
         "year": YEARS,
         "month": MONTHS,
@@ -114,6 +137,36 @@ client.retrieve(
 # %%
 extract_if_zipped(output_wind_solar)
 print(f"Saved to {output_wind_solar}")
+
+# %%
+# Single-level group C: accumulated flux variables (tp, sf, ssrd)
+# Kept separate from instantaneous variables because the CDS API returns
+# instant and accumulated fields in different files within the zip archive.
+output_accumulated = paths.era5_sl_accumulated_file
+print(f"Downloading single-level accumulated variables -> {output_accumulated}")
+
+client.retrieve(
+    "reanalysis-era5-single-levels-monthly-means",
+    {
+        "product_type": "monthly_averaged_reanalysis",
+        "variable": [
+            "total_precipitation",               # Hydrology
+            "snowfall",                          # Hydrology / Albedo
+            "surface_solar_radiation_downwards", # Solar power
+        ],
+        "year": YEARS,
+        "month": MONTHS,
+        "time": "00:00",
+        "area": BOUNDING_BOX,
+        "format": "netcdf",
+        "download_format": "unarchived",
+    },
+    str(output_accumulated),
+)
+
+# %%
+extract_if_zipped(output_accumulated)
+print(f"Saved to {output_accumulated}")
 
 # %%
 # Pressure-level monthly means: geopotential, U/V wind at 250 and 500 hPa

@@ -167,6 +167,52 @@ class ProjPaths:
         """Investing.com downloads directory."""
         return self.downloads_path / "investing_com"
 
+    # ERA5 reanalysis paths
+    @property
+    def era5_downloads_path(self) -> Path:
+        """ERA5 reanalysis downloads directory."""
+        return self.downloads_path / "era5"
+
+    @property
+    def era5_monthly_aggregates_path(self) -> Path:
+        """ERA5 monthly aggregate data directory."""
+        return self.era5_downloads_path / "monthly_aggregates"
+
+    @property
+    def era5_monthly_nc_path(self) -> Path:
+        """ERA5 monthly aggregate NetCDF files directory."""
+        return self.era5_monthly_aggregates_path / "nc"
+
+    @property
+    def era5_sl_climate_file(self) -> Path:
+        """Path to ERA5 monthly-mean single-level climate variables (MSLP, T2m, precip, snowfall)."""
+        return self.era5_monthly_nc_path / "era5_sl_climate.nc"
+
+    @property
+    def era5_sl_wind_solar_file(self) -> Path:
+        """Path to ERA5 monthly-mean single-level wind variables (100m wind U/V)."""
+        return self.era5_monthly_nc_path / "era5_sl_wind_solar.nc"
+
+    @property
+    def era5_sl_accumulated_file(self) -> Path:
+        """Path to ERA5 monthly-mean single-level accumulated flux variables (tp, sf, ssrd)."""
+        return self.era5_monthly_nc_path / "era5_sl_accumulated.nc"
+
+    @property
+    def era5_monthly_pressure_levels_file(self) -> Path:
+        """Path to ERA5 monthly-mean pressure-level variables (NetCDF)."""
+        return self.era5_monthly_nc_path / "era5_monthly_pressure_levels.nc"
+
+    @property
+    def era5_monthly_zarr_path(self) -> Path:
+        """ERA5 monthly aggregate Zarr store directory."""
+        return self.era5_monthly_aggregates_path / "zarr" / "era5_monthly.zarr"
+
+    @property
+    def era5_germany_monthly_file(self) -> Path:
+        """ERA5 monthly spatial aggregates over Germany (parquet)."""
+        return self.processed_data_path / "era5_germany_monthly.parquet"
+
     @property
     def rotterdam_coal_prices_file(self) -> Path:
         """Path to API 2 Rotterdam coal futures prices CSV file."""
@@ -183,6 +229,7 @@ class ProjPaths:
             self.data_path,
             self.downloads_path,
             self.smard_downloads_path,
+            self.era5_monthly_nc_path,
             self.processed_data_path,
             self.output_path,
             self.reports_path,
