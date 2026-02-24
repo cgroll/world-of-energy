@@ -6,6 +6,7 @@ writes to data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr.
 """
 
 # %%
+import pandas as pd
 import xarray as xr
 
 from woe.paths import ProjPaths
@@ -45,9 +46,32 @@ print(f"  Accumulated variables: {list(ds_accumulated.data_vars)}")
 print(f"  Pressure-level variables: {list(ds_pressure.data_vars)}")
 
 # %%
-# Merge into one dataset
+# Align all datasets to a common time axis before merging.
+# Datasets from different CDS requests can have subtly different time
+# encodings (e.g. int64 vs datetime64, or ns vs us precision), which causes
+# xr.merge to expand to an outer-join time axis and run out of memory.
+# Normalise every time coordinate to datetime64[ns] first, then merge with
+# join='inner' so only months present in all four files are kept.
+def _normalise_time(ds):
+    t = pd.DatetimeIndex(ds.time.values).normalize()   # drop sub-day offset
+    return ds.assign_coords(time=t)
+
+ds_climate    = _normalise_time(ds_climate)
+ds_wind_solar = _normalise_time(ds_wind_solar)
+ds_accumulated = _normalise_time(ds_accumulated)
+ds_pressure   = _normalise_time(ds_pressure)
+
+# Diagnose time coordinate alignment across datasets (after rename+normalise)
+for name, ds in [("climate", ds_climate), ("wind_solar", ds_wind_solar),
+                 ("accumulated", ds_accumulated), ("pressure", ds_pressure)]:
+    t = ds.time
+    print(f"  {name:12s}  time: {t.values[0]} → {t.values[-1]}  n={len(t)}  dtype={t.dtype}")
+
 print("Merging datasets...")
-ds_merged = xr.merge([ds_climate, ds_wind_solar, ds_accumulated, ds_pressure])
+ds_merged = xr.merge(
+    [ds_climate, ds_wind_solar, ds_accumulated, ds_pressure],
+    join="inner",
+)
 
 print(f"  Combined variables: {list(ds_merged.data_vars)}")
 print(f"  Time range: {ds_merged.time.values[0]} → {ds_merged.time.values[-1]}")

@@ -209,6 +209,11 @@ class ProjPaths:
         return self.era5_monthly_aggregates_path / "zarr" / "era5_monthly.zarr"
 
     @property
+    def era5_nao_jetstream_path(self) -> Path:
+        """ERA5 daily NAO/jet-stream data directory (nao_jetstream/)."""
+        return self.era5_downloads_path / "nao_jetstream"
+
+    @property
     def era5_germany_monthly_file(self) -> Path:
         """ERA5 monthly spatial aggregates over Germany (parquet)."""
         return self.processed_data_path / "era5_germany_monthly.parquet"

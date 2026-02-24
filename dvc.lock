@@ -579,12 +579,12 @@ stages:
     deps:
     - path: pipeline/13_download_monthly_era5.py
       hash: md5
-      md5: 70f94e409f9d94b5a04a0b2ef943053c
-      size: 4295
+      md5: 08028215c9295f45b8ce980bc2cef322
+      size: 6250
     - path: woe/paths.py
       hash: md5
-      md5: b62946aa1a66564680993c3e56dc4113
-      size: 8172
+      md5: 5810100b4f4e4128339bf27e45d5d9c9
+      size: 8594
     outs:
     - path: 
         data/downloads/era5/monthly_aggregates/nc/era5_monthly_pressure_levels.nc
@@ -593,12 +593,12 @@ stages:
       size: 1169824773
     - path: data/downloads/era5/monthly_aggregates/nc/era5_sl_climate.nc
       hash: md5
-      md5: b59ce54265313e967026df226df136ff
+      md5: b811f68da61cef1f9c03ad73092f1219
       size: 363626248
     - path: data/downloads/era5/monthly_aggregates/nc/era5_sl_wind_solar.nc
       hash: md5
-      md5: b2c4793d9cfcb4bce4d0d950ade2bffb
-      size: 507844665
+      md5: 3aa5cf2eb4487f98d9ba96c954ced662
+      size: 507762809
   nc_to_zarr:
     cmd: python pipeline/14_nc_to_zarr.py
     deps:
@@ -609,23 +609,19 @@ stages:
       size: 1169824773
     - path: data/downloads/era5/monthly_aggregates/nc/era5_sl_climate.nc
       hash: md5
-      md5: b59ce54265313e967026df226df136ff
+      md5: b811f68da61cef1f9c03ad73092f1219
       size: 363626248
     - path: data/downloads/era5/monthly_aggregates/nc/era5_sl_wind_solar.nc
       hash: md5
-      md5: b2c4793d9cfcb4bce4d0d950ade2bffb
-      size: 507844665
+      md5: 3aa5cf2eb4487f98d9ba96c954ced662
+      size: 507762809
     - path: pipeline/14_nc_to_zarr.py
       hash: md5
-      md5: a2bcfbdd1a0dbce391ab847e942bf41e
-      size: 2378
-    - path: woe/paths.py
-      hash: md5
-      md5: b62946aa1a66564680993c3e56dc4113
-      size: 8172
+      md5: 103a25429b159a2ffc2ead5c770d8b64
+      size: 3767
     outs:
     - path: data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
       hash: md5
-      md5: d150ae19c2ef683cb08fb493b8940b31.dir
-      size: 2947867137
-      nfiles: 698
+      md5: 582beb9fd99af742c27acdd663ac01c1.dir
+      size: 3562653332
+      nfiles: 956
