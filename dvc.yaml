@@ -181,6 +181,28 @@ stages:
           persist: true
       - data/downloads/era5/20250603_1200/era5_20250603_1200_pressure_levels.nc:
           persist: true
+  process_projections:
+    cmd: >
+      MPLBACKEND=Agg python pipeline/12_projections.py &&
+      uv run jupytext --to md:myst --output book/notebooks/12_projections.md pipeline/12_projections.py &&
+      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/12_projections.md
+    deps:
+      - pipeline/12_projections.py
+      - woe/paths.py
+      - data/downloads/era5/20250603_1200/era5_20250603_1200_surface.nc
+    outs:
+      - book/notebooks/12_projections.md:
+          cache: false
+      - output/images/12_t2m_projections_overview.png:
+          cache: false
+      - output/images/12_t2m_orthographic.png:
+          cache: false
+      - output/images/12_t2m_robinson.png:
+          cache: false
+      - output/images/12_t2m_domain.png:
+          cache: false
+      - output/images/12_t2m_orthographic_nao.png:
+          cache: false
   download_monthly_era5:
     cmd: python pipeline/13_download_monthly_era5.py
     deps:

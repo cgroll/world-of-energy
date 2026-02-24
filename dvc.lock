@@ -646,3 +646,46 @@ stages:
       hash: md5
       md5: 5c2f3fb71666bf66d99f36215e2c6d9d
       size: 24942627
+  process_projections:
+    cmd: "MPLBACKEND=Agg python pipeline/12_projections.py && uv run jupytext --to
+      md:myst --output book/notebooks/12_projections.md pipeline/12_projections.py
+      && sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
+      book/notebooks/12_projections.md\n"
+    deps:
+    - path: data/downloads/era5/20250603_1200/era5_20250603_1200_surface.nc
+      hash: md5
+      md5: 5c2f3fb71666bf66d99f36215e2c6d9d
+      size: 24942627
+    - path: pipeline/12_projections.py
+      hash: md5
+      md5: 48e2410752fe77278015e87673a99aaf
+      size: 9131
+    - path: woe/paths.py
+      hash: md5
+      md5: d2703edd7c2e9995ce3e6d82d2c18bd0
+      size: 9485
+    outs:
+    - path: book/notebooks/12_projections.md
+      hash: md5
+      md5: 220ae73854e9b3abe7462f60d4c9d36b
+      size: 8951
+    - path: output/images/12_t2m_domain.png
+      hash: md5
+      md5: 669ac3e5b4d93888b209e4c2f194a2fa
+      size: 441109
+    - path: output/images/12_t2m_orthographic.png
+      hash: md5
+      md5: e92ee42cd3be8e1e4f7fb4f9603a2cc8
+      size: 1105954
+    - path: output/images/12_t2m_orthographic_nao.png
+      hash: md5
+      md5: f4777511988f2551eb91eb3d742c057b
+      size: 938962
+    - path: output/images/12_t2m_projections_overview.png
+      hash: md5
+      md5: f17aab16d0cfaaa4e862b6861a345f62
+      size: 2539886
+    - path: output/images/12_t2m_robinson.png
+      hash: md5
+      md5: 0500219ef6cb53ebbefece3bd2587c33
+      size: 903781
