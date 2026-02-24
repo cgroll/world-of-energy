@@ -625,3 +625,24 @@ stages:
       md5: 582beb9fd99af742c27acdd663ac01c1.dir
       size: 3562653332
       nfiles: 956
+  download_era5_single_timestamp:
+    cmd: python pipeline/11_download_era5_single_timestamp.py
+    deps:
+    - path: pipeline/11_download_era5_single_timestamp.py
+      hash: md5
+      md5: 7bd1d5d292e10c00f6a6c5f6e9399be4
+      size: 5586
+    - path: woe/paths.py
+      hash: md5
+      md5: d2703edd7c2e9995ce3e6d82d2c18bd0
+      size: 9485
+    outs:
+    - path: 
+        data/downloads/era5/20250603_1200/era5_20250603_1200_pressure_levels.nc
+      hash: md5
+      md5: f1a6ca7f5d212d4e055162f3c140cd60
+      size: 199371962
+    - path: data/downloads/era5/20250603_1200/era5_20250603_1200_surface.nc
+      hash: md5
+      md5: 5c2f3fb71666bf66d99f36215e2c6d9d
+      size: 24942627

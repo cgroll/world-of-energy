@@ -214,6 +214,21 @@ class ProjPaths:
         return self.era5_downloads_path / "nao_jetstream"
 
     @property
+    def era5_snapshot_20250603_1200_path(self) -> Path:
+        """ERA5 single-timestamp snapshot directory for 2025-06-03 12:00 UTC."""
+        return self.era5_downloads_path / "20250603_1200"
+
+    @property
+    def era5_snapshot_20250603_1200_surface_file(self) -> Path:
+        """ERA5 merged surface variables for 2025-06-03 12:00 UTC."""
+        return self.era5_snapshot_20250603_1200_path / "era5_20250603_1200_surface.nc"
+
+    @property
+    def era5_snapshot_20250603_1200_pressure_file(self) -> Path:
+        """ERA5 merged pressure-level variables for 2025-06-03 12:00 UTC."""
+        return self.era5_snapshot_20250603_1200_path / "era5_20250603_1200_pressure_levels.nc"
+
+    @property
     def era5_germany_monthly_file(self) -> Path:
         """ERA5 monthly spatial aggregates over Germany (parquet)."""
         return self.processed_data_path / "era5_germany_monthly.parquet"

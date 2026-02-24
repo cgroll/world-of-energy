@@ -171,6 +171,16 @@ stages:
           cache: false
       - output/images/10_ee_ndvi_africa_by_doy.gif:
           cache: false
+  download_era5_single_timestamp:
+    cmd: python pipeline/11_download_era5_single_timestamp.py
+    deps:
+      - pipeline/11_download_era5_single_timestamp.py
+      - woe/paths.py
+    outs:
+      - data/downloads/era5/20250603_1200/era5_20250603_1200_surface.nc:
+          persist: true
+      - data/downloads/era5/20250603_1200/era5_20250603_1200_pressure_levels.nc:
+          persist: true
   download_monthly_era5:
     cmd: python pipeline/13_download_monthly_era5.py
     deps:
