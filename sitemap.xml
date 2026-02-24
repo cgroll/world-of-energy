@@ -20,6 +20,9 @@
     <loc>http://localhost:3000/notebooks/projections</loc>
   </url>
   <url>
+    <loc>http://localhost:3000/notebooks/pressure-and-weather</loc>
+  </url>
+  <url>
     <loc>http://localhost:3000/markdown/resources</loc>
   </url>
 </urlset>
