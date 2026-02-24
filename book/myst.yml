@@ -17,6 +17,7 @@ project:
     - file: notebooks/05_load_seasonalities.md
     - file: notebooks/10_earth_seasons.md
     - file: notebooks/12_projections.md
+    - file: notebooks/13_pressure_and_weather.md
     - file: markdown/resources.md
 site:
   options:

@@ -689,3 +689,83 @@ stages:
       hash: md5
       md5: 0500219ef6cb53ebbefece3bd2587c33
       size: 903781
+  process_pressure_and_weather:
+    cmd: "MPLBACKEND=Agg python pipeline/13_pressure_and_weather.py && uv run jupytext
+      --to md:myst --output book/notebooks/13_pressure_and_weather.md pipeline/13_pressure_and_weather.py
+      && sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
+      book/notebooks/13_pressure_and_weather.md\n"
+    deps:
+    - path: 
+        data/downloads/era5/20250603_1200/era5_20250603_1200_pressure_levels.nc
+      hash: md5
+      md5: f1a6ca7f5d212d4e055162f3c140cd60
+      size: 199371962
+    - path: data/downloads/era5/20250603_1200/era5_20250603_1200_surface.nc
+      hash: md5
+      md5: 5c2f3fb71666bf66d99f36215e2c6d9d
+      size: 24942627
+    - path: pipeline/13_pressure_and_weather.py
+      hash: md5
+      md5: 21e1ec1edf838442bdaa8af121af95b2
+      size: 43511
+    - path: woe/paths.py
+      hash: md5
+      md5: d2703edd7c2e9995ce3e6d82d2c18bd0
+      size: 9485
+    outs:
+    - path: book/notebooks/13_pressure_and_weather.md
+      hash: md5
+      md5: 4fa162c4d3e0aac4fb8f37046939f743
+      size: 42960
+    - path: output/images/13_cloud_satellite.png
+      hash: md5
+      md5: 1f679bd476c2e657b623b63e1c1d8504
+      size: 2785161
+    - path: output/images/13_cross_section_0E.png
+      hash: md5
+      md5: 469cb54f827ab27aba3ad8fbda97846d
+      size: 453282
+    - path: output/images/13_cross_section_animation.gif
+      hash: md5
+      md5: fe54cab046ce258a69d55fac6e072e9e
+      size: 5794431
+    - path: output/images/13_jet_colmax.png
+      hash: md5
+      md5: fff28c6d11bc3c1d46461449a79a80d6
+      size: 936125
+    - path: output/images/13_jet_stream_polar.png
+      hash: md5
+      md5: 023434d8b692e33141c59ddbfceb6c1f
+      size: 972099
+    - path: output/images/13_pressure_bands.png
+      hash: md5
+      md5: ef63a176a189ee563053fc2d75406adf
+      size: 411321
+    - path: output/images/13_pressure_levels_animation.gif
+      hash: md5
+      md5: 75b1faf48b926081b19528475dd84ad9
+      size: 2966849
+    - path: output/images/13_surface_temperature.png
+      hash: md5
+      md5: 9fbe5ed71e515c7599de5e278e1ed304
+      size: 1037687
+    - path: output/images/13_surface_wind.png
+      hash: md5
+      md5: b82c267220479317fa117519b1aa98ba
+      size: 1463716
+    - path: output/images/13_t2m_jet_core.png
+      hash: md5
+      md5: ed6ea55e647917083f63eebba03d7851
+      size: 1418756
+    - path: output/images/13_t2m_z500.png
+      hash: md5
+      md5: d25d6ca57ebf6cf353f9e01c82ee55e2
+      size: 1460912
+    - path: output/images/13_z500_jet_purple.png
+      hash: md5
+      md5: 1ab027145cca0822610b2b918f093915
+      size: 1345969
+    - path: output/images/13_z500_wind250.png
+      hash: md5
+      md5: 4cb8605194a61a75f984393ad09aab01
+      size: 1094522

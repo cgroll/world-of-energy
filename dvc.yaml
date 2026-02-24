@@ -203,6 +203,45 @@ stages:
           cache: false
       - output/images/12_t2m_orthographic_nao.png:
           cache: false
+  process_pressure_and_weather:
+    cmd: >
+      MPLBACKEND=Agg python pipeline/13_pressure_and_weather.py &&
+      uv run jupytext --to md:myst --output book/notebooks/13_pressure_and_weather.md pipeline/13_pressure_and_weather.py &&
+      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/13_pressure_and_weather.md
+    deps:
+      - pipeline/13_pressure_and_weather.py
+      - woe/paths.py
+      - data/downloads/era5/20250603_1200/era5_20250603_1200_surface.nc
+      - data/downloads/era5/20250603_1200/era5_20250603_1200_pressure_levels.nc
+    outs:
+      - book/notebooks/13_pressure_and_weather.md:
+          cache: false
+      - output/images/13_surface_temperature.png:
+          cache: false
+      - output/images/13_surface_wind.png:
+          cache: false
+      - output/images/13_cloud_satellite.png:
+          cache: false
+      - output/images/13_pressure_bands.png:
+          cache: false
+      - output/images/13_z500_wind250.png:
+          cache: false
+      - output/images/13_z500_jet_purple.png:
+          cache: false
+      - output/images/13_t2m_z500.png:
+          cache: false
+      - output/images/13_t2m_jet_core.png:
+          cache: false
+      - output/images/13_jet_stream_polar.png:
+          cache: false
+      - output/images/13_pressure_levels_animation.gif:
+          cache: false
+      - output/images/13_cross_section_0E.png:
+          cache: false
+      - output/images/13_cross_section_animation.gif:
+          cache: false
+      - output/images/13_jet_colmax.png:
+          cache: false
   download_monthly_era5:
     cmd: python pipeline/13_download_monthly_era5.py
     deps:
