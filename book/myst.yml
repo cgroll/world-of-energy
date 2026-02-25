@@ -18,6 +18,8 @@ project:
     - file: notebooks/10_earth_seasons.md
     - file: notebooks/12_projections.md
     - file: notebooks/13_pressure_and_weather.md
+    - file: notebooks/17_germany_variations.md
+    - file: notebooks/18_nao_index.md
     - file: markdown/resources.md
 site:
   options:

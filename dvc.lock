@@ -782,3 +782,51 @@ stages:
       hash: md5
       md5: 430ffb5a37bb3e78890c4c297b5449b3
       size: 69290
+  process_germany_variations:
+    cmd: "MPLBACKEND=Agg python pipeline/17_germany_variations.py && uv run jupytext
+      --to md:myst --output book/notebooks/17_germany_variations.md pipeline/17_germany_variations.py
+      && sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
+      book/notebooks/17_germany_variations.md\n"
+    deps:
+    - path: data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
+      hash: md5
+      md5: 582beb9fd99af742c27acdd663ac01c1.dir
+      size: 3562653332
+      nfiles: 956
+    - path: data/processed/era5/time_series/germany_monthly.parquet
+      hash: md5
+      md5: 430ffb5a37bb3e78890c4c297b5449b3
+      size: 69290
+    - path: pipeline/17_germany_variations.py
+      hash: md5
+      md5: b66d781d9015053954c5fa4626532dfe
+      size: 17544
+    outs:
+    - path: book/notebooks/17_germany_variations.md
+      hash: md5
+      md5: 223c6ec711dcb50df3c09c77aa6582c9
+      size: 17408
+    - path: output/images/17_germany_dunkelflaute.png
+      hash: md5
+      md5: 9bcad18b818f4f46f4bc5f08948b6e7f
+      size: 188999
+    - path: output/images/17_germany_ssrd_jitter.png
+      hash: md5
+      md5: 14677bd6c61301a6fefa718790baaf2a
+      size: 168332
+    - path: output/images/17_germany_t2m_jitter.png
+      hash: md5
+      md5: 297b84c78a81da56f30c6b7cedc672a1
+      size: 168897
+    - path: output/images/17_germany_wind_jitter.png
+      hash: md5
+      md5: de5f41f9f72dd317c2cafe14006ed5b1
+      size: 215042
+    - path: output/images/17_january_250hpa_comparison.png
+      hash: md5
+      md5: 5d7e892c93ec0df01588ca506dd2dba1
+      size: 2597943
+    - path: output/images/17_january_t2m_comparison.png
+      hash: md5
+      md5: 59f399d4f611cfae7a9b4587ac977eaf
+      size: 1556955

@@ -267,6 +267,62 @@ stages:
       - data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
     outs:
       - data/processed/era5/time_series/germany_monthly.parquet
+  process_germany_variations:
+    cmd: >
+      MPLBACKEND=Agg python pipeline/17_germany_variations.py &&
+      uv run jupytext --to md:myst --output book/notebooks/17_germany_variations.md pipeline/17_germany_variations.py &&
+      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/17_germany_variations.md
+    deps:
+      - pipeline/17_germany_variations.py
+      - data/processed/era5/time_series/germany_monthly.parquet
+      - data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
+    outs:
+      - book/notebooks/17_germany_variations.md:
+          cache: false
+      - output/images/17_germany_t2m_jitter.png:
+          cache: false
+      - output/images/17_germany_wind_jitter.png:
+          cache: false
+      - output/images/17_germany_ssrd_jitter.png:
+          cache: false
+      - output/images/17_germany_dunkelflaute.png:
+          cache: false
+      - output/images/17_january_t2m_comparison.png:
+          cache: false
+      - output/images/17_january_250hpa_comparison.png:
+          cache: false
+  process_nao_index:
+    cmd: >
+      MPLBACKEND=Agg python pipeline/18_nao_index.py &&
+      uv run jupytext --to md:myst --output book/notebooks/18_nao_index.md pipeline/18_nao_index.py &&
+      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/18_nao_index.md
+    deps:
+      - pipeline/18_nao_index.py
+      - data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
+      - data/processed/era5/time_series/germany_monthly.parquet
+    outs:
+      - book/notebooks/18_nao_index.md:
+          cache: false
+      - output/images/15_era5_t2m_2025_01.png:
+          cache: false
+      - output/images/15_era5_t2m_europe_2025_01.png:
+          cache: false
+      - output/images/15_era5_t2m_domain_2025_01.png:
+          cache: false
+      - output/images/15_nao_index.png:
+          cache: false
+      - output/images/15_nao_t2m_correlation.png:
+          cache: false
+      - output/images/15_nao_germany_t2m.png:
+          cache: false
+      - output/images/15_nao_extreme_winters.png:
+          cache: false
+      - output/images/15_nao_extreme_diff.png:
+          cache: false
+      - output/images/15_nao_extreme_250hpa_wind.png:
+          cache: false
+      - output/images/15_nao_extreme_z500.png:
+          cache: false
   process_nao_jet_stream:
     cmd: >
       MPLBACKEND=Agg python pipeline/18_nao_jet_stream.py &&
