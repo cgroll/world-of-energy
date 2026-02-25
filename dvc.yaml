@@ -175,7 +175,6 @@ stages:
     cmd: python pipeline/11_download_era5_single_timestamp.py
     deps:
       - pipeline/11_download_era5_single_timestamp.py
-      - woe/paths.py
     outs:
       - data/downloads/era5/20250603_1200/era5_20250603_1200_surface.nc:
           persist: true
@@ -188,7 +187,6 @@ stages:
       sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/12_projections.md
     deps:
       - pipeline/12_projections.py
-      - woe/paths.py
       - data/downloads/era5/20250603_1200/era5_20250603_1200_surface.nc
     outs:
       - book/notebooks/12_projections.md:
@@ -210,7 +208,6 @@ stages:
       sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/13_pressure_and_weather.md
     deps:
       - pipeline/13_pressure_and_weather.py
-      - woe/paths.py
       - data/downloads/era5/20250603_1200/era5_20250603_1200_surface.nc
       - data/downloads/era5/20250603_1200/era5_20250603_1200_pressure_levels.nc
     outs:
@@ -263,6 +260,13 @@ stages:
     outs:
       - data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr:
           persist: true
+  compute_germany_time_series:
+    cmd: python pipeline/15_compute_germany_time_series.py
+    deps:
+      - pipeline/15_compute_germany_time_series.py
+      - data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
+    outs:
+      - data/processed/era5/time_series/germany_monthly.parquet
   process_nao_jet_stream:
     cmd: >
       MPLBACKEND=Agg python pipeline/18_nao_jet_stream.py &&
@@ -270,7 +274,6 @@ stages:
       sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/18_nao_jet_stream.md
     deps:
       - pipeline/18_nao_jet_stream.py
-      - woe/paths.py
       - data/downloads/era5/nao_jetstream/era5_nao_jetstream_2014-2015.nc
       - data/downloads/era5/nao_jetstream/era5_nao_jetstream_2009-2010.nc
     outs:

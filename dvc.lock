@@ -769,3 +769,24 @@ stages:
       hash: md5
       md5: 4cb8605194a61a75f984393ad09aab01
       size: 1094522
+  compute_germany_time_series:
+    cmd: python pipeline/15_compute_germany_time_series.py
+    deps:
+    - path: data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
+      hash: md5
+      md5: 582beb9fd99af742c27acdd663ac01c1.dir
+      size: 3562653332
+      nfiles: 956
+    - path: pipeline/15_compute_germany_time_series.py
+      hash: md5
+      md5: 26e4c9d8689186cb5764c709fec8d71a
+      size: 3989
+    - path: woe/paths.py
+      hash: md5
+      md5: 26df420cf1310aebe128c54abe61b031
+      size: 9716
+    outs:
+    - path: data/processed/era5/time_series/germany_monthly.parquet
+      hash: md5
+      md5: 430ffb5a37bb3e78890c4c297b5449b3
+      size: 69290
