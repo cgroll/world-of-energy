@@ -26,6 +26,12 @@
     <loc>http://localhost:3000/notebooks/germany-variations</loc>
   </url>
   <url>
+    <loc>http://localhost:3000/notebooks/nao-index</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/notebooks/daily-jet-stream-animations</loc>
+  </url>
+  <url>
     <loc>http://localhost:3000/markdown/resources</loc>
   </url>
 </urlset>
