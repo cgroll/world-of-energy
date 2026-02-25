@@ -830,3 +830,130 @@ stages:
       hash: md5
       md5: 59f399d4f611cfae7a9b4587ac977eaf
       size: 1556955
+  process_nao_index:
+    cmd: "MPLBACKEND=Agg python pipeline/18_nao_index.py && uv run jupytext --to md:myst
+      --output book/notebooks/18_nao_index.md pipeline/18_nao_index.py && sed -i -e
+      's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
+      book/notebooks/18_nao_index.md\n"
+    deps:
+    - path: data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
+      hash: md5
+      md5: 582beb9fd99af742c27acdd663ac01c1.dir
+      size: 3562653332
+      nfiles: 956
+    - path: data/processed/era5/time_series/germany_monthly.parquet
+      hash: md5
+      md5: 430ffb5a37bb3e78890c4c297b5449b3
+      size: 69290
+    - path: pipeline/18_nao_index.py
+      hash: md5
+      md5: ae815bbe2969683ae1dbc0c760356bc9
+      size: 24182
+    outs:
+    - path: book/notebooks/18_nao_index.md
+      hash: md5
+      md5: 533eb999c6677ea32b5f0baca792c24b
+      size: 23892
+    - path: output/images/15_era5_t2m_2025_01.png
+      hash: md5
+      md5: 273fd707ec294306a53cb24b2b4f2a2a
+      size: 464289
+    - path: output/images/15_era5_t2m_domain_2025_01.png
+      hash: md5
+      md5: b8bc8cc0c1d9081449a9a758ad498cd8
+      size: 425757
+    - path: output/images/15_era5_t2m_europe_2025_01.png
+      hash: md5
+      md5: c176ff19a83117de1b360b51f6afcb91
+      size: 590987
+    - path: output/images/15_nao_extreme_250hpa_wind.png
+      hash: md5
+      md5: d9eb82cbbf1efed01100baf415a7a553
+      size: 1461000
+    - path: output/images/15_nao_extreme_diff.png
+      hash: md5
+      md5: 9d784edbad20af958c588ecff4d83665
+      size: 493202
+    - path: output/images/15_nao_extreme_winters.png
+      hash: md5
+      md5: 861543055e4208c0bab2b6246cf19abe
+      size: 728781
+    - path: output/images/15_nao_extreme_z500.png
+      hash: md5
+      md5: e323599045b3bee6192011f00c22b3cb
+      size: 775870
+    - path: output/images/15_nao_germany_t2m.png
+      hash: md5
+      md5: ddf4204812e0e6e3489703133b96705c
+      size: 128396
+    - path: output/images/15_nao_index.png
+      hash: md5
+      md5: c5065edc846b10992d59ec8cd1a07717
+      size: 98425
+    - path: output/images/15_nao_t2m_correlation.png
+      hash: md5
+      md5: 4eb706d4bf7a49fe5accd5da6efc3dd3
+      size: 885470
+  download_daily_nao_jetstream:
+    cmd: python pipeline/19_download_daily_nao_jetstream.py
+    deps:
+    - path: pipeline/19_download_daily_nao_jetstream.py
+      hash: md5
+      md5: cc9ff295ca4ffa3f14df53239ab227cf
+      size: 10453
+    outs:
+    - path: data/downloads/era5/nao_jetstream/era5_nao_jetstream_2009-2010.nc
+      hash: md5
+      md5: e6e35fcedd165b4fc39049c7fdb89840
+      size: 180821057
+    - path: data/downloads/era5/nao_jetstream/era5_nao_jetstream_2014-2015.nc
+      hash: md5
+      md5: 97adbb42c42c2c046a2f627299c1554a
+      size: 180821057
+  process_daily_jet_stream_animations:
+    cmd: "MPLBACKEND=Agg python pipeline/20_daily_jet_stream_animations.py && uv run
+      jupytext --to md:myst --output book/notebooks/20_daily_jet_stream_animations.md
+      pipeline/20_daily_jet_stream_animations.py && sed -i -e 's/```{code-cell}/```{code-cell}
+      python/g' -e '/root_level_metadata_filter/d' book/notebooks/20_daily_jet_stream_animations.md\n"
+    deps:
+    - path: data/downloads/era5/nao_jetstream/era5_nao_jetstream_2009-2010.nc
+      hash: md5
+      md5: e6e35fcedd165b4fc39049c7fdb89840
+      size: 180821057
+    - path: data/downloads/era5/nao_jetstream/era5_nao_jetstream_2014-2015.nc
+      hash: md5
+      md5: 97adbb42c42c2c046a2f627299c1554a
+      size: 180821057
+    - path: pipeline/20_daily_jet_stream_animations.py
+      hash: md5
+      md5: 38ec3dbc2c26314216574a12f327e344
+      size: 20836
+    outs:
+    - path: book/notebooks/20_daily_jet_stream_animations.md
+      hash: md5
+      md5: 5b53ebaed4f2b42e3ba321a343306dfb
+      size: 20545
+    - path: output/images/18_combined_2009-2010.gif
+      hash: md5
+      md5: d26d848bc16858649fb96c86d48961ed
+      size: 21271231
+    - path: output/images/18_combined_2014-2015.gif
+      hash: md5
+      md5: 606ae91238429a108784c4820a167a53
+      size: 20960453
+    - path: output/images/18_nao_jet_stream_2009-2010.gif
+      hash: md5
+      md5: 99f3a3b63e96569ed17c4cdb8618a371
+      size: 7128314
+    - path: output/images/18_nao_jet_stream_2014-2015.gif
+      hash: md5
+      md5: 26ef36ae3ee7f2dda2fdb77e97b037c1
+      size: 7085217
+    - path: output/images/18_t2m_z500_2009-2010.gif
+      hash: md5
+      md5: 0aa110b54a2e3f650f24c7231f136e46
+      size: 10231419
+    - path: output/images/18_t2m_z500_2014-2015.gif
+      hash: md5
+      md5: 4f45e46740cc95a26de41846b84cdefb
+      size: 10284444

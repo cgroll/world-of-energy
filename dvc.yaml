@@ -323,17 +323,17 @@ stages:
           cache: false
       - output/images/15_nao_extreme_z500.png:
           cache: false
-  process_nao_jet_stream:
+  process_daily_jet_stream_animations:
     cmd: >
-      MPLBACKEND=Agg python pipeline/18_nao_jet_stream.py &&
-      uv run jupytext --to md:myst --output book/notebooks/18_nao_jet_stream.md pipeline/18_nao_jet_stream.py &&
-      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/18_nao_jet_stream.md
+      MPLBACKEND=Agg python pipeline/20_daily_jet_stream_animations.py &&
+      uv run jupytext --to md:myst --output book/notebooks/20_daily_jet_stream_animations.md pipeline/20_daily_jet_stream_animations.py &&
+      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/20_daily_jet_stream_animations.md
     deps:
-      - pipeline/18_nao_jet_stream.py
+      - pipeline/20_daily_jet_stream_animations.py
       - data/downloads/era5/nao_jetstream/era5_nao_jetstream_2014-2015.nc
       - data/downloads/era5/nao_jetstream/era5_nao_jetstream_2009-2010.nc
     outs:
-      - book/notebooks/18_nao_jet_stream.md:
+      - book/notebooks/20_daily_jet_stream_animations.md:
           cache: false
       - output/images/18_t2m_z500_2014-2015.gif:
           cache: false
@@ -347,3 +347,12 @@ stages:
           cache: false
       - output/images/18_combined_2009-2010.gif:
           cache: false
+  download_daily_nao_jetstream:
+    cmd: python pipeline/19_download_daily_nao_jetstream.py
+    deps:
+      - pipeline/19_download_daily_nao_jetstream.py
+    outs:
+      - data/downloads/era5/nao_jetstream/era5_nao_jetstream_2014-2015.nc:
+          persist: true
+      - data/downloads/era5/nao_jetstream/era5_nao_jetstream_2009-2010.nc:
+          persist: true

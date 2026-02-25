@@ -20,6 +20,7 @@ project:
     - file: notebooks/13_pressure_and_weather.md
     - file: notebooks/17_germany_variations.md
     - file: notebooks/18_nao_index.md
+    - file: notebooks/20_daily_jet_stream_animations.md
     - file: markdown/resources.md
 site:
   options:

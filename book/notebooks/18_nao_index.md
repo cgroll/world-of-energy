@@ -1,21 +1,20 @@
-# ---
-# jupytext:
-#   text_representation:
-#     format_name: percent
-# kernelspec:
-#   display_name: Python 3
-#   language: python
-#   name: python3
-# ---
+---
+jupytext:
+  text_representation:
+    format_name: percent
+kernelspec:
+  display_name: Python 3
+  language: python
+  name: python3
+---
 
-# %% [markdown]
-# # Monthly ERA5 Reanalysis
-#
-# This notebook loads the monthly ERA5 reanalysis data downloaded from the
-# Copernicus Climate Data Store and stored as a Zarr archive.  It visualises
-# 2 m temperature on a Robinson projection.
+# Monthly ERA5 Reanalysis
 
-# %%
+This notebook loads the monthly ERA5 reanalysis data downloaded from the
+Copernicus Climate Data Store and stored as a Zarr archive.  It visualises
+2 m temperature on a Robinson projection.
+
+```{code-cell} python
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -26,20 +25,20 @@ import cartopy.feature as cfeature
 from woe.paths import ProjPaths
 
 paths = ProjPaths()
+```
 
-# %% [markdown]
-# ## Load Zarr store
+## Load Zarr store
 
-# %%
+```{code-cell} python
 ds = xr.open_zarr(paths.era5_monthly_zarr_path)
 print(f"Variables:   {list(ds.data_vars)}")
 print(f"Dimensions:  {dict(ds.dims)}")
 print(f"Time range:  {ds.time.values[0]} → {ds.time.values[-1]}")
+```
 
-# %% [markdown]
-# ## 2 m temperature — January 2025
+## 2 m temperature — January 2025
 
-# %%
+```{code-cell} python
 DATE = "2024-01"
 t2m = ds["t2m"].sel(time=DATE).squeeze() - 273.15  # K → °C
 
@@ -70,17 +69,18 @@ ax.set_title(f"ERA5 monthly mean 2 m temperature — {DATE}", fontsize=13)
 fig.tight_layout()
 fig.savefig(paths.images_path / "15_era5_t2m_2025_01.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/15_era5_t2m_2025_01.png
-# :name: fig-15-era5-t2m-2025-01
-# ERA5 monthly mean 2 m temperature for January 2025 on a Robinson projection.
-# ```
+```{figure} ../../output/images/15_era5_t2m_2025_01.png
+:name: fig-15-era5-t2m-2025-01
+ERA5 monthly mean 2 m temperature for January 2025 on a Robinson projection.
+```
 
-# %% [markdown]
-# ## 2 m temperature — January 2025 (Europe, Lambert Conformal)
++++
 
-# %%
+## 2 m temperature — January 2025 (Europe, Lambert Conformal)
+
+```{code-cell} python
 proj = ccrs.LambertConformal(central_longitude=10, central_latitude=50)
 
 fig, ax = plt.subplots(figsize=(10, 9), subplot_kw={"projection": proj})
@@ -112,18 +112,19 @@ ax.set_title(f"ERA5 monthly mean 2 m temperature — {DATE}", fontsize=13)
 fig.tight_layout()
 fig.savefig(paths.images_path / "15_era5_t2m_europe_2025_01.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/15_era5_t2m_europe_2025_01.png
-# :name: fig-15-era5-t2m-europe-2025-01
-# ERA5 monthly mean 2 m temperature for January 2025 over Europe on a Lambert
-# Conformal projection.
-# ```
+```{figure} ../../output/images/15_era5_t2m_europe_2025_01.png
+:name: fig-15-era5-t2m-europe-2025-01
+ERA5 monthly mean 2 m temperature for January 2025 over Europe on a Lambert
+Conformal projection.
+```
 
-# %% [markdown]
-# ## 2 m temperature — January 2025 (full domain, Plate Carrée)
++++
 
-# %%
+## 2 m temperature — January 2025 (full domain, Plate Carrée)
+
+```{code-cell} python
 # BOUNDING_BOX = [North=80, West=-90, South=20, East=40]
 fig, ax = plt.subplots(
     figsize=(14, 7),
@@ -156,36 +157,37 @@ ax.set_title(f"ERA5 monthly mean 2 m temperature — {DATE}", fontsize=13)
 fig.tight_layout()
 fig.savefig(paths.images_path / "15_era5_t2m_domain_2025_01.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/15_era5_t2m_domain_2025_01.png
-# :name: fig-15-era5-t2m-domain-2025-01
-# ERA5 monthly mean 2 m temperature for January 2025 on a Plate Carrée projection
-# showing the full downloaded domain.
-# ```
+```{figure} ../../output/images/15_era5_t2m_domain_2025_01.png
+:name: fig-15-era5-t2m-domain-2025-01
+ERA5 monthly mean 2 m temperature for January 2025 on a Plate Carrée projection
+showing the full downloaded domain.
+```
 
-# %% [markdown]
-# ## Winter NAO Index (1940–2024)
-#
-# The station-based North Atlantic Oscillation (NAO) index is the standardised
-# mean-sea-level pressure (MSLP) difference between the Azores (Ponta Delgada)
-# and Iceland (Reykjavik), following the Hurrell (1995) definition.
-#
-# Positive NAO winters bring stronger-than-normal westerlies across the North
-# Atlantic, resulting in warmer and wetter conditions over northern Europe.
-# Negative NAO winters are associated with blocking and cold-air outbreaks.
-#
-# **Method:**
-# 1. Filter monthly ERA5 MSLP to DJF months only.
-# 2. Resample with `YS-DEC` so that Dec(N), Jan(N+1), Feb(N+1) form one
-#    season labelled by year N — identical to the Hurrell convention.
-# 3. Drop boundary seasons with fewer than 3 months (first and last groups
-#    are partial because the dataset starts in January 1940).
-# 4. Snap to the nearest ERA5 grid point for each station.
-# 5. Normalise each series independently (subtract mean, divide by std).
-# 6. NAO index = Azores normalised − Iceland normalised.
++++
 
-# %%
+## Winter NAO Index (1940–2024)
+
+The station-based North Atlantic Oscillation (NAO) index is the standardised
+mean-sea-level pressure (MSLP) difference between the Azores (Ponta Delgada)
+and Iceland (Reykjavik), following the Hurrell (1995) definition.
+
+Positive NAO winters bring stronger-than-normal westerlies across the North
+Atlantic, resulting in warmer and wetter conditions over northern Europe.
+Negative NAO winters are associated with blocking and cold-air outbreaks.
+
+**Method:**
+1. Filter monthly ERA5 MSLP to DJF months only.
+2. Resample with `YS-DEC` so that Dec(N), Jan(N+1), Feb(N+1) form one
+   season labelled by year N — identical to the Hurrell convention.
+3. Drop boundary seasons with fewer than 3 months (first and last groups
+   are partial because the dataset starts in January 1940).
+4. Snap to the nearest ERA5 grid point for each station.
+5. Normalise each series independently (subtract mean, divide by std).
+6. NAO index = Azores normalised − Iceland normalised.
+
+```{code-cell} python
 # ERA5 short name for mean sea level pressure is 'msl'
 msl = ds["msl"]
 
@@ -221,11 +223,11 @@ values = nao.values
 
 print(f"NAO index: {len(years)} winters ({years[0]}/{years[0]+1} – {years[-1]}/{years[-1]+1})")
 print(f"Mean: {values.mean():.3f}  Std: {values.std():.3f}")
+```
 
-# %% [markdown]
-# ### NAO bar chart
+### NAO bar chart
 
-# %%
+```{code-cell} python
 # 9-year centred running mean to show decadal variability
 nao_smooth = nao.rolling(time=9, center=True, min_periods=5).mean().values
 
@@ -259,31 +261,32 @@ ax.text(0.01, 0.03, station_text, transform=ax.transAxes,
 fig.tight_layout()
 fig.savefig(paths.images_path / "15_nao_index.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/15_nao_index.png
-# :name: fig-15-nao-index
-# Winter (DJF) NAO index derived from ERA5 MSLP, 1940–2024. Red bars indicate
-# positive-phase winters (stronger westerlies, milder northern Europe); blue bars
-# indicate negative-phase winters (weaker westerlies, cold-air outbreaks). The
-# black line is a 9-year centred running mean highlighting decadal variability.
-# ```
+```{figure} ../../output/images/15_nao_index.png
+:name: fig-15-nao-index
+Winter (DJF) NAO index derived from ERA5 MSLP, 1940–2024. Red bars indicate
+positive-phase winters (stronger westerlies, milder northern Europe); blue bars
+indicate negative-phase winters (weaker westerlies, cold-air outbreaks). The
+black line is a 9-year centred running mean highlighting decadal variability.
+```
 
-# %% [markdown]
-# ## Spatial correlation: NAO vs winter 2 m temperature
-#
-# Each grid point shows the Pearson *r* between the DJF NAO index and the
-# local DJF-mean 2 m temperature over 1940–2024.  Red (positive correlation)
-# means the location warms during NAO+ winters; blue means it cools.
-#
-# The canonical NAO fingerprint is visible: warming over northern Europe and
-# the North Atlantic, and cooling over the Mediterranean and parts of
-# north-eastern North America.
-#
-# Reuses the `complete` season mask from the NAO section to guarantee
-# identical time axes before calling `xr.corr`.
++++
 
-# %%
+## Spatial correlation: NAO vs winter 2 m temperature
+
+Each grid point shows the Pearson *r* between the DJF NAO index and the
+local DJF-mean 2 m temperature over 1940–2024.  Red (positive correlation)
+means the location warms during NAO+ winters; blue means it cools.
+
+The canonical NAO fingerprint is visible: warming over northern Europe and
+the North Atlantic, and cooling over the Mediterranean and parts of
+north-eastern North America.
+
+Reuses the `complete` season mask from the NAO section to guarantee
+identical time axes before calling `xr.corr`.
+
+```{code-cell} python
 # Build DJF mean temperature with the same resampling and completeness filter
 winter_t2m_means = (
     ds["t2m"]
@@ -297,8 +300,9 @@ winter_t2m_means = (
 print("Computing spatial correlation …")
 corr_map = xr.corr(nao, winter_t2m_means, dim="time").compute()
 print("Done.")
+```
 
-# %%
+```{code-cell} python
 proj = ccrs.Orthographic(central_longitude=-10, central_latitude=55)
 fig, ax = plt.subplots(figsize=(10, 8), subplot_kw={"projection": proj})
 
@@ -334,23 +338,24 @@ fig.savefig(
     paths.images_path / "15_nao_t2m_correlation.png", dpi=150, bbox_inches="tight"
 )
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/15_nao_t2m_correlation.png
-# :name: fig-15-nao-t2m-correlation
-# Pearson correlation between the DJF NAO index and ERA5 DJF 2 m temperature,
-# 1940–2024.  Red shading indicates regions that are warmer than average during
-# NAO+ winters; blue shading indicates cooler regions.
-# ```
+```{figure} ../../output/images/15_nao_t2m_correlation.png
+:name: fig-15-nao-t2m-correlation
+Pearson correlation between the DJF NAO index and ERA5 DJF 2 m temperature,
+1940–2024.  Red shading indicates regions that are warmer than average during
+NAO+ winters; blue shading indicates cooler regions.
+```
 
-# %% [markdown]
-# ## Germany DJF temperature vs NAO index
-#
-# Load the Germany spatial-mean 2 m temperature produced by
-# `16_dev_germany_weather.py`, apply the identical YS-DEC resampling used for
-# the NAO index, and scatter the two series against each other.
++++
 
-# %%
+## Germany DJF temperature vs NAO index
+
+Load the Germany spatial-mean 2 m temperature produced by
+`16_dev_germany_weather.py`, apply the identical YS-DEC resampling used for
+the NAO index, and scatter the two series against each other.
+
+```{code-cell} python
 # Load Germany monthly spatial-mean temperature (mean aggregation, K → °C)
 df_de = pd.read_parquet(paths.era5_germany_monthly_ts_file)
 t2m_de_monthly = df_de["t2m"] - 273.15  # K → °C
@@ -407,25 +412,26 @@ fig.tight_layout()
 
 fig.savefig(paths.images_path / "15_nao_germany_t2m.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/15_nao_germany_t2m.png
-# :name: fig-15-nao-germany-t2m
-# Scatter plot of Germany DJF mean 2 m temperature against the ERA5-derived
-# NAO index, 1940–2024.  Each point is one winter season, coloured by year.
-# The crimson line is an OLS regression; the slope (°C per σ of NAO) quantifies
-# how much Germany warms for each standard-deviation increase in the NAO index.
-# ```
+```{figure} ../../output/images/15_nao_germany_t2m.png
+:name: fig-15-nao-germany-t2m
+Scatter plot of Germany DJF mean 2 m temperature against the ERA5-derived
+NAO index, 1940–2024.  Each point is one winter season, coloured by year.
+The crimson line is an OLS regression; the slope (°C per σ of NAO) quantifies
+how much Germany warms for each standard-deviation increase in the NAO index.
+```
 
-# %% [markdown]
-# ## DJF temperature maps — extreme NAO winters
-#
-# Full spatial field of ERA5 DJF mean 2 m temperature for the winters with the
-# highest and lowest NAO index in the record (1940–2024).  Uses the same
-# `winter_t2m_means` DataArray (already filtered to complete DJF seasons) that
-# was used for the NAO computation.
++++
 
-# %%
+## DJF temperature maps — extreme NAO winters
+
+Full spatial field of ERA5 DJF mean 2 m temperature for the winters with the
+highest and lowest NAO index in the record (1940–2024).  Uses the same
+`winter_t2m_means` DataArray (already filtered to complete DJF seasons) that
+was used for the NAO computation.
+
+```{code-cell} python
 idx_max = int(np.argmax(values))
 idx_min = int(np.argmin(values))
 year_max, nao_max = years[idx_max], values[idx_max]
@@ -470,20 +476,21 @@ fig.suptitle(
 fig.tight_layout()
 fig.savefig(paths.images_path / "15_nao_extreme_winters.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/15_nao_extreme_winters.png
-# :name: fig-15-nao-extreme-winters
-# ERA5 DJF mean 2 m temperature for the winter with the highest NAO index
-# (left) and lowest NAO index (right) in the 1940–2024 record.  The contrast
-# between the two panels illustrates the NAO's influence on winter temperatures
-# across the North Atlantic–European sector.
-# ```
+```{figure} ../../output/images/15_nao_extreme_winters.png
+:name: fig-15-nao-extreme-winters
+ERA5 DJF mean 2 m temperature for the winter with the highest NAO index
+(left) and lowest NAO index (right) in the 1940–2024 record.  The contrast
+between the two panels illustrates the NAO's influence on winter temperatures
+across the North Atlantic–European sector.
+```
 
-# %% [markdown]
-# ## Temperature difference: max-NAO minus min-NAO winter
++++
 
-# %%
+## Temperature difference: max-NAO minus min-NAO winter
+
+```{code-cell} python
 t2m_diff = t2m_max_field - t2m_min_field  # signed: positive = warmer in NAO+ winter
 
 vabs = float(np.abs(t2m_diff.values).max())
@@ -513,24 +520,25 @@ ax.set_title(
 fig.tight_layout()
 fig.savefig(paths.images_path / "15_nao_extreme_diff.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/15_nao_extreme_diff.png
-# :name: fig-15-nao-extreme-diff
-# Signed temperature difference between the maximum-NAO and minimum-NAO DJF
-# seasons in the ERA5 record.  Red indicates regions that were warmer during
-# the NAO+ winter; blue indicates regions that were colder.
-# ```
+```{figure} ../../output/images/15_nao_extreme_diff.png
+:name: fig-15-nao-extreme-diff
+Signed temperature difference between the maximum-NAO and minimum-NAO DJF
+seasons in the ERA5 record.  Red indicates regions that were warmer during
+the NAO+ winter; blue indicates regions that were colder.
+```
 
-# %% [markdown]
-# ## 250 hPa wind speed — extreme NAO winters
-#
-# DJF mean 250 hPa wind speed (jet stream level) for the max-NAO and min-NAO
-# winters.  U and V components are resampled with the same YS-DEC convention
-# and completeness mask before computing speed = √(u² + v²).  Wind direction
-# is overlaid as thinned quiver arrows.
++++
 
-# %%
+## 250 hPa wind speed — extreme NAO winters
+
+DJF mean 250 hPa wind speed (jet stream level) for the max-NAO and min-NAO
+winters.  U and V components are resampled with the same YS-DEC convention
+and completeness mask before computing speed = √(u² + v²).  Wind direction
+is overlaid as thinned quiver arrows.
+
+```{code-cell} python
 # Build DJF mean U and V at 250 hPa with the same season mask as the NAO index
 def _djf_season_mean(da):
     return (
@@ -599,25 +607,26 @@ fig.suptitle(
 fig.tight_layout()
 fig.savefig(paths.images_path / "15_nao_extreme_250hpa_wind.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/15_nao_extreme_250hpa_wind.png
-# :name: fig-15-nao-extreme-250hpa-wind
-# DJF mean 250 hPa wind speed for the maximum-NAO (left) and minimum-NAO
-# (right) winters in the ERA5 record.  Colour shows wind speed; arrows show
-# wind direction (thinned for clarity).  The NAO+ winter typically shows a
-# stronger, more zonally oriented jet stream over the North Atlantic.
-# ```
+```{figure} ../../output/images/15_nao_extreme_250hpa_wind.png
+:name: fig-15-nao-extreme-250hpa-wind
+DJF mean 250 hPa wind speed for the maximum-NAO (left) and minimum-NAO
+(right) winters in the ERA5 record.  Colour shows wind speed; arrows show
+wind direction (thinned for clarity).  The NAO+ winter typically shows a
+stronger, more zonally oriented jet stream over the North Atlantic.
+```
 
-# %% [markdown]
-# ## 500 hPa geopotential height — extreme NAO winters
-#
-# DJF mean 500 hPa geopotential height (Z500) for the max-NAO and min-NAO
-# winters.  Geopotential (m²/s²) is converted to geopotential height (m) by
-# dividing by g = 9.80665 m/s².  Filled contours show height; contour lines
-# highlight the main ridges and troughs.
++++
 
-# %%
+## 500 hPa geopotential height — extreme NAO winters
+
+DJF mean 500 hPa geopotential height (Z500) for the max-NAO and min-NAO
+winters.  Geopotential (m²/s²) is converted to geopotential height (m) by
+dividing by g = 9.80665 m/s².  Filled contours show height; contour lines
+highlight the main ridges and troughs.
+
+```{code-cell} python
 G = 9.80665  # standard gravity m/s²
 
 z500_max = (_djf_season_mean(ds["z"].sel(pressure_level=500))
@@ -687,13 +696,13 @@ fig.suptitle(
 fig.tight_layout()
 fig.savefig(paths.images_path / "15_nao_extreme_z500.png", dpi=150, bbox_inches="tight")
 plt.show()
+```
 
-# %% [markdown]
-# ```{figure} ../../output/images/15_nao_extreme_z500.png
-# :name: fig-15-nao-extreme-z500
-# DJF mean 500 hPa geopotential height for the maximum-NAO (left) and
-# minimum-NAO (right) winters.  Contour lines are drawn every 80 m.  The
-# NAO+ pattern shows higher geopotential over the Azores and lower over
-# Iceland, steering mild Atlantic air into Europe; NAO− reverses this,
-# favouring blocking and cold-air advection.
-# ```
+```{figure} ../../output/images/15_nao_extreme_z500.png
+:name: fig-15-nao-extreme-z500
+DJF mean 500 hPa geopotential height for the maximum-NAO (left) and
+minimum-NAO (right) winters.  Contour lines are drawn every 80 m.  The
+NAO+ pattern shows higher geopotential over the Azores and lower over
+Iceland, steering mild Atlantic air into Europe; NAO− reverses this,
+favouring blocking and cold-air advection.
+```
