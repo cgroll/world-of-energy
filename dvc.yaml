@@ -240,9 +240,9 @@ stages:
       - output/images/13_jet_colmax.png:
           cache: false
   download_monthly_era5:
-    cmd: python pipeline/13_download_monthly_era5.py
+    cmd: python pipeline/14_download_monthly_era5.py
     deps:
-      - pipeline/13_download_monthly_era5.py
+      - pipeline/14_download_monthly_era5.py
     outs:
       - data/downloads/era5/monthly_aggregates/nc/era5_sl_climate.nc:
           persist: true
@@ -251,9 +251,9 @@ stages:
       - data/downloads/era5/monthly_aggregates/nc/era5_monthly_pressure_levels.nc:
           persist: true
   nc_to_zarr:
-    cmd: python pipeline/14_nc_to_zarr.py
+    cmd: python pipeline/15_nc_to_zarr.py
     deps:
-      - pipeline/14_nc_to_zarr.py
+      - pipeline/15_nc_to_zarr.py
       - data/downloads/era5/monthly_aggregates/nc/era5_sl_climate.nc
       - data/downloads/era5/monthly_aggregates/nc/era5_sl_wind_solar.nc
       - data/downloads/era5/monthly_aggregates/nc/era5_monthly_pressure_levels.nc
@@ -261,9 +261,9 @@ stages:
       - data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr:
           persist: true
   compute_germany_time_series:
-    cmd: python pipeline/15_compute_germany_time_series.py
+    cmd: python pipeline/16_compute_germany_time_series.py
     deps:
-      - pipeline/15_compute_germany_time_series.py
+      - pipeline/16_compute_germany_time_series.py
       - data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
     outs:
       - data/processed/era5/time_series/germany_monthly.parquet

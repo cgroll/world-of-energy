@@ -575,16 +575,12 @@ stages:
       md5: 7bedd851b723146a644a7f2e8d28207b
       size: 381462
   download_monthly_era5:
-    cmd: python pipeline/13_download_monthly_era5.py
+    cmd: python pipeline/14_download_monthly_era5.py
     deps:
-    - path: pipeline/13_download_monthly_era5.py
+    - path: pipeline/14_download_monthly_era5.py
       hash: md5
       md5: 08028215c9295f45b8ce980bc2cef322
       size: 6250
-    - path: woe/paths.py
-      hash: md5
-      md5: 5810100b4f4e4128339bf27e45d5d9c9
-      size: 8594
     outs:
     - path: 
         data/downloads/era5/monthly_aggregates/nc/era5_monthly_pressure_levels.nc
@@ -600,7 +596,7 @@ stages:
       md5: 3aa5cf2eb4487f98d9ba96c954ced662
       size: 507762809
   nc_to_zarr:
-    cmd: python pipeline/14_nc_to_zarr.py
+    cmd: python pipeline/15_nc_to_zarr.py
     deps:
     - path: 
         data/downloads/era5/monthly_aggregates/nc/era5_monthly_pressure_levels.nc
@@ -615,9 +611,9 @@ stages:
       hash: md5
       md5: 3aa5cf2eb4487f98d9ba96c954ced662
       size: 507762809
-    - path: pipeline/14_nc_to_zarr.py
+    - path: pipeline/15_nc_to_zarr.py
       hash: md5
-      md5: 103a25429b159a2ffc2ead5c770d8b64
+      md5: 773c8702e94beefdebc8cfc2a5434ed4
       size: 3767
     outs:
     - path: data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
@@ -770,21 +766,17 @@ stages:
       md5: 4cb8605194a61a75f984393ad09aab01
       size: 1094522
   compute_germany_time_series:
-    cmd: python pipeline/15_compute_germany_time_series.py
+    cmd: python pipeline/16_compute_germany_time_series.py
     deps:
     - path: data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
       hash: md5
       md5: 582beb9fd99af742c27acdd663ac01c1.dir
       size: 3562653332
       nfiles: 956
-    - path: pipeline/15_compute_germany_time_series.py
+    - path: pipeline/16_compute_germany_time_series.py
       hash: md5
-      md5: 26e4c9d8689186cb5764c709fec8d71a
+      md5: 4e477c996902d3e85255aaa1aa694e07
       size: 3989
-    - path: woe/paths.py
-      hash: md5
-      md5: 26df420cf1310aebe128c54abe61b031
-      size: 9716
     outs:
     - path: data/processed/era5/time_series/germany_monthly.parquet
       hash: md5

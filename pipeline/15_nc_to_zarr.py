@@ -1,6 +1,6 @@
 """Convert downloaded ERA5 monthly NetCDF files to a single Zarr store.
 
-Reads the NetCDF files produced by 13_download_monthly_era5.py,
+Reads the NetCDF files produced by 14_download_monthly_era5.py,
 merges all variables into one dataset, rechunks along the time axis, and
 writes to data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr.
 """

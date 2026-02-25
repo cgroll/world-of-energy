@@ -1,6 +1,6 @@
 """Compute ERA5 monthly Germany spatial-mean time series.
 
-Loads the monthly ERA5 Zarr store (produced by 14_nc_to_zarr.py), masks to
+Loads the monthly ERA5 Zarr store (produced by 15_nc_to_zarr.py), masks to
 Germany's land geometry (Natural Earth 10 m), and computes the spatial mean
 for each monthly time step over Germany grid cells.
 

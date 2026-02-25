@@ -13,7 +13,7 @@ Variables:
   - 2m temperature — surface air temperature for meteorological context
 
 Spatial domain: Atlantic and Europe [80°N–20°N, 90°W–40°E],
-matching the bounding box used in pipeline/13_download_monthly_era5.py.
+matching the bounding box used in pipeline/14_download_monthly_era5.py.
 
 ARCO-ERA5 uses 0–360° longitude. The requested domain straddles the
 wrap-around point, so western Atlantic (270°–360°) and Europe (0°–40°)
@@ -76,7 +76,7 @@ ZARR_URL = "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3
 # all 37 and slices in memory. This is expected and cannot be avoided.
 ERA5_START = pd.Timestamp("1940-01-01T00:00:00")
 
-# Bounding box — matches pipeline/13_download_monthly_era5.py
+# Bounding box — matches pipeline/14_download_monthly_era5.py
 LAT_NORTH = 80
 LAT_SOUTH = 20
 LON_WEST_0360 = 270   # -90°W in 0–360° convention
