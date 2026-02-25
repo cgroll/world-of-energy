@@ -234,6 +234,11 @@ class ProjPaths:
         return self.processed_data_path / "era5_germany_monthly.parquet"
 
     @property
+    def era5_germany_monthly_ts_file(self) -> Path:
+        """ERA5 monthly Germany spatial-mean time series (parquet)."""
+        return self.processed_data_path / "era5" / "time_series" / "germany_monthly.parquet"
+
+    @property
     def rotterdam_coal_prices_file(self) -> Path:
         """Path to API 2 Rotterdam coal futures prices CSV file."""
         return self.investing_com_path / "rotterdam_coal_futures.csv"
