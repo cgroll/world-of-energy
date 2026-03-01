@@ -54,9 +54,8 @@ stages:
           persist: true
   process_smard_DE_prices:
     cmd: >
-      MPLBACKEND=Agg python pipeline/03_smard_DE_prices.py &&
-      uv run jupytext --to md:myst --output book/notebooks/03_smard_DE_prices.md pipeline/03_smard_DE_prices.py &&
-      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/03_smard_DE_prices.md
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/03_smard_DE_prices.ipynb pipeline/03_smard_DE_prices.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/03_smard_DE_prices.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/03_smard_DE_prices.ipynb')"
     deps:
       - pipeline/03_smard_DE_prices.py
       - data/downloads/smard/prices_de_lu.parquet
@@ -66,7 +65,7 @@ stages:
       - data/downloads/smard/total_load.parquet
       - data/downloads/ttf_gas_prices.parquet
     outs:
-      - book/notebooks/03_smard_DE_prices.md:
+      - book/notebooks/03_smard_DE_prices.ipynb:
           cache: false
       - output/images/03_hourly_prices.png:
           cache: false
@@ -88,9 +87,8 @@ stages:
           cache: false
   process_reconstruct_prices:
     cmd: >
-      MPLBACKEND=Agg python pipeline/04_reconstruct_prices.py &&
-      uv run jupytext --to md:myst --output book/notebooks/04_reconstruct_prices.md pipeline/04_reconstruct_prices.py &&
-      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/04_reconstruct_prices.md
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/04_reconstruct_prices.ipynb pipeline/04_reconstruct_prices.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/04_reconstruct_prices.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/04_reconstruct_prices.ipynb')"
     deps:
       - pipeline/04_reconstruct_prices.py
       - data/downloads/smard/prices_de_lu.parquet
@@ -106,7 +104,7 @@ stages:
       - data/downloads/investing_com/rotterdam_coal_futures.csv
       - data/downloads/investing_com/carbon_emissions_futures.csv
     outs:
-      - book/notebooks/04_reconstruct_prices.md:
+      - book/notebooks/04_reconstruct_prices.ipynb:
           cache: false
       - output/images/04_srmc_timeseries.png:
           cache: false
@@ -128,9 +126,8 @@ stages:
           cache: false
   process_load_seasonalities:
     cmd: >
-      MPLBACKEND=Agg python pipeline/05_load_seasonalities.py &&
-      uv run jupytext --to md:myst --output book/notebooks/05_load_seasonalities.md pipeline/05_load_seasonalities.py &&
-      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/05_load_seasonalities.md
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/05_load_seasonalities.ipynb pipeline/05_load_seasonalities.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/05_load_seasonalities.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/05_load_seasonalities.ipynb')"
     deps:
       - pipeline/05_load_seasonalities.py
       - data/downloads/smard/prices_de_lu.parquet
@@ -139,7 +136,7 @@ stages:
       - data/downloads/smard/wind_offshore.parquet
       - data/downloads/smard/total_load.parquet
     outs:
-      - book/notebooks/05_load_seasonalities.md:
+      - book/notebooks/05_load_seasonalities.ipynb:
           cache: false
       - output/images/05_seasonality_solar.png:
           cache: false
@@ -155,13 +152,12 @@ stages:
           cache: false
   process_ee_seasons:
     cmd: >
-      python pipeline/10_ee_seasons.py &&
-      uv run jupytext --to md:myst --output book/notebooks/10_ee_seasons.md pipeline/10_ee_seasons.py &&
-      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/10_ee_seasons.md
+      uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/10_ee_seasons.ipynb pipeline/10_ee_seasons.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/10_ee_seasons.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/10_ee_seasons.ipynb')"
     deps:
       - pipeline/10_ee_seasons.py
     outs:
-      - book/notebooks/10_ee_seasons.md:
+      - book/notebooks/10_ee_seasons.ipynb:
           cache: false
       - output/images/10_ee_temperature_by_hour.gif:
           cache: false
@@ -182,14 +178,13 @@ stages:
           persist: true
   process_projections:
     cmd: >
-      MPLBACKEND=Agg python pipeline/12_projections.py &&
-      uv run jupytext --to md:myst --output book/notebooks/12_projections.md pipeline/12_projections.py &&
-      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/12_projections.md
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/12_projections.ipynb pipeline/12_projections.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/12_projections.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/12_projections.ipynb')"
     deps:
       - pipeline/12_projections.py
       - data/downloads/era5/20250603_1200/era5_20250603_1200_surface.nc
     outs:
-      - book/notebooks/12_projections.md:
+      - book/notebooks/12_projections.ipynb:
           cache: false
       - output/images/12_t2m_projections_overview.png:
           cache: false
@@ -203,15 +198,14 @@ stages:
           cache: false
   process_pressure_and_weather:
     cmd: >
-      MPLBACKEND=Agg python pipeline/13_pressure_and_weather.py &&
-      uv run jupytext --to md:myst --output book/notebooks/13_pressure_and_weather.md pipeline/13_pressure_and_weather.py &&
-      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/13_pressure_and_weather.md
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/13_pressure_and_weather.ipynb pipeline/13_pressure_and_weather.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/13_pressure_and_weather.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/13_pressure_and_weather.ipynb')"
     deps:
       - pipeline/13_pressure_and_weather.py
       - data/downloads/era5/20250603_1200/era5_20250603_1200_surface.nc
       - data/downloads/era5/20250603_1200/era5_20250603_1200_pressure_levels.nc
     outs:
-      - book/notebooks/13_pressure_and_weather.md:
+      - book/notebooks/13_pressure_and_weather.ipynb:
           cache: false
       - output/images/13_surface_temperature.png:
           cache: false
@@ -269,15 +263,14 @@ stages:
       - data/processed/era5/time_series/germany_monthly.parquet
   process_germany_variations:
     cmd: >
-      MPLBACKEND=Agg python pipeline/17_germany_variations.py &&
-      uv run jupytext --to md:myst --output book/notebooks/17_germany_variations.md pipeline/17_germany_variations.py &&
-      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/17_germany_variations.md
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/17_germany_variations.ipynb pipeline/17_germany_variations.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/17_germany_variations.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/17_germany_variations.ipynb')"
     deps:
       - pipeline/17_germany_variations.py
       - data/processed/era5/time_series/germany_monthly.parquet
       - data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
     outs:
-      - book/notebooks/17_germany_variations.md:
+      - book/notebooks/17_germany_variations.ipynb:
           cache: false
       - output/images/17_germany_t2m_jitter.png:
           cache: false
@@ -293,15 +286,14 @@ stages:
           cache: false
   process_nao_index:
     cmd: >
-      MPLBACKEND=Agg python pipeline/18_nao_index.py &&
-      uv run jupytext --to md:myst --output book/notebooks/18_nao_index.md pipeline/18_nao_index.py &&
-      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/18_nao_index.md
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/18_nao_index.ipynb pipeline/18_nao_index.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/18_nao_index.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/18_nao_index.ipynb')"
     deps:
       - pipeline/18_nao_index.py
       - data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
       - data/processed/era5/time_series/germany_monthly.parquet
     outs:
-      - book/notebooks/18_nao_index.md:
+      - book/notebooks/18_nao_index.ipynb:
           cache: false
       - output/images/15_era5_t2m_2025_01.png:
           cache: false
@@ -323,18 +315,13 @@ stages:
           cache: false
       - output/images/15_nao_extreme_z500.png:
           cache: false
-  process_daily_jet_stream_animations:
-    cmd: >
-      MPLBACKEND=Agg python pipeline/20_daily_jet_stream_animations.py &&
-      uv run jupytext --to md:myst --output book/notebooks/20_daily_jet_stream_animations.md pipeline/20_daily_jet_stream_animations.py &&
-      sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d' book/notebooks/20_daily_jet_stream_animations.md
+  generate_jet_stream_animations:
+    cmd: MPLBACKEND=Agg python pipeline/20_generate_jet_stream_animations.py
     deps:
-      - pipeline/20_daily_jet_stream_animations.py
+      - pipeline/20_generate_jet_stream_animations.py
       - data/downloads/era5/nao_jetstream/era5_nao_jetstream_2014-2015.nc
       - data/downloads/era5/nao_jetstream/era5_nao_jetstream_2009-2010.nc
     outs:
-      - book/notebooks/20_daily_jet_stream_animations.md:
-          cache: false
       - output/images/18_t2m_z500_2014-2015.gif:
           cache: false
       - output/images/18_t2m_z500_2009-2010.gif:
@@ -346,6 +333,21 @@ stages:
       - output/images/18_combined_2014-2015.gif:
           cache: false
       - output/images/18_combined_2009-2010.gif:
+          cache: false
+  process_daily_jet_stream_animations:
+    cmd: >
+      uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/21_daily_jet_stream_animations.ipynb pipeline/21_daily_jet_stream_animations.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/21_daily_jet_stream_animations.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/21_daily_jet_stream_animations.ipynb')"
+    deps:
+      - pipeline/21_daily_jet_stream_animations.py
+      - output/images/18_t2m_z500_2014-2015.gif
+      - output/images/18_t2m_z500_2009-2010.gif
+      - output/images/18_nao_jet_stream_2014-2015.gif
+      - output/images/18_nao_jet_stream_2009-2010.gif
+      - output/images/18_combined_2014-2015.gif
+      - output/images/18_combined_2009-2010.gif
+    outs:
+      - book/notebooks/21_daily_jet_stream_animations.ipynb:
           cache: false
   download_daily_nao_jetstream:
     cmd: python pipeline/19_download_daily_nao_jetstream.py

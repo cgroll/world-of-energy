@@ -211,8 +211,8 @@ plt.show()
 # %%
 from datetime import datetime, timedelta
 
-# Pick a recent 3-week window ending at the last full day in the hourly data
-end_date = df.index.max().normalize()
+# Drop the last 4 days to avoid provisional/placeholder data at the tail
+end_date = df.index.max().normalize() - timedelta(days=4)
 start_date = end_date - timedelta(weeks=3)
 
 sub_prices = df.loc[start_date:end_date].copy()
@@ -465,6 +465,11 @@ import numpy as np
 # Align price and residual load on the same index
 price_res = df[["PRICE_DE_LU"]].join(gen[["residual_load"]], how="inner").dropna()
 
+# Drop incomplete days (< 23 hours) to avoid spurious data at the boundary where
+# generation series coverage ends before the price series.
+_daily_counts = price_res.resample("D").count().min(axis=1)
+price_res = price_res[price_res.index.normalize().isin(_daily_counts[_daily_counts >= 23].index)]
+
 
 def plot_price_vs_residual(price_res_window, title_dates, save_path=None):
     """Plot price and residual load with axes aligned via a linear fit."""
@@ -507,13 +512,16 @@ def plot_price_vs_residual(price_res_window, title_dates, save_path=None):
 
 
 # %%
-# Recent 3-week window (same as intraday section above)
-price_res_sub = price_res.loc[start_date:end_date]
+# Recent 3-week window – derive dates from cleaned price_res so the window
+# always ends on the last day with complete generation data.
+end_date_res = price_res.index.max().normalize()
+start_date_res = end_date_res - timedelta(weeks=3)
+price_res_sub = price_res.loc[start_date_res:end_date_res]
 print(f"Matched records: {len(price_res_sub)}")
 
 plot_price_vs_residual(
     price_res_sub,
-    f"{start_date.strftime('%d %b')} – {end_date.strftime('%d %b %Y')}",
+    f"{start_date_res.strftime('%d %b')} – {end_date_res.strftime('%d %b %Y')}",
     save_path=paths.images_path / "03_price_vs_residual_recent.png",
 )
 

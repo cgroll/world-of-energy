@@ -25,10 +25,12 @@ stages:
       md5: 247fac1902042be63cbf5508d5d0c8ed
       size: 787806
   process_smard_DE_prices:
-    cmd: "MPLBACKEND=Agg python pipeline/03_smard_DE_prices.py && uv run jupytext
-      --to md:myst --output book/notebooks/03_smard_DE_prices.md pipeline/03_smard_DE_prices.py
-      && sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
-      book/notebooks/03_smard_DE_prices.md\n"
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/03_smard_DE_prices.ipynb pipeline/03_smard_DE_prices.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/03_smard_DE_prices.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/03_smard_DE_prices.ipynb')\"\
+      \n"
     deps:
     - path: data/downloads/smard/prices_de_lu.parquet
       hash: md5
@@ -56,21 +58,17 @@ stages:
       size: 81588
     - path: pipeline/03_smard_DE_prices.py
       hash: md5
-      md5: 3d57c414f2b507f425d561bca3db436f
-      size: 19465
-    - path: woe/paths.py
-      hash: md5
-      md5: e225909b00b81405a77978c7fa49a19c
-      size: 6718
+      md5: d8692016aaeb9831bf050c30262af39b
+      size: 19978
     outs:
-    - path: book/notebooks/03_smard_DE_prices.md
+    - path: book/notebooks/03_smard_DE_prices.ipynb
       hash: md5
-      md5: 6f23af0537e9c3c882489f8e1fca730c
-      size: 19158
+      md5: 11b7626988f329c13cf4eb2683746d24
+      size: 36904
     - path: output/images/03_daily_profile.png
       hash: md5
-      md5: 195604fd08232c9645a8ed48aa89168c
-      size: 97784
+      md5: 26037b24ed01cb2dce570a9644560220
+      size: 97199
     - path: output/images/03_electricity_vs_gas.png
       hash: md5
       md5: 388b67b5f6bcf82a6ab33763dfb84e08
@@ -81,8 +79,8 @@ stages:
       size: 119299
     - path: output/images/03_intraday_3week.png
       hash: md5
-      md5: 3a207a50584d7fbbdbc2c93c686a3c42
-      size: 148388
+      md5: 9392a3b8f7bfaff098dca4f51a82371f
+      size: 144689
     - path: output/images/03_monthly_avg_prices.png
       hash: md5
       md5: a8b888482f44916bccd8464eea5c906e
@@ -97,8 +95,8 @@ stages:
       size: 229394
     - path: output/images/03_price_vs_residual_recent.png
       hash: md5
-      md5: c3d08253094e5f36ec246d1a4a1a43ad
-      size: 193622
+      md5: a8f5c5a2c84849cbd3e931f8bdfa3143
+      size: 200105
     - path: output/images/03_renewables_vs_load.png
       hash: md5
       md5: 433dc4655235b7b6db5c77a0dd77e27a
@@ -216,10 +214,12 @@ stages:
       md5: 4eb34b88f8ef89d3f1c126be75a41555
       size: 81588
   process_reconstruct_prices:
-    cmd: "MPLBACKEND=Agg python pipeline/04_reconstruct_prices.py && uv run jupytext
-      --to md:myst --output book/notebooks/04_reconstruct_prices.md pipeline/04_reconstruct_prices.py
-      && sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
-      book/notebooks/04_reconstruct_prices.md\n"
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/04_reconstruct_prices.ipynb pipeline/04_reconstruct_prices.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/04_reconstruct_prices.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/04_reconstruct_prices.ipynb')\"\
+      \n"
     deps:
     - path: data/downloads/investing_com/carbon_emissions_futures.csv
       hash: md5
@@ -273,15 +273,11 @@ stages:
       hash: md5
       md5: 615d92c07b83eb9366eef9b1a46ca9e9
       size: 24024
-    - path: woe/paths.py
-      hash: md5
-      md5: e225909b00b81405a77978c7fa49a19c
-      size: 6718
     outs:
-    - path: book/notebooks/04_reconstruct_prices.md
+    - path: book/notebooks/04_reconstruct_prices.ipynb
       hash: md5
-      md5: bd8b87a416f416f3e2158985ee209431
-      size: 23782
+      md5: d53915514a02f48a930b4b60b9b6da90
+      size: 49423
     - path: output/images/04_actual_vs_reconstructed.png
       hash: md5
       md5: 0aaeb6e6fc15f0bad725bfb34d7c16ba
@@ -375,10 +371,12 @@ stages:
       md5: f66f1e142f63e91293cb7b716c368bdb
       size: 1107429
   process_load_seasonalities:
-    cmd: "MPLBACKEND=Agg python pipeline/05_load_seasonalities.py && uv run jupytext
-      --to md:myst --output book/notebooks/05_load_seasonalities.md pipeline/05_load_seasonalities.py
-      && sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
-      book/notebooks/05_load_seasonalities.md\n"
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/05_load_seasonalities.ipynb pipeline/05_load_seasonalities.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/05_load_seasonalities.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/05_load_seasonalities.ipynb')\"\
+      \n"
     deps:
     - path: data/downloads/smard/prices_de_lu.parquet
       hash: md5
@@ -404,15 +402,11 @@ stages:
       hash: md5
       md5: 5d5f227eeb697421159a12e569a659b1
       size: 6192
-    - path: woe/paths.py
-      hash: md5
-      md5: e225909b00b81405a77978c7fa49a19c
-      size: 6718
     outs:
-    - path: book/notebooks/05_load_seasonalities.md
+    - path: book/notebooks/05_load_seasonalities.ipynb
       hash: md5
-      md5: 5ee35b8df9545bc465c04ef46fe3c92a
-      size: 6121
+      md5: 6cf18b4c491cfa8bdda7cfd276828500
+      size: 15048
     - path: output/images/05_seasonality_load.png
       hash: md5
       md5: 4b04dafa4ee44618032dbbf78b6d58a2
@@ -541,31 +535,30 @@ stages:
       md5: 192bc1b0f84a403bc4b73a364c02428d
       size: 36449435
   process_ee_seasons:
-    cmd: "python pipeline/10_ee_seasons.py && uv run jupytext --to md:myst --output
-      book/notebooks/10_ee_seasons.md pipeline/10_ee_seasons.py && sed -i -e 's/```{code-cell}/```{code-cell}
-      python/g' -e '/root_level_metadata_filter/d' book/notebooks/10_ee_seasons.md\n"
+    cmd: "uv run jupytext --to notebook --execute --set-kernel world-of-energy --output
+      book/notebooks/10_ee_seasons.ipynb pipeline/10_ee_seasons.py && uv run python
+      -c \"import nbformat; nb = nbformat.read('book/notebooks/10_ee_seasons.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/10_ee_seasons.ipynb')\"\
+      \n"
     deps:
     - path: pipeline/10_ee_seasons.py
       hash: md5
       md5: 0b30963b9509399451bd8255cf5733b0
       size: 10094
-    - path: woe/paths.py
-      hash: md5
-      md5: e225909b00b81405a77978c7fa49a19c
-      size: 6718
     outs:
-    - path: book/notebooks/10_ee_seasons.md
+    - path: book/notebooks/10_ee_seasons.ipynb
       hash: md5
-      md5: 56f63f531dd49719f9c5f226ff49e07d
-      size: 10100
+      md5: f57df0b9490975f130ac5f7dacd800d6
+      size: 42098
     - path: output/images/10_ee_ndvi_africa_by_doy.gif
       hash: md5
-      md5: ad67b5238811e9e66a68594cb94c8f56
-      size: 2770278
+      md5: de7ab81900dab53a652d0eb8963e370c
+      size: 2770448
     - path: output/images/10_ee_ndvi_by_doy.gif
       hash: md5
-      md5: bf7dec085b5cd23d52c1819c2af30406
-      size: 562875
+      md5: 887858ddc132a514bc01f5dec29b9155
+      size: 559140
     - path: output/images/10_ee_temperature_by_hour.gif
       hash: md5
       md5: df1790a6e94d942bd70ea0c11219a2e6
@@ -643,10 +636,12 @@ stages:
       md5: 5c2f3fb71666bf66d99f36215e2c6d9d
       size: 24942627
   process_projections:
-    cmd: "MPLBACKEND=Agg python pipeline/12_projections.py && uv run jupytext --to
-      md:myst --output book/notebooks/12_projections.md pipeline/12_projections.py
-      && sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
-      book/notebooks/12_projections.md\n"
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/12_projections.ipynb pipeline/12_projections.py && uv
+      run python -c \"import nbformat; nb = nbformat.read('book/notebooks/12_projections.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/12_projections.ipynb')\"\
+      \n"
     deps:
     - path: data/downloads/era5/20250603_1200/era5_20250603_1200_surface.nc
       hash: md5
@@ -656,15 +651,11 @@ stages:
       hash: md5
       md5: 48e2410752fe77278015e87673a99aaf
       size: 9131
-    - path: woe/paths.py
-      hash: md5
-      md5: d2703edd7c2e9995ce3e6d82d2c18bd0
-      size: 9485
     outs:
-    - path: book/notebooks/12_projections.md
+    - path: book/notebooks/12_projections.ipynb
       hash: md5
-      md5: 220ae73854e9b3abe7462f60d4c9d36b
-      size: 8951
+      md5: 025e3c37196d5c0988d80cb5fb44d91a
+      size: 16767
     - path: output/images/12_t2m_domain.png
       hash: md5
       md5: 669ac3e5b4d93888b209e4c2f194a2fa
@@ -686,10 +677,12 @@ stages:
       md5: 0500219ef6cb53ebbefece3bd2587c33
       size: 903781
   process_pressure_and_weather:
-    cmd: "MPLBACKEND=Agg python pipeline/13_pressure_and_weather.py && uv run jupytext
-      --to md:myst --output book/notebooks/13_pressure_and_weather.md pipeline/13_pressure_and_weather.py
-      && sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
-      book/notebooks/13_pressure_and_weather.md\n"
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/13_pressure_and_weather.ipynb pipeline/13_pressure_and_weather.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/13_pressure_and_weather.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/13_pressure_and_weather.ipynb')\"\
+      \n"
     deps:
     - path: 
         data/downloads/era5/20250603_1200/era5_20250603_1200_pressure_levels.nc
@@ -704,15 +697,11 @@ stages:
       hash: md5
       md5: 21e1ec1edf838442bdaa8af121af95b2
       size: 43511
-    - path: woe/paths.py
-      hash: md5
-      md5: d2703edd7c2e9995ce3e6d82d2c18bd0
-      size: 9485
     outs:
-    - path: book/notebooks/13_pressure_and_weather.md
+    - path: book/notebooks/13_pressure_and_weather.ipynb
       hash: md5
-      md5: 4fa162c4d3e0aac4fb8f37046939f743
-      size: 42960
+      md5: 2307e76dcce4ccab9e6da4355738aef0
+      size: 107739
     - path: output/images/13_cloud_satellite.png
       hash: md5
       md5: 1f679bd476c2e657b623b63e1c1d8504
@@ -783,10 +772,12 @@ stages:
       md5: 430ffb5a37bb3e78890c4c297b5449b3
       size: 69290
   process_germany_variations:
-    cmd: "MPLBACKEND=Agg python pipeline/17_germany_variations.py && uv run jupytext
-      --to md:myst --output book/notebooks/17_germany_variations.md pipeline/17_germany_variations.py
-      && sed -i -e 's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
-      book/notebooks/17_germany_variations.md\n"
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/17_germany_variations.ipynb pipeline/17_germany_variations.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/17_germany_variations.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/17_germany_variations.ipynb')\"\
+      \n"
     deps:
     - path: data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
       hash: md5
@@ -802,10 +793,10 @@ stages:
       md5: b66d781d9015053954c5fa4626532dfe
       size: 17544
     outs:
-    - path: book/notebooks/17_germany_variations.md
+    - path: book/notebooks/17_germany_variations.ipynb
       hash: md5
-      md5: 223c6ec711dcb50df3c09c77aa6582c9
-      size: 17408
+      md5: 9908900b64c9ba4cdcdcdc9a3eb369b5
+      size: 31130
     - path: output/images/17_germany_dunkelflaute.png
       hash: md5
       md5: 9bcad18b818f4f46f4bc5f08948b6e7f
@@ -831,10 +822,12 @@ stages:
       md5: 59f399d4f611cfae7a9b4587ac977eaf
       size: 1556955
   process_nao_index:
-    cmd: "MPLBACKEND=Agg python pipeline/18_nao_index.py && uv run jupytext --to md:myst
-      --output book/notebooks/18_nao_index.md pipeline/18_nao_index.py && sed -i -e
-      's/```{code-cell}/```{code-cell} python/g' -e '/root_level_metadata_filter/d'
-      book/notebooks/18_nao_index.md\n"
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/18_nao_index.ipynb pipeline/18_nao_index.py && uv run
+      python -c \"import nbformat; nb = nbformat.read('book/notebooks/18_nao_index.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/18_nao_index.ipynb')\"\
+      \n"
     deps:
     - path: data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
       hash: md5
@@ -850,10 +843,10 @@ stages:
       md5: ae815bbe2969683ae1dbc0c760356bc9
       size: 24182
     outs:
-    - path: book/notebooks/18_nao_index.md
+    - path: book/notebooks/18_nao_index.ipynb
       hash: md5
-      md5: 533eb999c6677ea32b5f0baca792c24b
-      size: 23892
+      md5: 20640b782ecc76a53d1b846f2b90fe09
+      size: 42357
     - path: output/images/15_era5_t2m_2025_01.png
       hash: md5
       md5: 273fd707ec294306a53cb24b2b4f2a2a
@@ -911,10 +904,48 @@ stages:
       md5: 97adbb42c42c2c046a2f627299c1554a
       size: 180821057
   process_daily_jet_stream_animations:
-    cmd: "MPLBACKEND=Agg python pipeline/20_daily_jet_stream_animations.py && uv run
-      jupytext --to md:myst --output book/notebooks/20_daily_jet_stream_animations.md
-      pipeline/20_daily_jet_stream_animations.py && sed -i -e 's/```{code-cell}/```{code-cell}
-      python/g' -e '/root_level_metadata_filter/d' book/notebooks/20_daily_jet_stream_animations.md\n"
+    cmd: "uv run jupytext --to notebook --execute --set-kernel world-of-energy --output
+      book/notebooks/21_daily_jet_stream_animations.ipynb pipeline/21_daily_jet_stream_animations.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/21_daily_jet_stream_animations.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/21_daily_jet_stream_animations.ipynb')\"\
+      \n"
+    deps:
+    - path: output/images/18_combined_2009-2010.gif
+      hash: md5
+      md5: d26d848bc16858649fb96c86d48961ed
+      size: 21271231
+    - path: output/images/18_combined_2014-2015.gif
+      hash: md5
+      md5: 606ae91238429a108784c4820a167a53
+      size: 20960453
+    - path: output/images/18_nao_jet_stream_2009-2010.gif
+      hash: md5
+      md5: 99f3a3b63e96569ed17c4cdb8618a371
+      size: 7128314
+    - path: output/images/18_nao_jet_stream_2014-2015.gif
+      hash: md5
+      md5: 26ef36ae3ee7f2dda2fdb77e97b037c1
+      size: 7085217
+    - path: output/images/18_t2m_z500_2009-2010.gif
+      hash: md5
+      md5: 0aa110b54a2e3f650f24c7231f136e46
+      size: 10231419
+    - path: output/images/18_t2m_z500_2014-2015.gif
+      hash: md5
+      md5: 4f45e46740cc95a26de41846b84cdefb
+      size: 10284444
+    - path: pipeline/21_daily_jet_stream_animations.py
+      hash: md5
+      md5: 5f42e7fcdd3c12d93e0853a7511da263
+      size: 6584
+    outs:
+    - path: book/notebooks/21_daily_jet_stream_animations.ipynb
+      hash: md5
+      md5: d36edd1914c775f3d99e937c1bcf4228
+      size: 8561
+  generate_jet_stream_animations:
+    cmd: MPLBACKEND=Agg python pipeline/20_generate_jet_stream_animations.py
     deps:
     - path: data/downloads/era5/nao_jetstream/era5_nao_jetstream_2009-2010.nc
       hash: md5
@@ -924,15 +955,11 @@ stages:
       hash: md5
       md5: 97adbb42c42c2c046a2f627299c1554a
       size: 180821057
-    - path: pipeline/20_daily_jet_stream_animations.py
+    - path: pipeline/20_generate_jet_stream_animations.py
       hash: md5
-      md5: 38ec3dbc2c26314216574a12f327e344
-      size: 20836
+      md5: c8d9f412ebf5395871e3d6360a8babb9
+      size: 12621
     outs:
-    - path: book/notebooks/20_daily_jet_stream_animations.md
-      hash: md5
-      md5: 5b53ebaed4f2b42e3ba321a343306dfb
-      size: 20545
     - path: output/images/18_combined_2009-2010.gif
       hash: md5
       md5: d26d848bc16858649fb96c86d48961ed
