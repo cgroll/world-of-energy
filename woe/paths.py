@@ -248,6 +248,56 @@ class ProjPaths:
         """Path to EU ETS carbon allowance prices CSV file."""
         return self.investing_com_path / "carbon_emissions_futures.csv"
 
+    @property
+    def renewable_power_plants_file(self) -> Path:
+        """Path to filtered renewable power plants CSV file (Open Power System Data)."""
+        return self.downloads_path / "renewable_power_plants" / "renewable_power_plants_DE_filtered.csv"
+
+    @property
+    def renewable_plants_processed_path(self) -> Path:
+        """Processed renewable plant aggregates directory."""
+        return self.processed_data_path / "renewable_plants"
+
+    @property
+    def pv_state_aggregates_file(self) -> Path:
+        """Capacity-weighted PV centroid and capacity aggregate per Bundesland (parquet)."""
+        return self.renewable_plants_processed_path / "pv_state_aggregates.parquet"
+
+    @property
+    def pv_state_centroids_csv_file(self) -> Path:
+        """Capacity-weighted PV centroid locations per Bundesland (CSV)."""
+        return self.renewable_plants_processed_path / "pv_state_centroids.csv"
+
+    @property
+    def wind_state_aggregates_file(self) -> Path:
+        """Capacity-weighted wind centroid and capacity aggregate per Bundesland (parquet)."""
+        return self.renewable_plants_processed_path / "wind_state_aggregates.parquet"
+
+    @property
+    def wind_onshore_state_aggregates_file(self) -> Path:
+        """Capacity-weighted onshore wind centroid and capacity aggregate per Bundesland (parquet)."""
+        return self.renewable_plants_processed_path / "wind_onshore_state_aggregates.parquet"
+
+    @property
+    def wind_offshore_aggregates_file(self) -> Path:
+        """Offshore wind capacity and capacity-weighted centroid per sea region (Nordsee/Ostsee) (parquet)."""
+        return self.renewable_plants_processed_path / "wind_offshore_aggregates.parquet"
+
+    @property
+    def ninja_pv_cf_file(self) -> Path:
+        """Hourly PV capacity factors (0–1) per Bundesland for 2019, from renewables.ninja (parquet)."""
+        return self.renewable_plants_processed_path / "ninja_pv_cf.parquet"
+
+    @property
+    def ninja_wind_onshore_cf_file(self) -> Path:
+        """Hourly onshore wind capacity factors (0–1) per Bundesland for 2019, from renewables.ninja (parquet)."""
+        return self.renewable_plants_processed_path / "ninja_wind_onshore_cf.parquet"
+
+    @property
+    def ninja_wind_offshore_cf_file(self) -> Path:
+        """Hourly offshore wind capacity factors (0–1) per sea region (Nordsee/Ostsee) for 2019, from renewables.ninja (parquet)."""
+        return self.renewable_plants_processed_path / "ninja_wind_offshore_cf.parquet"
+
     def ensure_directories(self) -> None:
         """Create all necessary directories if they don't exist."""
         directories = [

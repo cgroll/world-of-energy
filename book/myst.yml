@@ -17,6 +17,11 @@ project:
         - file: notebooks/03_smard_DE_prices.ipynb
         - file: notebooks/04_reconstruct_prices.ipynb
         - file: notebooks/05_load_seasonalities.ipynb
+    - title: Renewable Energy
+      children:
+        - file: notebooks/31_validate_pv_capacity_data.ipynb
+        - file: notebooks/32_pv_capacities_2019.ipynb
+        - file: notebooks/34_analyse_renewables_ninja_generations.ipynb
     - title: Weather
       children:
         - file: notebooks/10_earth_seasons.ipynb

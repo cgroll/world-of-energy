@@ -358,3 +358,67 @@ stages:
           persist: true
       - data/downloads/era5/nao_jetstream/era5_nao_jetstream_2009-2010.nc:
           persist: true
+  process_validate_pv_capacity_data:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/31_validate_pv_capacity_data.ipynb pipeline/31_validate_pv_capacity_data.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/31_validate_pv_capacity_data.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/31_validate_pv_capacity_data.ipynb')"
+    deps:
+      - pipeline/31_validate_pv_capacity_data.py
+      - data/downloads/renewable_power_plants/renewable_power_plants_DE_filtered.csv
+    outs:
+      - book/notebooks/31_validate_pv_capacity_data.ipynb:
+          cache: false
+      - output/images/31_plant_counts.png:
+          cache: false
+  process_pv_capacities_2019:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/32_pv_capacities_2019.ipynb pipeline/32_pv_capacities_2019.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/32_pv_capacities_2019.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/32_pv_capacities_2019.ipynb')"
+    deps:
+      - pipeline/32_pv_capacities_2019.py
+      - data/downloads/renewable_power_plants/renewable_power_plants_DE_filtered.csv
+    outs:
+      - book/notebooks/32_pv_capacities_2019.ipynb:
+          cache: false
+      - output/images/32_solar_choropleth.png:
+          cache: false
+      - output/images/32_wind_choropleth.png:
+          cache: false
+      - output/images/32_pv_state_centroids.png:
+          cache: false
+      - data/processed/renewable_plants/pv_state_aggregates.parquet
+      - data/processed/renewable_plants/wind_onshore_state_aggregates.parquet
+      - data/processed/renewable_plants/wind_offshore_aggregates.parquet
+  download_renewables_ninja_generations:
+    cmd: python pipeline/33_download_renewables_ninja_generations.py
+    deps:
+      - pipeline/33_download_renewables_ninja_generations.py
+      - data/processed/renewable_plants/pv_state_aggregates.parquet
+      - data/processed/renewable_plants/wind_onshore_state_aggregates.parquet
+      - data/processed/renewable_plants/wind_offshore_aggregates.parquet
+    outs:
+      - data/processed/renewable_plants/ninja_pv_cf.parquet:
+          persist: true
+      - data/processed/renewable_plants/ninja_wind_onshore_cf.parquet:
+          persist: true
+      - data/processed/renewable_plants/ninja_wind_offshore_cf.parquet:
+          persist: true
+  process_analyse_renewables_ninja_generations:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/34_analyse_renewables_ninja_generations.ipynb pipeline/34_analyse_renewables_ninja_generations.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/34_analyse_renewables_ninja_generations.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/34_analyse_renewables_ninja_generations.ipynb')"
+    deps:
+      - pipeline/34_analyse_renewables_ninja_generations.py
+      - data/processed/renewable_plants/ninja_pv_cf.parquet
+      - data/processed/renewable_plants/ninja_wind_onshore_cf.parquet
+      - data/processed/renewable_plants/ninja_wind_offshore_cf.parquet
+      - data/processed/renewable_plants/pv_state_aggregates.parquet
+      - data/processed/renewable_plants/wind_onshore_state_aggregates.parquet
+      - data/processed/renewable_plants/wind_offshore_aggregates.parquet
+    outs:
+      - book/notebooks/34_analyse_renewables_ninja_generations.ipynb:
+          cache: false
+      - output/images/34_monthly_generation.png:
+          cache: false
+      - output/images/34_capacity_factors.png:
+          cache: false
