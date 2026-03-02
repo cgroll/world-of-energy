@@ -24,7 +24,7 @@ project:
         - file: notebooks/34_analyse_renewables_ninja_generations.ipynb
     - title: Weather
       children:
-        - file: notebooks/10_earth_seasons.ipynb
+        - file: notebooks/10_ee_seasons.ipynb
         - file: notebooks/12_projections.ipynb
         - file: notebooks/13_pressure_and_weather.ipynb
         - file: notebooks/17_germany_variations.ipynb

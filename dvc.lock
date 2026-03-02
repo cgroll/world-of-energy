@@ -544,13 +544,13 @@ stages:
     deps:
     - path: pipeline/10_ee_seasons.py
       hash: md5
-      md5: 0b30963b9509399451bd8255cf5733b0
-      size: 10094
+      md5: a7270c8efd80f28803fa30334ae365b2
+      size: 11409
     outs:
     - path: book/notebooks/10_ee_seasons.ipynb
       hash: md5
-      md5: f57df0b9490975f130ac5f7dacd800d6
-      size: 42098
+      md5: b39e5090304bc302636fb35a93925d98
+      size: 43884
     - path: output/images/10_ee_ndvi_africa_by_doy.gif
       hash: md5
       md5: de7ab81900dab53a652d0eb8963e370c
@@ -984,3 +984,159 @@ stages:
       hash: md5
       md5: 4f45e46740cc95a26de41846b84cdefb
       size: 10284444
+  process_validate_pv_capacity_data:
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/31_validate_pv_capacity_data.ipynb pipeline/31_validate_pv_capacity_data.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/31_validate_pv_capacity_data.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/31_validate_pv_capacity_data.ipynb')\"\
+      \n"
+    deps:
+    - path: 
+        data/downloads/renewable_power_plants/renewable_power_plants_DE_filtered.csv
+      hash: md5
+      md5: b2c38e43e1b00a1aced94913656ece67
+      size: 383047498
+    - path: pipeline/31_validate_pv_capacity_data.py
+      hash: md5
+      md5: 56f2ed166d90bd2816722d7e1add047c
+      size: 6344
+    outs:
+    - path: book/notebooks/31_validate_pv_capacity_data.ipynb
+      hash: md5
+      md5: 1c91d3c9e1e9dce2aa72c1505c0212f7
+      size: 14165
+    - path: output/images/31_plant_counts.png
+      hash: md5
+      md5: d1097783c1ea09d4daa87cfa1383c5ff
+      size: 84333
+  process_pv_capacities_2019:
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/32_pv_capacities_2019.ipynb pipeline/32_pv_capacities_2019.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/32_pv_capacities_2019.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/32_pv_capacities_2019.ipynb')\"\
+      \n"
+    deps:
+    - path: 
+        data/downloads/renewable_power_plants/renewable_power_plants_DE_filtered.csv
+      hash: md5
+      md5: b2c38e43e1b00a1aced94913656ece67
+      size: 383047498
+    - path: pipeline/32_pv_capacities_2019.py
+      hash: md5
+      md5: b50dc1e81fee315fe7b8883996aa94ea
+      size: 12551
+    outs:
+    - path: book/notebooks/32_pv_capacities_2019.ipynb
+      hash: md5
+      md5: 0a5d096b82752f75ad79b3f0bed8bea6
+      size: 26099
+    - path: data/processed/renewable_plants/pv_state_aggregates.parquet
+      hash: md5
+      md5: 37eed3f2d5ad7af8f2cac73dbd9b1851
+      size: 5479
+    - path: data/processed/renewable_plants/wind_offshore_aggregates.parquet
+      hash: md5
+      md5: 821c7b467ede0f0d99925d421328490d
+      size: 4036
+    - path: 
+        data/processed/renewable_plants/wind_onshore_state_aggregates.parquet
+      hash: md5
+      md5: f770336512f0ef4e91a1b10e47bb1332
+      size: 4805
+    - path: output/images/32_pv_state_centroids.png
+      hash: md5
+      md5: cf6976b1483ca4c77b8595e2f495cd47
+      size: 386165
+    - path: output/images/32_solar_choropleth.png
+      hash: md5
+      md5: 13c85acd852c91fecf8df07c81254a7c
+      size: 315970
+    - path: output/images/32_wind_choropleth.png
+      hash: md5
+      md5: 6b8c72d4ce930861acf20e3efec45e4b
+      size: 331114
+  download_renewables_ninja_generations:
+    cmd: python pipeline/33_download_renewables_ninja_generations.py
+    deps:
+    - path: data/processed/renewable_plants/pv_state_aggregates.parquet
+      hash: md5
+      md5: 37eed3f2d5ad7af8f2cac73dbd9b1851
+      size: 5479
+    - path: data/processed/renewable_plants/wind_offshore_aggregates.parquet
+      hash: md5
+      md5: 821c7b467ede0f0d99925d421328490d
+      size: 4036
+    - path: 
+        data/processed/renewable_plants/wind_onshore_state_aggregates.parquet
+      hash: md5
+      md5: f770336512f0ef4e91a1b10e47bb1332
+      size: 4805
+    - path: pipeline/33_download_renewables_ninja_generations.py
+      hash: md5
+      md5: 04f88aa75a51e0de9270e000500fbe57
+      size: 6152
+    outs:
+    - path: data/processed/renewable_plants/ninja_pv_cf.parquet
+      hash: md5
+      md5: 3828f6573870e00728cd2ba1ee57176f
+      size: 251117
+    - path: data/processed/renewable_plants/ninja_wind_offshore_cf.parquet
+      hash: md5
+      md5: 4feca74a493701ba61e9e7a6aff51152
+      size: 112175
+    - path: data/processed/renewable_plants/ninja_wind_onshore_cf.parquet
+      hash: md5
+      md5: 6725ac6f286a93594fac34910022cc8e
+      size: 330420
+  process_analyse_renewables_ninja_generations:
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/34_analyse_renewables_ninja_generations.ipynb pipeline/34_analyse_renewables_ninja_generations.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/34_analyse_renewables_ninja_generations.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/34_analyse_renewables_ninja_generations.ipynb')\"\
+      \n"
+    deps:
+    - path: data/processed/renewable_plants/ninja_pv_cf.parquet
+      hash: md5
+      md5: 3828f6573870e00728cd2ba1ee57176f
+      size: 251117
+    - path: data/processed/renewable_plants/ninja_wind_offshore_cf.parquet
+      hash: md5
+      md5: 4feca74a493701ba61e9e7a6aff51152
+      size: 112175
+    - path: data/processed/renewable_plants/ninja_wind_onshore_cf.parquet
+      hash: md5
+      md5: 6725ac6f286a93594fac34910022cc8e
+      size: 330420
+    - path: data/processed/renewable_plants/pv_state_aggregates.parquet
+      hash: md5
+      md5: 37eed3f2d5ad7af8f2cac73dbd9b1851
+      size: 5479
+    - path: data/processed/renewable_plants/wind_offshore_aggregates.parquet
+      hash: md5
+      md5: 821c7b467ede0f0d99925d421328490d
+      size: 4036
+    - path: 
+        data/processed/renewable_plants/wind_onshore_state_aggregates.parquet
+      hash: md5
+      md5: f770336512f0ef4e91a1b10e47bb1332
+      size: 4805
+    - path: pipeline/34_analyse_renewables_ninja_generations.py
+      hash: md5
+      md5: ec20b19267304e6e146f6e663bdee7ab
+      size: 5367
+    outs:
+    - path: book/notebooks/34_analyse_renewables_ninja_generations.ipynb
+      hash: md5
+      md5: 24f335ffb15749bb55c5a97b6c8bb478
+      size: 9458
+    - path: output/images/34_capacity_factors.png
+      hash: md5
+      md5: bdc5481e7188ea33ec9bb68ea2ceea2d
+      size: 80789
+    - path: output/images/34_monthly_generation.png
+      hash: md5
+      md5: 4cb73fbdb408b0d29533194288bf9fdc
+      size: 69040

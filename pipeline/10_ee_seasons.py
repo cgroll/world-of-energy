@@ -98,6 +98,14 @@ geemap.add_text_to_gif(
 print(f"Annotated GIF saved to {gif_path}")
 
 # %% [markdown]
+# ```{figure} ../../output/images/10_ee_temperature_by_hour.gif
+# :name: fig-10-ee-temperature-by-hour
+# Mean 2m temperature (°C) for each UTC hour (0–23), averaged over 2024.
+# The diurnal heating cycle is visible over land masses, with peak temperatures
+# in the mid-afternoon local time.
+# ```
+
+# %% [markdown]
 # ## Seasonal cycle — average temperature per month
 #
 # Average 3 years of ERA5 daily noon snapshots by calendar month (1–12).
@@ -171,6 +179,13 @@ geemap.add_text_to_gif(
     progress_bar_height=5,
 )
 print(f"Annotated monthly GIF saved to {gif_monthly_path}")
+
+# %% [markdown]
+# ```{figure} ../../output/images/10_ee_temperature_by_month.gif
+# :name: fig-10-ee-temperature-by-month
+# Mean 2m temperature (°C) by calendar month, averaged over 2022–2024 (ERA5 noon snapshots).
+# The seasonal contrast between the northern and southern hemispheres is clearly visible.
+# ```
 
 # %% [markdown]
 # ## NDVI seasonal cycle
@@ -320,6 +335,14 @@ add_subsolar_line(gif_ndvi_path, global_lat_min, global_lat_max)
 print(f"Subsolar line added to {gif_ndvi_path}")
 
 # %% [markdown]
+# ```{figure} ../../output/images/10_ee_ndvi_by_doy.gif
+# :name: fig-10-ee-ndvi-by-doy
+# Multi-year median NDVI (MODIS MOD13A2, 2015–2024) for each 16-day composite period.
+# The yellow dashed line marks the subsolar latitude. The seasonal "green wave"
+# migrates between hemispheres, tracking the sun.
+# ```
+
+# %% [markdown]
 # ## NDVI seasonal cycle — Africa
 #
 # Same multi-year median NDVI composites, but clipped to Africa at higher
@@ -367,5 +390,13 @@ print(f"Annotated NDVI Africa GIF saved to {gif_ndvi_africa_path}")
 # %%
 add_subsolar_line(gif_ndvi_africa_path, lat_min=-35, lat_max=38)
 print(f"Subsolar line added to {gif_ndvi_africa_path}")
+
+# %% [markdown]
+# ```{figure} ../../output/images/10_ee_ndvi_africa_by_doy.gif
+# :name: fig-10-ee-ndvi-africa-by-doy
+# Multi-year median NDVI over Africa for each 16-day composite period.
+# The Sahel greening pulse during the monsoon season is particularly visible,
+# with the subsolar latitude (yellow dashed line) tracking the seasonal migration.
+# ```
 
 # %%

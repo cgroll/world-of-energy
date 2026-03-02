@@ -1,0 +1,6 @@
+/pv_state_aggregates.parquet
+/wind_onshore_state_aggregates.parquet
+/wind_offshore_aggregates.parquet
+/ninja_pv_cf.parquet
+/ninja_wind_onshore_cf.parquet
+/ninja_wind_offshore_cf.parquet
