@@ -14,6 +14,18 @@
     <loc>http://localhost:3000/notebooks/load-seasonalities</loc>
   </url>
   <url>
+    <loc>http://localhost:3000/notebooks/validate-pv-capacity-data</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/notebooks/pv-capacities-2019</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/notebooks/analyse-renewables-ninja-generations</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/notebooks/ee-seasons</loc>
+  </url>
+  <url>
     <loc>http://localhost:3000/notebooks/projections</loc>
   </url>
   <url>
