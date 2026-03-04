@@ -23,6 +23,9 @@
     <loc>http://localhost:3000/notebooks/analyse-renewables-ninja-generations</loc>
   </url>
   <url>
+    <loc>http://localhost:3000/notebooks/analyse-pecd</loc>
+  </url>
+  <url>
     <loc>http://localhost:3000/notebooks/ee-seasons</loc>
   </url>
   <url>
