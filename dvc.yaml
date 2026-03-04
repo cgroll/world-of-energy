@@ -422,3 +422,43 @@ stages:
           cache: false
       - output/images/34_capacity_factors.png:
           cache: false
+  download_pecd_regions:
+    cmd: python pipeline/35_download_pecd_regions.py
+    deps:
+      - pipeline/35_download_pecd_regions.py
+      - woe/paths.py
+    outs:
+      - data/downloads/pecd:
+          persist: true
+  process_pecd_regions:
+    cmd: python pipeline/36_process_pecd_regions.py
+    deps:
+      - pipeline/36_process_pecd_regions.py
+      - woe/paths.py
+      - data/downloads/pecd
+    outs:
+      - data/processed/pecd/pecd_regions.parquet
+  process_analyse_pecd:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/37_analyse_pecd.ipynb pipeline/37_analyse_pecd.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/37_analyse_pecd.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/37_analyse_pecd.ipynb')"
+    deps:
+      - pipeline/37_analyse_pecd.py
+      - data/processed/pecd/pecd_regions.parquet
+    outs:
+      - book/notebooks/37_analyse_pecd.ipynb:
+          cache: false
+      - output/images/37_mean_cf_by_country.png:
+          cache: false
+      - output/images/37_seasonal_profile_de.png:
+          cache: false
+      - output/images/37_annual_cf_de.png:
+          cache: false
+      - output/images/37_solar_wind_scatter.png:
+          cache: false
+      - output/images/37_cf_choropleth_solar.png:
+          cache: false
+      - output/images/37_cf_choropleth_onshore.png:
+          cache: false
+      - output/images/37_cf_choropleth_offshore.png:
+          cache: false

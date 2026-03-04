@@ -1125,13 +1125,13 @@ stages:
       size: 4805
     - path: pipeline/34_analyse_renewables_ninja_generations.py
       hash: md5
-      md5: ec20b19267304e6e146f6e663bdee7ab
-      size: 5367
+      md5: 1318a6eaa0f327e83163ad7e605d4ede
+      size: 23621
     outs:
     - path: book/notebooks/34_analyse_renewables_ninja_generations.ipynb
       hash: md5
-      md5: 24f335ffb15749bb55c5a97b6c8bb478
-      size: 9458
+      md5: cda21c68b5ff25e2a35aef522cbb8fac
+      size: 39653
     - path: output/images/34_capacity_factors.png
       hash: md5
       md5: bdc5481e7188ea33ec9bb68ea2ceea2d
@@ -1140,3 +1140,90 @@ stages:
       hash: md5
       md5: 4cb73fbdb408b0d29533194288bf9fdc
       size: 69040
+  download_pecd_regions:
+    cmd: python pipeline/35_download_pecd_regions.py
+    deps:
+    - path: pipeline/35_download_pecd_regions.py
+      hash: md5
+      md5: f6c93c5892a32072226f411bcd1ace81
+      size: 2834
+    - path: woe/paths.py
+      hash: md5
+      md5: 3e500333274b7bc2d1773cb537e33484
+      size: 12622
+    outs:
+    - path: data/downloads/pecd
+      hash: md5
+      md5: 378f6cf87916a7e0e470eb5423b17e03.dir
+      size: 165494181
+      nfiles: 3
+  process_pecd_regions:
+    cmd: python pipeline/36_process_pecd_regions.py
+    deps:
+    - path: data/downloads/pecd
+      hash: md5
+      md5: 378f6cf87916a7e0e470eb5423b17e03.dir
+      size: 165494181
+      nfiles: 3
+    - path: pipeline/36_process_pecd_regions.py
+      hash: md5
+      md5: 3a87286750274321351bafdda4fb1d6c
+      size: 3037
+    - path: woe/paths.py
+      hash: md5
+      md5: 3e500333274b7bc2d1773cb537e33484
+      size: 12622
+    outs:
+    - path: data/processed/pecd/pecd_regions.parquet
+      hash: md5
+      md5: ee98ad165ffabc42ee6d1db32cb42775
+      size: 296592707
+  process_analyse_pecd:
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/37_analyse_pecd.ipynb pipeline/37_analyse_pecd.py &&
+      uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/37_analyse_pecd.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/37_analyse_pecd.ipynb')\"\
+      \n"
+    deps:
+    - path: data/processed/pecd/pecd_regions.parquet
+      hash: md5
+      md5: ee98ad165ffabc42ee6d1db32cb42775
+      size: 296592707
+    - path: pipeline/37_analyse_pecd.py
+      hash: md5
+      md5: e285b1d392390fd136a4aa395489223d
+      size: 15370
+    outs:
+    - path: book/notebooks/37_analyse_pecd.ipynb
+      hash: md5
+      md5: d41f1571092066caf2b978cc9656ca5d
+      size: 28936
+    - path: output/images/37_annual_cf_de.png
+      hash: md5
+      md5: 1dcb89616d88cb1d10e36b70c2d09119
+      size: 144902
+    - path: output/images/37_cf_choropleth_offshore.png
+      hash: md5
+      md5: f13915e4c04364e4f8108924e216d81f
+      size: 366038
+    - path: output/images/37_cf_choropleth_onshore.png
+      hash: md5
+      md5: b8d35ceca2d1e0b18ef7fd71c00c3460
+      size: 378356
+    - path: output/images/37_cf_choropleth_solar.png
+      hash: md5
+      md5: 6a0feeab46787705f7e6308ef8d76a58
+      size: 380188
+    - path: output/images/37_mean_cf_by_country.png
+      hash: md5
+      md5: ac4a8ef36111de68fb4b04a67cc47eaf
+      size: 115500
+    - path: output/images/37_seasonal_profile_de.png
+      hash: md5
+      md5: 63ffaa30fe8f569be8b84d105f948580
+      size: 114647
+    - path: output/images/37_solar_wind_scatter.png
+      hash: md5
+      md5: 1a112a8519338c01a9553c45f32be65d
+      size: 78450

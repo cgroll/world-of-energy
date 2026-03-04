@@ -167,6 +167,17 @@ class ProjPaths:
         """Investing.com downloads directory."""
         return self.downloads_path / "investing_com"
 
+    # PECD (Pan-European Climate Database) paths
+    @property
+    def pecd_downloads_path(self) -> Path:
+        """PECD reanalysis downloads directory."""
+        return self.downloads_path / "pecd"
+
+    @property
+    def pecd_processed_file(self) -> Path:
+        """Combined PECD capacity factors and power generation parquet file."""
+        return self.processed_data_path / "pecd" / "pecd_regions.parquet"
+
     # ERA5 reanalysis paths
     @property
     def era5_downloads_path(self) -> Path:
