@@ -1130,8 +1130,8 @@ stages:
     outs:
     - path: book/notebooks/34_analyse_renewables_ninja_generations.ipynb
       hash: md5
-      md5: cda21c68b5ff25e2a35aef522cbb8fac
-      size: 39653
+      md5: 80142f19cb108964d63304d4fa0c8d54
+      size: 39642
     - path: output/images/34_capacity_factors.png
       hash: md5
       md5: bdc5481e7188ea33ec9bb68ea2ceea2d
@@ -1192,13 +1192,13 @@ stages:
       size: 296592707
     - path: pipeline/37_analyse_pecd.py
       hash: md5
-      md5: e285b1d392390fd136a4aa395489223d
-      size: 15370
+      md5: 10dabf2d380155ace93af61471389ccf
+      size: 15708
     outs:
     - path: book/notebooks/37_analyse_pecd.ipynb
       hash: md5
-      md5: d41f1571092066caf2b978cc9656ca5d
-      size: 28936
+      md5: 4fa9369236289362544df6628b19c625
+      size: 29552
     - path: output/images/37_annual_cf_de.png
       hash: md5
       md5: 1dcb89616d88cb1d10e36b70c2d09119
