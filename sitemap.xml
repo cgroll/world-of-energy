@@ -26,6 +26,12 @@
     <loc>http://localhost:3000/notebooks/analyse-pecd</loc>
   </url>
   <url>
+    <loc>http://localhost:3000/notebooks/bdew-profiles</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/notebooks/demand-reconstruction</loc>
+  </url>
+  <url>
     <loc>http://localhost:3000/notebooks/ee-seasons</loc>
   </url>
   <url>
