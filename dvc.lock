@@ -1242,7 +1242,7 @@ stages:
     outs:
     - path: book/notebooks/38_bdew_profiles.ipynb
       hash: md5
-      md5: 546cce9892ab0fa44efbd3ee10f0ad9d
+      md5: b55cbcfd7a94bb15170715f557a7a575
       size: 19170
     - path: output/images/38_g0_season_daytype.png
       hash: md5
@@ -1311,7 +1311,7 @@ stages:
     outs:
     - path: book/notebooks/39_demand_reconstruction.ipynb
       hash: md5
-      md5: 2888bdd453c942fb6ebbd2ff8f2b1e46
+      md5: a368676a4a6b9789b2eac8c958b97924
       size: 26948
     - path: output/images/39_feature_importance.png
       hash: md5
