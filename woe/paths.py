@@ -291,6 +291,11 @@ class ProjPaths:
         return self.de_load_estimation_path / "weather.json"
 
     @property
+    def de_demand_predictions_file(self) -> Path:
+        """Hourly demand predictions for the full PECD period — baseline and weather-enhanced models."""
+        return self.processed_data_path / "de_demand_predictions.parquet"
+
+    @property
     def renewable_plants_processed_path(self) -> Path:
         """Processed renewable plant aggregates directory."""
         return self.processed_data_path / "renewable_plants"
@@ -334,6 +339,11 @@ class ProjPaths:
     def ninja_wind_offshore_cf_file(self) -> Path:
         """Hourly offshore wind capacity factors (0–1) per sea region (Nordsee/Ostsee) for 2019, from renewables.ninja (parquet)."""
         return self.renewable_plants_processed_path / "ninja_wind_offshore_cf.parquet"
+
+    @property
+    def residual_load_reconstruction_file(self) -> Path:
+        """Reconstructed hourly residual load time series 2022–2025 (demand − PECD renewables)."""
+        return self.processed_data_path / "residual_load_reconstruction.parquet"
 
     def ensure_directories(self) -> None:
         """Create all necessary directories if they don't exist."""

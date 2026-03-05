@@ -722,3 +722,52 @@ for year, y_true, y_pred in [(2022, y_test2_22, y_pred2_22), (2025, y_test2_25, 
 # temperature–demand relationship drifts between the training period (2023–2024)
 # and the most recent test year.
 # ```
+
+# %% [markdown]
+# ## Full-period demand predictions
+#
+# Generate predictions for the complete PECD data range using both models and
+# save as a single parquet file (consumed by script 40).
+
+# %%
+_weather_clean = weather[~weather.index.duplicated(keep="first")][WEATHER_COLS]
+_weather_idx = _weather_clean.index
+
+_full_years = sorted(_weather_idx.year.unique().tolist())
+_full_holidays = hol.Germany(years=_full_years)
+_full_holiday_dates = {d for d in _full_holidays.keys()}
+
+full_feat = pd.DataFrame(index=_weather_idx)
+full_feat["season"] = [classify_season(ts, ref_seasons) for ts in full_feat.index]
+full_feat["day_type_raw"] = full_feat.index.map(
+    lambda ts: "Workday" if ts.dayofweek < 5 else ("Saturday" if ts.dayofweek == 5 else "Sunday")
+)
+full_feat["is_holiday"] = full_feat.index.normalize().map(
+    lambda d: d in _full_holiday_dates).astype(int)
+full_feat["day_type"] = full_feat["day_type_raw"].where(full_feat["is_holiday"] == 0, "Sunday")
+full_feat["hour"] = full_feat.index.hour
+
+_bdew_full = full_feat.join(lookup, on=["season", "day_type", "hour"], how="left", rsuffix="_bdew")
+for p in PROFILES:
+    full_feat[f"bdew_{p}"] = _bdew_full[p].values
+
+full_feat["sin_month"] = np.sin(2 * np.pi * full_feat.index.month / 12)
+full_feat["cos_month"] = np.cos(2 * np.pi * full_feat.index.month / 12)
+full_feat["sin_hour"] = np.sin(2 * np.pi * full_feat.index.hour / 24)
+full_feat["cos_hour"] = np.cos(2 * np.pi * full_feat.index.hour / 24)
+full_feat["is_saturday"] = (full_feat.index.dayofweek == 5).astype(int)
+full_feat["is_sunday"] = (full_feat.index.dayofweek == 6).astype(int)
+full_feat.drop(columns=["season", "day_type_raw", "day_type", "hour"], inplace=True)
+full_feat.dropna(inplace=True)
+
+full_feat2 = full_feat.join(_weather_clean, how="left")
+
+pred_df = pd.DataFrame({
+    "demand_baseline_mw": model.predict(full_feat[FEATURE_COLS]),
+    "demand_weather_mw":  model2.predict(full_feat2[FEATURE_COLS2]),
+}, index=full_feat.index)
+
+paths.processed_data_path.mkdir(parents=True, exist_ok=True)
+pred_df.to_parquet(paths.de_demand_predictions_file)
+print(f"Saved: {paths.de_demand_predictions_file}  ({len(pred_df):,} rows)")
+print(pred_df.describe().round(0))

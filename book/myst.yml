@@ -25,6 +25,7 @@ project:
         - file: notebooks/37_analyse_pecd.ipynb
         - file: notebooks/38_bdew_profiles.ipynb
         - file: notebooks/39_demand_reconstruction.ipynb
+        - file: notebooks/40_residual_load_reconstruction.ipynb
     - title: Weather
       children:
         - file: notebooks/10_ee_seasons.ipynb

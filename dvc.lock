@@ -1149,8 +1149,8 @@ stages:
       size: 3848
     - path: woe/paths.py
       hash: md5
-      md5: bbc777071c776247ff87a5774ca4ad59
-      size: 13564
+      md5: 239506caacfd69be9738cf9b7e76bdf7
+      size: 14066
     outs:
     - path: data/downloads/pecd
       hash: md5
@@ -1171,8 +1171,8 @@ stages:
       size: 3397
     - path: woe/paths.py
       hash: md5
-      md5: bbc777071c776247ff87a5774ca4ad59
-      size: 13564
+      md5: 239506caacfd69be9738cf9b7e76bdf7
+      size: 14066
     outs:
     - path: data/processed/pecd/pecd_regions.parquet
       hash: md5
@@ -1310,13 +1310,13 @@ stages:
       size: 616016135
     - path: pipeline/39_demand_reconstruction.py
       hash: md5
-      md5: d968279dd7e2fd7f0bdaddd1b3edac3f
-      size: 27153
+      md5: 51813f7b872589421efb7ebb9fa4d91d
+      size: 29339
     outs:
     - path: book/notebooks/39_demand_reconstruction.ipynb
       hash: md5
-      md5: b34ad411d362bae8bcc61f1f7160cb6b
-      size: 47240
+      md5: c09a3e9a58228c9a284f1139a7c594bb
+      size: 51063
     - path: data/models/de_load_estimation/baseline.json
       hash: md5
       md5: b6fd8454815cf035b9c52605b41d3cc0
@@ -1325,6 +1325,10 @@ stages:
       hash: md5
       md5: 0fb12972be8dcba5ca931a29b2fbffc8
       size: 5028179
+    - path: data/processed/de_demand_predictions.parquet
+      hash: md5
+      md5: e3c6a221accc0f9d7b4e0b9b8d4af208
+      size: 5570066
     - path: output/images/39_feature_importance.png
       hash: md5
       md5: 6c27a391e7d64638bf0c7be740b19174
@@ -1377,3 +1381,80 @@ stages:
       hash: md5
       md5: ea0eec3a81d889869252cfacb6173449
       size: 450818
+  process_residual_load_reconstruction:
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/40_residual_load_reconstruction.ipynb pipeline/40_residual_load_reconstruction.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/40_residual_load_reconstruction.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/40_residual_load_reconstruction.ipynb')\"\
+      \n"
+    deps:
+    - path: data/downloads/smard/capacities.parquet
+      hash: md5
+      md5: 09ff4edfc9e9bc8c5e6b42b1afe5a377
+      size: 9534
+    - path: data/downloads/smard/solar.parquet
+      hash: md5
+      md5: e4e47c88ae22d08959fa3bffb8a595d0
+      size: 965503
+    - path: data/downloads/smard/total_load.parquet
+      hash: md5
+      md5: 938685177e69ea6c964a0f0679dbef2b
+      size: 970693
+    - path: data/downloads/smard/wind_offshore.parquet
+      hash: md5
+      md5: f42de75296c83e34d0158366076bc0d8
+      size: 820468
+    - path: data/downloads/smard/wind_onshore.parquet
+      hash: md5
+      md5: f66f1e142f63e91293cb7b716c368bdb
+      size: 1107429
+    - path: data/processed/de_demand_predictions.parquet
+      hash: md5
+      md5: e3c6a221accc0f9d7b4e0b9b8d4af208
+      size: 5570066
+    - path: data/processed/pecd/pecd_regions.parquet
+      hash: md5
+      md5: 6a4b45ce2c25bc3c40a37d4a75645c5a
+      size: 616016135
+    - path: pipeline/40_residual_load_reconstruction.py
+      hash: md5
+      md5: a9dc3fb22fa30d4425faba61ff8f22cc
+      size: 17299
+    outs:
+    - path: book/notebooks/40_residual_load_reconstruction.ipynb
+      hash: md5
+      md5: 1158a5e05d9780049e9f2f8506fa8b6f
+      size: 40811
+    - path: output/images/40_annual_generation_comparison.png
+      hash: md5
+      md5: 61ac251761355888fbf68f116a953d76
+      size: 98449
+    - path: output/images/40_installed_capacities.png
+      hash: md5
+      md5: 60ee31effe116273a7e523678ca734fd
+      size: 57560
+    - path: output/images/40_monthly_residual_load.png
+      hash: md5
+      md5: 23cd94d336d546706f2c3cec811b03cb
+      size: 280631
+    - path: output/images/40_sample_week_2022_summer.png
+      hash: md5
+      md5: c4a5154a26c3871e5eefab7a8dc2f630
+      size: 142393
+    - path: output/images/40_sample_week_2022_winter.png
+      hash: md5
+      md5: c15577149a78cd97b7ea4d95392b4703
+      size: 107507
+    - path: output/images/40_sample_week_2025_summer.png
+      hash: md5
+      md5: 9dfb9a5aa81cdafe56fa84b8ee6612a9
+      size: 159464
+    - path: output/images/40_sample_week_2025_winter.png
+      hash: md5
+      md5: 3abe4282ab91857c0b175b334726169f
+      size: 121788
+    - path: output/images/40_scatter_residual_load.png
+      hash: md5
+      md5: d1edaaa71766cb05405042383d3d8885
+      size: 633190

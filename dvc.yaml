@@ -534,3 +534,36 @@ stages:
           cache: false
       - data/models/de_load_estimation/baseline.json
       - data/models/de_load_estimation/weather.json
+      - data/processed/de_demand_predictions.parquet
+  process_residual_load_reconstruction:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/40_residual_load_reconstruction.ipynb pipeline/40_residual_load_reconstruction.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/40_residual_load_reconstruction.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/40_residual_load_reconstruction.ipynb')"
+    deps:
+      - pipeline/40_residual_load_reconstruction.py
+      - data/processed/de_demand_predictions.parquet
+      - data/processed/pecd/pecd_regions.parquet
+      - data/downloads/smard/capacities.parquet
+      - data/downloads/smard/total_load.parquet
+      - data/downloads/smard/solar.parquet
+      - data/downloads/smard/wind_onshore.parquet
+      - data/downloads/smard/wind_offshore.parquet
+    outs:
+      - book/notebooks/40_residual_load_reconstruction.ipynb:
+          cache: false
+      - output/images/40_installed_capacities.png:
+          cache: false
+      - output/images/40_annual_generation_comparison.png:
+          cache: false
+      - output/images/40_scatter_residual_load.png:
+          cache: false
+      - output/images/40_sample_week_2022_winter.png:
+          cache: false
+      - output/images/40_sample_week_2022_summer.png:
+          cache: false
+      - output/images/40_sample_week_2025_winter.png:
+          cache: false
+      - output/images/40_sample_week_2025_summer.png:
+          cache: false
+      - output/images/40_monthly_residual_load.png:
+          cache: false
