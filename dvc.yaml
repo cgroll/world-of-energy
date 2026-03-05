@@ -509,30 +509,17 @@ stages:
           cache: false
       - output/images/39_scatter_actual_vs_predicted.png:
           cache: false
-      - output/images/39_sample_week_winter.png:
+      - output/images/39_sample_week_2022_winter.png:
           cache: false
-      - output/images/39_sample_week_summer.png:
+      - output/images/39_sample_week_2022_summer.png:
           cache: false
-      - output/images/39_residuals_by_hour.png:
+      - output/images/39_sample_week_2025_winter.png:
           cache: false
-  process_dev_demand_reconstruction:
-    cmd: >
-      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/39_dev_demand_reconstruction.ipynb pipeline/39_dev_demand_reconstruction.py &&
-      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/39_dev_demand_reconstruction.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/39_dev_demand_reconstruction.ipynb')"
-    deps:
-      - pipeline/39_dev_demand_reconstruction.py
-    outs:
-      - data/downloads/smard/total_load_qh.parquet:
-          persist: true
-      - book/notebooks/39_dev_demand_reconstruction.ipynb:
-          cache: false
-      - output/images/39_feature_importance.png:
-          cache: false
-      - output/images/39_scatter_actual_vs_predicted.png:
-          cache: false
-      - output/images/39_sample_week_winter.png:
-          cache: false
-      - output/images/39_sample_week_summer.png:
+      - output/images/39_sample_week_2025_summer.png:
           cache: false
       - output/images/39_residuals_by_hour.png:
+          cache: false
+      - output/images/39_rolling_mae_2022.png:
+          cache: false
+      - output/images/39_rolling_mae_2025.png:
           cache: false

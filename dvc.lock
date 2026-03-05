@@ -1149,8 +1149,8 @@ stages:
       size: 2834
     - path: woe/paths.py
       hash: md5
-      md5: 3e500333274b7bc2d1773cb537e33484
-      size: 12622
+      md5: a764f33032891ec3e6d99d4eb29ee76c
+      size: 12828
     outs:
     - path: data/downloads/pecd
       hash: md5
@@ -1171,8 +1171,8 @@ stages:
       size: 3037
     - path: woe/paths.py
       hash: md5
-      md5: 3e500333274b7bc2d1773cb537e33484
-      size: 12622
+      md5: a764f33032891ec3e6d99d4eb29ee76c
+      size: 12828
     outs:
     - path: data/processed/pecd/pecd_regions.parquet
       hash: md5
@@ -1227,3 +1227,125 @@ stages:
       hash: md5
       md5: 1a112a8519338c01a9553c45f32be65d
       size: 78450
+  process_bdew_profiles:
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/38_bdew_profiles.ipynb pipeline/38_bdew_profiles.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/38_bdew_profiles.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/38_bdew_profiles.ipynb')\"\
+      \n"
+    deps:
+    - path: pipeline/38_bdew_profiles.py
+      hash: md5
+      md5: ee03ceb3687150f082a83877dc2379a1
+      size: 12498
+    outs:
+    - path: book/notebooks/38_bdew_profiles.ipynb
+      hash: md5
+      md5: 546cce9892ab0fa44efbd3ee10f0ad9d
+      size: 19170
+    - path: output/images/38_g0_season_daytype.png
+      hash: md5
+      md5: bb1c3ec302e8c1aab54693e95b2179ec
+      size: 239504
+    - path: output/images/38_g1_season_daytype.png
+      hash: md5
+      md5: af56ee9238e9f8e6fa4cf044823eeb3b
+      size: 201782
+    - path: output/images/38_g2_season_daytype.png
+      hash: md5
+      md5: ba8a73d4d9e3c6924b2dcfe468e98624
+      size: 253506
+    - path: output/images/38_g3_season_daytype.png
+      hash: md5
+      md5: 9da30b5f858fdf73fe8dca597ddf1fcf
+      size: 284488
+    - path: output/images/38_g4_season_daytype.png
+      hash: md5
+      md5: 417dc0fbe0381c408149f580c17ba772
+      size: 255341
+    - path: output/images/38_g5_season_daytype.png
+      hash: md5
+      md5: 15da478a32e65080448ca3fbb7011c70
+      size: 251351
+    - path: output/images/38_g6_season_daytype.png
+      hash: md5
+      md5: 895e088ba28ef8e3f962728cabe07679
+      size: 253272
+    - path: output/images/38_h0_season_daytype.png
+      hash: md5
+      md5: 6af785151703cbc4daa2708a30cd73a9
+      size: 284328
+    - path: output/images/38_l0_season_daytype.png
+      hash: md5
+      md5: de14f54254600120bcba91cc07bbc48b
+      size: 271181
+    - path: output/images/38_l1_season_daytype.png
+      hash: md5
+      md5: 07686b4a695e2418c7594beabcf263bb
+      size: 267103
+    - path: output/images/38_l2_season_daytype.png
+      hash: md5
+      md5: 827cdf20e06f2770579fbd3d9896003a
+      size: 283021
+    - path: output/images/38_profile_overview.png
+      hash: md5
+      md5: 22c5581e53237d9a353cb25d01e25f5f
+      size: 113265
+  process_demand_reconstruction:
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/39_demand_reconstruction.ipynb pipeline/39_demand_reconstruction.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/39_demand_reconstruction.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/39_demand_reconstruction.ipynb')\"\
+      \n"
+    deps:
+    - path: data/downloads/smard/total_load_qh.parquet
+      hash: md5
+      md5: 05d1f35330e7f15e2469e73fdf5a71a3
+      size: 1606329
+    - path: pipeline/39_demand_reconstruction.py
+      hash: md5
+      md5: 07906ebfc9bd758bc07b5068c5c1466d
+      size: 15728
+    outs:
+    - path: book/notebooks/39_demand_reconstruction.ipynb
+      hash: md5
+      md5: 2888bdd453c942fb6ebbd2ff8f2b1e46
+      size: 26948
+    - path: output/images/39_feature_importance.png
+      hash: md5
+      md5: 6c27a391e7d64638bf0c7be740b19174
+      size: 92292
+    - path: output/images/39_residuals_by_hour.png
+      hash: md5
+      md5: eb697d3336e2f437dd5930575fc7ecc0
+      size: 86822
+    - path: output/images/39_rolling_mae_2022.png
+      hash: md5
+      md5: 785fe221f46a2d0906eb43a0301a483c
+      size: 232729
+    - path: output/images/39_rolling_mae_2025.png
+      hash: md5
+      md5: a2fea7cac7c5da9ca667f4c23b5364e8
+      size: 225950
+    - path: output/images/39_sample_week_2022_summer.png
+      hash: md5
+      md5: edf32c8069e43f0d1554d3a272f1e430
+      size: 150894
+    - path: output/images/39_sample_week_2022_winter.png
+      hash: md5
+      md5: 256b2018f02a6b5ff8a5c1e78c15849a
+      size: 156391
+    - path: output/images/39_sample_week_2025_summer.png
+      hash: md5
+      md5: 2be7b5401c80625a18187fe28cdda264
+      size: 151913
+    - path: output/images/39_sample_week_2025_winter.png
+      hash: md5
+      md5: 29bd9653a7e2e691c7985002899eb71c
+      size: 155303
+    - path: output/images/39_scatter_actual_vs_predicted.png
+      hash: md5
+      md5: 49c6afc92a64ad696544e2bdf89f36a9
+      size: 431984

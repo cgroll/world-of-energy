@@ -32,11 +32,18 @@ from woe.paths import ProjPaths
 
 paths = ProjPaths()
 
+
+def show():
+    """plt.show() wrapper: no-op when matplotlib uses a non-interactive backend."""
+    try:
+        plt.show()
+    except Exception:
+        pass
+
 # %%
 # Generate quarter-hourly profiles for a representative non-leap year
 slp = bdew.ElecSlp(2023)
 df = slp.slp_frame
-df_hourly = df.resample("h").mean()
 
 print(f"Profiles:    {df.columns.tolist()}")
 print(f"Time range:  {df.index[0]} → {df.index[-1]}")
@@ -114,7 +121,7 @@ ax.legend(handles=legend_elements, loc="lower right")
 
 fig.tight_layout()
 fig.savefig(paths.images_path / "38_profile_overview.png", dpi=150, bbox_inches="tight")
-plt.show()
+show()
 
 # %% [markdown]
 # ```{figure} ../../output/images/38_profile_overview.png
@@ -143,14 +150,14 @@ def _season_of(ts, seasons):
 
 
 season_tags = pd.Series(
-    [_season_of(ts, slp._seasons) for ts in df_hourly.index],
-    index=df_hourly.index,
+    [_season_of(ts, slp._seasons) for ts in df.index],
+    index=df.index,
 )
 daytype_tags = pd.Series(
-    df_hourly.index.dayofweek.map(
+    df.index.dayofweek.map(
         lambda d: "Workday" if d < 5 else ("Saturday" if d == 5 else "Sunday")
     ),
-    index=df_hourly.index,
+    index=df.index,
 )
 
 SEASON_COLORS  = {"winter": "#4a90d9", "transition": "#e6a817", "summer": "#5ab55e"}
@@ -168,17 +175,17 @@ _legend_elements = [
 # Pre-compute all grids to establish a shared colour scale
 _all_grids = {}
 for _p in peak_to_mean_sorted.index:
-    _s = df_hourly[_p]
+    _s = df[_p]
     _p9 = (
         pd.DataFrame({
             "val":     _s,
             "season":  season_tags,
             "daytype": daytype_tags,
-            "hour":    _s.index.hour,
+            "qh":      _s.index.hour * 4 + _s.index.minute // 15,
         })
-        .groupby(["season", "daytype", "hour"])["val"]
+        .groupby(["season", "daytype", "qh"])["val"]
         .mean()
-        .unstack("hour")
+        .unstack("qh")
     )
     _g = (
         _p9.mean(axis=1)
@@ -205,15 +212,15 @@ for profile in peak_to_mean_sorted.index:
     for season in ["winter", "transition", "summer"]:
         for daytype in ["Workday", "Saturday", "Sunday"]:
             ax_l.plot(
-                range(24), profiles_9.loc[(season, daytype)].values,
+                range(96), profiles_9.loc[(season, daytype)].values,
                 color=SEASON_COLORS[season],
                 linestyle=DAYTYPE_STYLES[daytype],
                 linewidth=2,
             )
     ax_l.legend(handles=_legend_elements, fontsize=9, ncol=2)
-    ax_l.set_xlabel("Hour of day")
+    ax_l.set_xlabel("Time of day")
     ax_l.set_ylabel("Relative load (normalised)")
-    ax_l.set_xticks(range(0, 24, 2))
+    ax_l.set_xticks(range(0, 96, 8))
     ax_l.set_xticklabels([f"{h:02d}:00" for h in range(0, 24, 2)])
     ax_l.set_title(
         f"BDEW {PROFILE_LABELS[profile]} — season × day-type profiles (2023)",
@@ -253,7 +260,7 @@ for profile in peak_to_mean_sorted.index:
         paths.images_path / f"38_{profile}_season_daytype.png",
         dpi=150, bbox_inches="tight",
     )
-    plt.show()
+    show()
 
 # %% [markdown]
 # ```{figure} ../../output/images/38_h0_season_daytype.png

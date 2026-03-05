@@ -11,7 +11,7 @@
 # %% [markdown]
 # # Demand Nowcasting with XGBoost and BDEW Profiles
 #
-# XGBoost model that reconstructs quarter-hourly electricity consumption in
+# XGBoost model that reconstructs hourly electricity consumption in
 # Germany (2023–2025) from structural and temporal features.
 #
 # **Features**
@@ -20,14 +20,12 @@
 # - Day-type dummies: Saturday, Sunday, public holiday (DE national)
 #
 # **Methodology**
-# - BDEW profile values are extracted via a seasonal × day-type lookup table
-#   (independent of timestamp convention, timezone-agnostic)
+# - BDEW quarter-hourly profiles are aggregated to hourly means and stored in
+#   a seasonal × day-type × hour-of-day lookup table (timezone-agnostic)
 # - Train: 2023–2024 · Test: 2025
-# - Target: actual quarter-hourly consumption from SMARD (TOTAL_LOAD, DE-LU)
+# - Target: actual hourly consumption from SMARD (TOTAL_LOAD, DE-LU)
 
 # %%
-from datetime import datetime
-
 import holidays as hol
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,7 +36,6 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from demandlib import bdew
 from woe.paths import ProjPaths
-from woe.smard import Resolution, Region, Variable, download_smard_data
 
 def show():
     """plt.show() wrapper: no-op when matplotlib uses a non-interactive backend."""
@@ -50,49 +47,32 @@ def show():
 
 paths = ProjPaths()
 
-YEARS = [2023, 2024, 2025]
+YEARS = [2022, 2023, 2024, 2025]
 PROFILES = ["h0", "g0", "g1", "g2", "g3", "g4", "g5", "g6", "l0", "l1", "l2"]
 
 # %% [markdown]
-# ## Quarter-hourly consumption data
+# ## Hourly consumption data
 #
 # The SMARD download script (01) fetches total load at **hourly** resolution.
-# This script downloads and caches the same variable at **quarter-hourly**
-# resolution for 2023–2025.
+# We read that file directly — no additional download required.
 
 # %%
-qh_file = paths.smard_total_load_qh_file
+load_h = pd.read_parquet(paths.smard_total_load_file)
+load_h = load_h.rename(columns={"TOTAL_LOAD": "load_mw"})
+load_h = load_h[load_h.index.year.isin(YEARS)].copy()
 
-if qh_file.exists():
-    load_qh = pd.read_parquet(qh_file)
-    print(f"Loaded {len(load_qh):,} records from cache ({qh_file.name})")
-else:
-    print("Downloading quarter-hourly TOTAL_LOAD from SMARD …")
-    load_qh = download_smard_data(
-        region=Region.DE_LU.value,
-        resolution=Resolution.QUARTER_HOUR.value,
-        variable=Variable.TOTAL_LOAD.value,
-        variable_name="load_mw",
-        start_time=datetime(YEARS[0], 1, 1),
-    )
-    paths.smard_downloads_path.mkdir(parents=True, exist_ok=True)
-    load_qh.to_parquet(qh_file)
-    print(f"Downloaded {len(load_qh):,} records → saved to {qh_file.name}")
-
-load_qh = load_qh[load_qh.index.year.isin(YEARS)].copy()
-print(f"\nTime range:     {load_qh.index[0]} → {load_qh.index[-1]}")
-print(f"Records:        {len(load_qh):,}")
-print(f"Missing values: {load_qh['load_mw'].isna().sum():,}")
+print(f"Time range:     {load_h.index[0]} → {load_h.index[-1]}")
+print(f"Records:        {len(load_h):,}")
+print(f"Missing values: {load_h['load_mw'].isna().sum():,}")
 
 # %% [markdown]
 # ## BDEW feature lookup table
 #
-# Instead of aligning BDEW timestamps directly with SMARD (which may differ
-# by one quarter-hour depending on period-start vs period-end convention),
-# a lookup table is built from the reference profile:
+# BDEW profiles are quarter-hourly. They are aggregated to hourly means and
+# stored in a lookup keyed by:
 #
 # ```
-# (season, day_type, quarter_of_day) → {profile: mean value}
+# (season, day_type, hour_of_day) → {profile: mean value}
 # ```
 #
 # This mapping is timezone-agnostic and works regardless of the labelling
@@ -119,19 +99,19 @@ ref_df["season"] = [classify_season(ts, ref_seasons) for ts in ref_df.index]
 ref_df["day_type"] = ref_df.index.map(
     lambda ts: "Workday" if ts.dayofweek < 5 else ("Saturday" if ts.dayofweek == 5 else "Sunday")
 )
-ref_df["qh"] = ref_df.index.hour * 4 + ref_df.index.minute // 15
+ref_df["hour"] = ref_df.index.hour
 
-# Build lookup: one mean value per (season, day_type, qh) cell
-lookup = ref_df.groupby(["season", "day_type", "qh"])[PROFILES].mean()
+# Build lookup: aggregate 4 quarter-hourly slots per hour, then take mean per cell
+lookup = ref_df.groupby(["season", "day_type", "hour"])[PROFILES].mean()
 
-print(f"Lookup table shape: {lookup.shape}  (3 seasons × 3 day-types × 96 quarter-hours)")
+print(f"Lookup table shape: {lookup.shape}  (3 seasons × 3 day-types × 24 hours)")
 print(f"Seasons in lookup:  {sorted(lookup.index.get_level_values('season').unique())}")
 
 # %% [markdown]
 # ## Feature matrix
 
 # %%
-df = load_qh.dropna(subset=["load_mw"]).copy()
+df = load_h.dropna(subset=["load_mw"]).copy()
 
 # German national public holidays
 de_holidays = hol.Germany(years=YEARS)
@@ -145,11 +125,11 @@ df["day_type_raw"] = df.index.map(
 # Holidays shift to "Sunday" category in BDEW convention
 df["is_holiday"] = df.index.normalize().map(lambda d: d in holiday_dates).astype(int)
 df["day_type"] = df["day_type_raw"].where(df["is_holiday"] == 0, "Sunday")
-df["qh"] = df.index.hour * 4 + df.index.minute // 15
+df["hour"] = df.index.hour
 
 # Look up BDEW profile values
 bdew_features = df.join(
-    lookup, on=["season", "day_type", "qh"], how="left", rsuffix="_bdew"
+    lookup, on=["season", "day_type", "hour"], how="left", rsuffix="_bdew"
 )
 for p in PROFILES:
     df[f"bdew_{p}"] = bdew_features[p].values
@@ -166,7 +146,7 @@ df["is_sunday"] = (df.index.dayofweek == 6).astype(int)
 # is_holiday already computed above
 
 # Drop helper columns and any remaining NaNs
-df.drop(columns=["season", "day_type_raw", "day_type", "qh"], inplace=True)
+df.drop(columns=["season", "day_type_raw", "day_type", "hour"], inplace=True)
 df.dropna(inplace=True)
 
 FEATURE_COLS = [c for c in df.columns if c != "load_mw"]
@@ -177,17 +157,21 @@ print(f"Holiday rows:  {df['is_holiday'].sum():,}")
 # %% [markdown]
 # ## Train / test split
 #
-# Train on 2023–2024, evaluate on 2025.
+# Train on 2023–2024, evaluate on 2022 and 2025 (out-of-sample in both
+# directions).
 
 # %%
-train = df[df.index.year < 2025]
-test = df[df.index.year == 2025]
+train    = df[df.index.year.isin([2023, 2024])]
+test_22  = df[df.index.year == 2022]
+test_25  = df[df.index.year == 2025]
 
-X_train, y_train = train[FEATURE_COLS], train["load_mw"]
-X_test, y_test = test[FEATURE_COLS], test["load_mw"]
+X_train,   y_train   = train[FEATURE_COLS],   train["load_mw"]
+X_test_22, y_test_22 = test_22[FEATURE_COLS], test_22["load_mw"]
+X_test_25, y_test_25 = test_25[FEATURE_COLS], test_25["load_mw"]
 
-print(f"Train: {len(X_train):,} rows  {X_train.index[0].date()} → {X_train.index[-1].date()}")
-print(f"Test:  {len(X_test):,} rows   {X_test.index[0].date()} → {X_test.index[-1].date()}")
+print(f"Train:     {len(X_train):,} rows  {X_train.index[0].date()} → {X_train.index[-1].date()}")
+print(f"Test 2022: {len(X_test_22):,} rows  {X_test_22.index[0].date()} → {X_test_22.index[-1].date()}")
+print(f"Test 2025: {len(X_test_25):,} rows  {X_test_25.index[0].date()} → {X_test_25.index[-1].date()}")
 
 # %% [markdown]
 # ## XGBoost model
@@ -206,7 +190,8 @@ model = xgb.XGBRegressor(
 model.fit(X_train, y_train)
 
 y_pred_train = model.predict(X_train)
-y_pred_test = model.predict(X_test)
+y_pred_22    = model.predict(X_test_22)
+y_pred_25    = model.predict(X_test_25)
 
 # %% [markdown]
 # ## Evaluation metrics
@@ -217,11 +202,12 @@ def _metrics(y_true, y_pred, label):
     mae = mean_absolute_error(y_true, y_pred)
     rmse = np.sqrt(mean_squared_error(y_true, y_pred))
     mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-    print(f"{label:<8} R²={r2:.4f}  MAE={mae:,.0f} MW  RMSE={rmse:,.0f} MW  MAPE={mape:.2f}%")
+    print(f"{label:<12} R²={r2:.4f}  MAE={mae:,.0f} MW  RMSE={rmse:,.0f} MW  MAPE={mape:.2f}%")
     return dict(r2=r2, mae=mae, rmse=rmse, mape=mape)
 
-metrics_train = _metrics(y_train, y_pred_train, "Train")
-metrics_test = _metrics(y_test, y_pred_test, "Test")
+metrics_train = _metrics(y_train,   y_pred_train, "Train")
+metrics_22    = _metrics(y_test_22, y_pred_22,    "Test 2022")
+metrics_25    = _metrics(y_test_25, y_pred_25,    "Test 2025")
 
 # %% [markdown]
 # ## Feature importance
@@ -243,7 +229,7 @@ for f in importances.index:
 fig, ax = plt.subplots(figsize=(10, 7))
 ax.barh(importances.index, importances.values, color=_colors, edgecolor="white", linewidth=0.4)
 ax.set_xlabel("Feature importance (gain, normalised)")
-ax.set_title("XGBoost feature importances — quarter-hourly demand model (2023–2024 training)", fontsize=11)
+ax.set_title("XGBoost feature importances — hourly demand model (2023–2024 training)", fontsize=11)
 ax.xaxis.grid(True, linewidth=0.4, alpha=0.6)
 ax.set_axisbelow(True)
 legend_elements = [
@@ -260,33 +246,39 @@ show()
 # %% [markdown]
 # ```{figure} ../../output/images/39_feature_importance.png
 # :name: fig-39-feature-importance
-# XGBoost feature importances (gain) for the quarter-hourly demand nowcasting
-# model. BDEW profiles dominate — H0 (residential) typically ranks highest
-# because households make up the largest share of German consumption. The sin/cos
-# month features carry the annual heating cycle, while day-type dummies and
-# sin/cos hour add intraday level adjustments.
+# XGBoost feature importances (gain) for the hourly demand nowcasting model.
+# BDEW profiles dominate — H0 (residential) typically ranks highest because
+# households make up the largest share of German consumption. The sin/cos month
+# features carry the annual heating cycle, while day-type dummies and sin/cos
+# hour add intraday level adjustments.
 # ```
 
 # %% [markdown]
-# ## Actual vs predicted — scatter (test 2025)
+# ## Actual vs predicted — scatter (test years)
 
 # %%
-fig, ax = plt.subplots(figsize=(7, 7))
-ax.scatter(y_test, y_pred_test, alpha=0.08, s=2, color="#4a90d9", rasterized=True)
-lims = [
-    min(float(y_test.min()), float(y_pred_test.min())),
-    max(float(y_test.max()), float(y_pred_test.max())),
-]
-ax.plot(lims, lims, "r--", linewidth=1, label="Perfect fit")
-ax.set_xlabel("Actual consumption (MW)")
-ax.set_ylabel("Predicted consumption (MW)")
-ax.set_title(
-    f"Demand nowcast — actual vs predicted, test 2025\n"
-    f"R²={metrics_test['r2']:.4f}  MAE={metrics_test['mae']:,.0f} MW  "
-    f"RMSE={metrics_test['rmse']:,.0f} MW  MAPE={metrics_test['mape']:.2f}%",
-    fontsize=10,
-)
-ax.legend()
+fig, axes = plt.subplots(1, 2, figsize=(14, 7))
+
+for ax, year, y_true, y_pred, m in [
+    (axes[0], 2022, y_test_22, y_pred_22, metrics_22),
+    (axes[1], 2025, y_test_25, y_pred_25, metrics_25),
+]:
+    ax.scatter(y_true, y_pred, alpha=0.08, s=2, color="#4a90d9", rasterized=True)
+    lims = [
+        min(float(y_true.min()), float(y_pred.min())),
+        max(float(y_true.max()), float(y_pred.max())),
+    ]
+    ax.plot(lims, lims, "r--", linewidth=1, label="Perfect fit")
+    ax.set_xlabel("Actual consumption (MW)")
+    ax.set_ylabel("Predicted consumption (MW)")
+    ax.set_title(
+        f"Demand nowcast — actual vs predicted, test {year}\n"
+        f"R²={m['r2']:.4f}  MAE={m['mae']:,.0f} MW  "
+        f"RMSE={m['rmse']:,.0f} MW  MAPE={m['mape']:.2f}%",
+        fontsize=10,
+    )
+    ax.legend()
+
 fig.tight_layout()
 fig.savefig(paths.images_path / "39_scatter_actual_vs_predicted.png", dpi=150, bbox_inches="tight")
 show()
@@ -294,53 +286,69 @@ show()
 # %% [markdown]
 # ```{figure} ../../output/images/39_scatter_actual_vs_predicted.png
 # :name: fig-39-scatter
-# Scatter plot of actual vs predicted quarter-hourly consumption for the 2025
-# test period. Points cluster tightly along the 1:1 line, confirming that BDEW
-# profiles plus temporal sin/cos features capture the dominant variance in
-# German electricity demand.
+# Scatter plots of actual vs predicted hourly consumption for the 2022 (left)
+# and 2025 (right) test years. Points cluster tightly along the 1:1 line in
+# both out-of-sample periods, confirming that BDEW profiles plus temporal
+# sin/cos features capture the dominant variance in German electricity demand.
 # ```
 
 # %% [markdown]
 # ## Sample week time series
 
 # %%
-y_pred_test_s = pd.Series(y_pred_test, index=test.index, name="predicted")
+_test_sets = [
+    (2022, test_22, pd.Series(y_pred_22, index=test_22.index, name="predicted")),
+    (2025, test_25, pd.Series(y_pred_25, index=test_25.index, name="predicted")),
+]
 
-for label, start_date in [("winter", "2025-01-13"), ("summer", "2025-07-07")]:
-    start = pd.Timestamp(start_date)
-    end = start + pd.Timedelta(days=7)
-    mask = (test.index >= start) & (test.index < end)
-    actual = test.loc[mask, "load_mw"]
-    predicted = y_pred_test_s.loc[mask]
+for yr, test_df, y_pred_s in _test_sets:
+    for season, start_date in [("winter", f"{yr}-01-13"), ("summer", f"{yr}-07-07")]:
+        start = pd.Timestamp(start_date)
+        end = start + pd.Timedelta(days=7)
+        mask = (test_df.index >= start) & (test_df.index < end)
+        actual = test_df.loc[mask, "load_mw"]
+        predicted = y_pred_s.loc[mask]
 
-    if actual.empty:
-        print(f"No data for {label} week — skipping")
-        continue
+        if actual.empty:
+            print(f"No data for {season} {yr} — skipping")
+            continue
 
-    fig, ax = plt.subplots(figsize=(14, 4))
-    ax.plot(actual.index, actual.values, color="#333333", linewidth=1.0, label="Actual")
-    ax.plot(predicted.index, predicted.values, color="#e6734a", linewidth=1.0,
-            label="Predicted", alpha=0.85)
-    ax.set_ylabel("Consumption (MW)")
-    ax.set_title(f"Demand nowcast — {label} week 2025 ({start_date})", fontsize=11)
-    ax.legend()
-    ax.yaxis.grid(True, linewidth=0.4, alpha=0.6)
-    ax.set_axisbelow(True)
-    fig.tight_layout()
-    fig.savefig(paths.images_path / f"39_sample_week_{label}.png", dpi=150, bbox_inches="tight")
-    show()
+        fig, ax = plt.subplots(figsize=(14, 4))
+        ax.plot(actual.index, actual.values, color="#333333", linewidth=1.0, label="Actual")
+        ax.plot(predicted.index, predicted.values, color="#e6734a", linewidth=1.0,
+                label="Predicted", alpha=0.85)
+        ax.set_ylabel("Consumption (MW)")
+        ax.set_title(f"Demand nowcast — {season} week {yr} ({start_date})", fontsize=11)
+        ax.legend()
+        ax.yaxis.grid(True, linewidth=0.4, alpha=0.6)
+        ax.set_axisbelow(True)
+        fig.tight_layout()
+        fig.savefig(paths.images_path / f"39_sample_week_{yr}_{season}.png", dpi=150, bbox_inches="tight")
+        show()
 
 # %% [markdown]
-# ```{figure} ../../output/images/39_sample_week_winter.png
-# :name: fig-39-week-winter
-# Actual vs predicted quarter-hourly consumption for a representative winter week
-# (January 2025). The model tracks the intraday double-peak (morning/evening)
+# ```{figure} ../../output/images/39_sample_week_2022_winter.png
+# :name: fig-39-week-2022-winter
+# Actual vs predicted hourly consumption for a representative winter week
+# (January 2022). The model tracks the intraday double-peak (morning/evening)
 # and captures the reduced weekend load.
 # ```
 #
-# ```{figure} ../../output/images/39_sample_week_summer.png
-# :name: fig-39-week-summer
-# Actual vs predicted quarter-hourly consumption for a representative summer week
+# ```{figure} ../../output/images/39_sample_week_2022_summer.png
+# :name: fig-39-week-2022-summer
+# Actual vs predicted hourly consumption for a representative summer week
+# (July 2022).
+# ```
+#
+# ```{figure} ../../output/images/39_sample_week_2025_winter.png
+# :name: fig-39-week-2025-winter
+# Actual vs predicted hourly consumption for a representative winter week
+# (January 2025).
+# ```
+#
+# ```{figure} ../../output/images/39_sample_week_2025_summer.png
+# :name: fig-39-week-2025-summer
+# Actual vs predicted hourly consumption for a representative summer week
 # (July 2025). The flatter intraday profile and weaker day-type contrast compared
 # to winter are reproduced well.
 # ```
@@ -349,29 +357,32 @@ for label, start_date in [("winter", "2025-01-13"), ("summer", "2025-07-07")]:
 # ## Residuals by hour of day
 
 # %%
-residuals = pd.Series(
-    y_test.values - y_pred_test, index=test.index, name="residual"
-)
-resid_by_hour = [residuals[residuals.index.hour == h].values for h in range(24)]
+fig, axes = plt.subplots(1, 2, figsize=(18, 5), sharey=True)
 
-fig, ax = plt.subplots(figsize=(12, 5))
-ax.boxplot(
-    resid_by_hour,
-    positions=range(24),
-    widths=0.6,
-    patch_artist=True,
-    boxprops=dict(facecolor="#4a90d9", alpha=0.7),
-    medianprops=dict(color="white", linewidth=1.5),
-    flierprops=dict(marker=".", markersize=2, alpha=0.3),
-)
-ax.axhline(0, color="red", linestyle="--", linewidth=1)
-ax.set_xlabel("Hour of day")
-ax.set_ylabel("Residual (MW)")
-ax.set_title("Prediction residuals by hour of day — test set 2025", fontsize=11)
-ax.set_xticks(range(24))
-ax.set_xticklabels([f"{h:02d}:00" for h in range(24)], fontsize=8)
-ax.yaxis.grid(True, linewidth=0.4, alpha=0.6)
-ax.set_axisbelow(True)
+for ax, year, y_true, y_pred in [
+    (axes[0], 2022, y_test_22, y_pred_22),
+    (axes[1], 2025, y_test_25, y_pred_25),
+]:
+    resid = pd.Series(y_true.values - y_pred, index=y_true.index)
+    resid_by_hour = [resid[resid.index.hour == h].values for h in range(24)]
+    ax.boxplot(
+        resid_by_hour,
+        positions=range(24),
+        widths=0.6,
+        patch_artist=True,
+        boxprops=dict(facecolor="#4a90d9", alpha=0.7),
+        medianprops=dict(color="white", linewidth=1.5),
+        flierprops=dict(marker=".", markersize=2, alpha=0.3),
+    )
+    ax.axhline(0, color="red", linestyle="--", linewidth=1)
+    ax.set_xlabel("Hour of day")
+    ax.set_ylabel("Residual (MW)")
+    ax.set_title(f"Prediction residuals by hour of day — test {year}", fontsize=11)
+    ax.set_xticks(range(24))
+    ax.set_xticklabels([f"{h:02d}:00" for h in range(24)], fontsize=8)
+    ax.yaxis.grid(True, linewidth=0.4, alpha=0.6)
+    ax.set_axisbelow(True)
+
 fig.tight_layout()
 fig.savefig(paths.images_path / "39_residuals_by_hour.png", dpi=150, bbox_inches="tight")
 show()
@@ -379,8 +390,48 @@ show()
 # %% [markdown]
 # ```{figure} ../../output/images/39_residuals_by_hour.png
 # :name: fig-39-residuals
-# Distribution of prediction residuals by hour of day for the 2025 test period.
-# Medians near zero indicate unbiased predictions across all hours. Wider
-# interquartile ranges during morning ramp-up (07:00–09:00) and evening peak
-# (17:00–20:00) reflect higher uncertainty at demand transition points.
+# Distribution of prediction residuals by hour of day for the 2022 (left) and
+# 2025 (right) test periods. Medians near zero indicate unbiased predictions
+# across all hours. Wider interquartile ranges during morning ramp-up
+# (07:00–09:00) and evening peak (17:00–20:00) reflect higher uncertainty at
+# demand transition points.
+# ```
+
+# %% [markdown]
+# ## Rolling MAE over time
+
+# %%
+_WINDOWS = [(24, "#4a90d9", "24 h"), (72, "#e6a817", "72 h"), (240, "#e6734a", "240 h")]
+
+for year, y_true, y_pred in [(2022, y_test_22, y_pred_22), (2025, y_test_25, y_pred_25)]:
+    abs_err = pd.Series(np.abs(y_true.values - y_pred), index=y_true.index, name="abs_err")
+
+    fig, ax = plt.subplots(figsize=(14, 4))
+    for window, color, label in _WINDOWS:
+        rolling_mae = abs_err.rolling(window, center=True, min_periods=1).mean()
+        ax.plot(rolling_mae.index, rolling_mae.values, color=color, linewidth=1.2, label=label)
+
+    ax.set_ylabel("Rolling MAE (MW)")
+    ax.set_title(f"Rolling mean absolute error — test {year}", fontsize=11)
+    ax.legend(title="Window")
+    ax.yaxis.grid(True, linewidth=0.4, alpha=0.6)
+    ax.set_axisbelow(True)
+    fig.tight_layout()
+    fig.savefig(paths.images_path / f"39_rolling_mae_{year}.png", dpi=150, bbox_inches="tight")
+    show()
+
+# %% [markdown]
+# ```{figure} ../../output/images/39_rolling_mae_2022.png
+# :name: fig-39-rolling-mae-2022
+# Rolling mean absolute error for the 2022 test year at three smoothing
+# windows (24 h, 72 h, 240 h). Peaks indicate periods where the structural
+# BDEW + temporal features are insufficient to capture actual consumption,
+# e.g. during unusual weather or public-holiday clusters.
+# ```
+#
+# ```{figure} ../../output/images/39_rolling_mae_2025.png
+# :name: fig-39-rolling-mae-2025
+# Rolling mean absolute error for the 2025 test year. Comparing the two test
+# years reveals whether the model's error structure is stable over time or
+# drifts as structural consumption patterns evolve.
 # ```
