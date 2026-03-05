@@ -1197,7 +1197,7 @@ stages:
     outs:
     - path: book/notebooks/37_analyse_pecd.ipynb
       hash: md5
-      md5: d363553f55a4427f8784ef3d39c4ee3f
+      md5: 598e01691cea0c77eb887125a2e70bbe
       size: 29657
     - path: output/images/37_annual_cf_de.png
       hash: md5
@@ -1315,7 +1315,7 @@ stages:
     outs:
     - path: book/notebooks/39_demand_reconstruction.ipynb
       hash: md5
-      md5: edb4510707477893c5f2a70b98386079
+      md5: b34ad411d362bae8bcc61f1f7160cb6b
       size: 47240
     - path: data/models/de_load_estimation/baseline.json
       hash: md5
