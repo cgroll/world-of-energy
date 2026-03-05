@@ -35,10 +35,14 @@ seen: set[tuple[str, str]] = set()
 combos: list[tuple[str, str, object]] = []
 for zip_path in zip_files:
     m = re.match(r"PECD_\d+_(.+)_(capacity_factor_ratio|power)\.zip$", zip_path.name)
-    if not m:
-        print(f"  Skipping unrecognised filename: {zip_path.name}")
-        continue
-    variable, product_type = m.group(1), m.group(2)
+    if m:
+        variable, product_type = m.group(1), m.group(2)
+    else:
+        m = re.match(r"PECD_\d+_(.+)\.zip$", zip_path.name)
+        if not m:
+            print(f"  Skipping unrecognised filename: {zip_path.name}")
+            continue
+        variable, product_type = m.group(1), "value"
     key = (variable, product_type)
     if key not in seen:
         seen.add(key)
@@ -65,6 +69,10 @@ def load_pecd_zip(zip_path, variable: str, product_type: str) -> pd.DataFrame:
         index_col="Date",
     )
     df.index.name = "time"
+    if df.index.duplicated().any():
+        n_dups = df.index.duplicated().sum()
+        print(f"  Dropping {n_dups} duplicate timestamps in {zip_path.name}")
+        df = df[~df.index.duplicated(keep="first")]
     df.columns = pd.MultiIndex.from_tuples(
         [(variable, product_type, country) for country in df.columns],
         names=["variable", "product_type", "country"],

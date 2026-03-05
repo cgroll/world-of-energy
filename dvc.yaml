@@ -502,6 +502,7 @@ stages:
     deps:
       - pipeline/39_demand_reconstruction.py
       - data/downloads/smard/total_load_qh.parquet
+      - data/processed/pecd/pecd_regions.parquet
     outs:
       - book/notebooks/39_demand_reconstruction.ipynb:
           cache: false
@@ -523,3 +524,13 @@ stages:
           cache: false
       - output/images/39_rolling_mae_2025.png:
           cache: false
+      - output/images/39_feature_importance_weather.png:
+          cache: false
+      - output/images/39_scatter_weather.png:
+          cache: false
+      - output/images/39_rolling_mae_weather_2022.png:
+          cache: false
+      - output/images/39_rolling_mae_weather_2025.png:
+          cache: false
+      - data/models/de_load_estimation/baseline.json
+      - data/models/de_load_estimation/weather.json

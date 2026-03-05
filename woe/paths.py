@@ -269,6 +269,27 @@ class ProjPaths:
         """Path to filtered renewable power plants CSV file (Open Power System Data)."""
         return self.downloads_path / "renewable_power_plants" / "renewable_power_plants_DE_filtered.csv"
 
+    # Trained model paths
+    @property
+    def models_path(self) -> Path:
+        """Trained model directory."""
+        return self.data_path / "models"
+
+    @property
+    def de_load_estimation_path(self) -> Path:
+        """DE load estimation models directory."""
+        return self.models_path / "de_load_estimation"
+
+    @property
+    def de_load_baseline_model_file(self) -> Path:
+        """Baseline XGBoost load model (BDEW + temporal features)."""
+        return self.de_load_estimation_path / "baseline.json"
+
+    @property
+    def de_load_weather_model_file(self) -> Path:
+        """Weather-enhanced XGBoost load model (BDEW + temporal + weather features)."""
+        return self.de_load_estimation_path / "weather.json"
+
     @property
     def renewable_plants_processed_path(self) -> Path:
         """Processed renewable plant aggregates directory."""

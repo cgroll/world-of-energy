@@ -37,6 +37,13 @@ VARIABLES = [
 
 PRODUCT_TYPES = ["capacity_factor_ratio"]
 
+# Meteorological driving variables (no energy_product_type required)
+WEATHER_VARIABLES = [
+    "2m_air_temperature",
+    "wind_speed_at_10m",
+    "surface_downwelling_shortwave_radiation",
+]
+
 paths.pecd_downloads_path.mkdir(parents=True, exist_ok=True)
 
 client = cdsapi.Client()
@@ -79,4 +86,26 @@ with tqdm(jobs, desc="Downloading PECD", unit="request") as pbar:
                 tqdm.write(f"  Skipping {output_file.name} (invalid combination: {variable} + {product_type})")
                 continue
             raise
+        tqdm.write(f"  Downloaded {output_file.name}")
+
+weather_jobs = [(year, variable) for year in YEARS for variable in WEATHER_VARIABLES]
+
+with tqdm(weather_jobs, desc="Downloading PECD weather", unit="request") as pbar:
+    for year, variable in pbar:
+        output_file = paths.pecd_downloads_path / f"PECD_{year}_{variable}.zip"
+        pbar.set_postfix({"file": output_file.name})
+
+        if output_file.exists():
+            tqdm.write(f"  Skipping {output_file.name} (already exists)")
+            continue
+
+        request = {
+            "variable": variable,
+            "spatial_aggregation": "country_level",
+            "temporal_aggregation": "hourly",
+            "year": year,
+            "format": "zip",
+        }
+
+        client.retrieve("sis-energy-derived-reanalysis", request, str(output_file))
         tqdm.write(f"  Downloaded {output_file.name}")

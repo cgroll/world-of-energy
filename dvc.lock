@@ -1145,39 +1145,39 @@ stages:
     deps:
     - path: pipeline/35_download_pecd_regions.py
       hash: md5
-      md5: f6c93c5892a32072226f411bcd1ace81
-      size: 2834
+      md5: 99c29aea010f7a5a83b39e1a46268563
+      size: 3848
     - path: woe/paths.py
       hash: md5
-      md5: a764f33032891ec3e6d99d4eb29ee76c
-      size: 12828
+      md5: bbc777071c776247ff87a5774ca4ad59
+      size: 13564
     outs:
     - path: data/downloads/pecd
       hash: md5
-      md5: 378f6cf87916a7e0e470eb5423b17e03.dir
-      size: 165494181
-      nfiles: 3
+      md5: 329efd156d65cff268121770ddddb251.dir
+      size: 337482901
+      nfiles: 6
   process_pecd_regions:
     cmd: python pipeline/36_process_pecd_regions.py
     deps:
     - path: data/downloads/pecd
       hash: md5
-      md5: 378f6cf87916a7e0e470eb5423b17e03.dir
-      size: 165494181
-      nfiles: 3
+      md5: 329efd156d65cff268121770ddddb251.dir
+      size: 337482901
+      nfiles: 6
     - path: pipeline/36_process_pecd_regions.py
       hash: md5
-      md5: 3a87286750274321351bafdda4fb1d6c
-      size: 3037
+      md5: c1db7acf63c548ca3d79cf2481ecb0a9
+      size: 3397
     - path: woe/paths.py
       hash: md5
-      md5: a764f33032891ec3e6d99d4eb29ee76c
-      size: 12828
+      md5: bbc777071c776247ff87a5774ca4ad59
+      size: 13564
     outs:
     - path: data/processed/pecd/pecd_regions.parquet
       hash: md5
-      md5: ee98ad165ffabc42ee6d1db32cb42775
-      size: 296592707
+      md5: 6a4b45ce2c25bc3c40a37d4a75645c5a
+      size: 616016135
   process_analyse_pecd:
     cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
       --output book/notebooks/37_analyse_pecd.ipynb pipeline/37_analyse_pecd.py &&
@@ -1188,8 +1188,8 @@ stages:
     deps:
     - path: data/processed/pecd/pecd_regions.parquet
       hash: md5
-      md5: ee98ad165ffabc42ee6d1db32cb42775
-      size: 296592707
+      md5: 6a4b45ce2c25bc3c40a37d4a75645c5a
+      size: 616016135
     - path: pipeline/37_analyse_pecd.py
       hash: md5
       md5: 10dabf2d380155ace93af61471389ccf
@@ -1197,8 +1197,8 @@ stages:
     outs:
     - path: book/notebooks/37_analyse_pecd.ipynb
       hash: md5
-      md5: 4fa9369236289362544df6628b19c625
-      size: 29552
+      md5: d363553f55a4427f8784ef3d39c4ee3f
+      size: 29657
     - path: output/images/37_annual_cf_de.png
       hash: md5
       md5: 1dcb89616d88cb1d10e36b70c2d09119
@@ -1304,19 +1304,35 @@ stages:
       hash: md5
       md5: 05d1f35330e7f15e2469e73fdf5a71a3
       size: 1606329
+    - path: data/processed/pecd/pecd_regions.parquet
+      hash: md5
+      md5: 6a4b45ce2c25bc3c40a37d4a75645c5a
+      size: 616016135
     - path: pipeline/39_demand_reconstruction.py
       hash: md5
-      md5: 07906ebfc9bd758bc07b5068c5c1466d
-      size: 15728
+      md5: d968279dd7e2fd7f0bdaddd1b3edac3f
+      size: 27153
     outs:
     - path: book/notebooks/39_demand_reconstruction.ipynb
       hash: md5
-      md5: a368676a4a6b9789b2eac8c958b97924
-      size: 26948
+      md5: edb4510707477893c5f2a70b98386079
+      size: 47240
+    - path: data/models/de_load_estimation/baseline.json
+      hash: md5
+      md5: b6fd8454815cf035b9c52605b41d3cc0
+      size: 4102895
+    - path: data/models/de_load_estimation/weather.json
+      hash: md5
+      md5: 0fb12972be8dcba5ca931a29b2fbffc8
+      size: 5028179
     - path: output/images/39_feature_importance.png
       hash: md5
       md5: 6c27a391e7d64638bf0c7be740b19174
       size: 92292
+    - path: output/images/39_feature_importance_weather.png
+      hash: md5
+      md5: a21423dfc87c1f8d03408a0f7d223bf2
+      size: 107306
     - path: output/images/39_residuals_by_hour.png
       hash: md5
       md5: eb697d3336e2f437dd5930575fc7ecc0
@@ -1329,6 +1345,14 @@ stages:
       hash: md5
       md5: a2fea7cac7c5da9ca667f4c23b5364e8
       size: 225950
+    - path: output/images/39_rolling_mae_weather_2022.png
+      hash: md5
+      md5: 79e2adad10b4a884dc3ba26bbecf915b
+      size: 523892
+    - path: output/images/39_rolling_mae_weather_2025.png
+      hash: md5
+      md5: 1a11e987bce53add5e84bf42300341e2
+      size: 493004
     - path: output/images/39_sample_week_2022_summer.png
       hash: md5
       md5: edf32c8069e43f0d1554d3a272f1e430
@@ -1349,3 +1373,7 @@ stages:
       hash: md5
       md5: 49c6afc92a64ad696544e2bdf89f36a9
       size: 431984
+    - path: output/images/39_scatter_weather.png
+      hash: md5
+      md5: ea0eec3a81d889869252cfacb6173449
+      size: 450818
