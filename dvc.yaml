@@ -462,3 +462,77 @@ stages:
           cache: false
       - output/images/37_cf_choropleth_offshore.png:
           cache: false
+  process_bdew_profiles:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/38_bdew_profiles.ipynb pipeline/38_bdew_profiles.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/38_bdew_profiles.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/38_bdew_profiles.ipynb')"
+    deps:
+      - pipeline/38_bdew_profiles.py
+    outs:
+      - book/notebooks/38_bdew_profiles.ipynb:
+          cache: false
+      - output/images/38_profile_overview.png:
+          cache: false
+      - output/images/38_h0_season_daytype.png:
+          cache: false
+      - output/images/38_g0_season_daytype.png:
+          cache: false
+      - output/images/38_g1_season_daytype.png:
+          cache: false
+      - output/images/38_g2_season_daytype.png:
+          cache: false
+      - output/images/38_g3_season_daytype.png:
+          cache: false
+      - output/images/38_g4_season_daytype.png:
+          cache: false
+      - output/images/38_g5_season_daytype.png:
+          cache: false
+      - output/images/38_g6_season_daytype.png:
+          cache: false
+      - output/images/38_l0_season_daytype.png:
+          cache: false
+      - output/images/38_l1_season_daytype.png:
+          cache: false
+      - output/images/38_l2_season_daytype.png:
+          cache: false
+  process_demand_reconstruction:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/39_demand_reconstruction.ipynb pipeline/39_demand_reconstruction.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/39_demand_reconstruction.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/39_demand_reconstruction.ipynb')"
+    deps:
+      - pipeline/39_demand_reconstruction.py
+      - data/downloads/smard/total_load_qh.parquet
+    outs:
+      - book/notebooks/39_demand_reconstruction.ipynb:
+          cache: false
+      - output/images/39_feature_importance.png:
+          cache: false
+      - output/images/39_scatter_actual_vs_predicted.png:
+          cache: false
+      - output/images/39_sample_week_winter.png:
+          cache: false
+      - output/images/39_sample_week_summer.png:
+          cache: false
+      - output/images/39_residuals_by_hour.png:
+          cache: false
+  process_dev_demand_reconstruction:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/39_dev_demand_reconstruction.ipynb pipeline/39_dev_demand_reconstruction.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/39_dev_demand_reconstruction.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/39_dev_demand_reconstruction.ipynb')"
+    deps:
+      - pipeline/39_dev_demand_reconstruction.py
+    outs:
+      - data/downloads/smard/total_load_qh.parquet:
+          persist: true
+      - book/notebooks/39_dev_demand_reconstruction.ipynb:
+          cache: false
+      - output/images/39_feature_importance.png:
+          cache: false
+      - output/images/39_scatter_actual_vs_predicted.png:
+          cache: false
+      - output/images/39_sample_week_winter.png:
+          cache: false
+      - output/images/39_sample_week_summer.png:
+          cache: false
+      - output/images/39_residuals_by_hour.png:
+          cache: false

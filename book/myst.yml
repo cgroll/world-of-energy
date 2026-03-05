@@ -23,6 +23,8 @@ project:
         - file: notebooks/32_pv_capacities_2019.ipynb
         - file: notebooks/34_analyse_renewables_ninja_generations.ipynb
         - file: notebooks/37_analyse_pecd.ipynb
+        - file: notebooks/38_bdew_profiles.ipynb
+        - file: notebooks/39_demand_reconstruction.ipynb
     - title: Weather
       children:
         - file: notebooks/10_ee_seasons.ipynb

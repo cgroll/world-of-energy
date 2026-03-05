@@ -29,6 +29,9 @@ dependencies = [
     "cdsapi>=0.7.7",
     "netcdf4>=1.7.4",
     "h5netcdf>=1.8.1",
+    "demandlib>=0.2.2",
+    "xgboost>=3.2.0",
+    "holidays>=0.92",
 ]
 
 [build-system]

@@ -152,6 +152,11 @@ class ProjPaths:
         return self.smard_downloads_path / "forecast_id_wind_offshore.parquet"
 
     @property
+    def smard_total_load_qh_file(self) -> Path:
+        """Path to SMARD quarter-hourly total load parquet file (DE-LU)."""
+        return self.smard_downloads_path / "total_load_qh.parquet"
+
+    @property
     def smard_capacities_file(self) -> Path:
         """Path to SMARD installed capacities parquet file."""
         return self.smard_downloads_path / "capacities.parquet"
