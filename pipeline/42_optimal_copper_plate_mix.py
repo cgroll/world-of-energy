@@ -12,7 +12,7 @@
 # # Optimal Copper-Plate Energy Mix — Germany
 #
 # Uses **PyPSA** to find the cost-minimising mix of solar PV, onshore wind,
-# offshore wind, short-duration battery storage, and long-duration hydrogen
+# short-duration battery storage, and long-duration hydrogen
 # storage for Germany. The country is treated as a single node (copper-plate /
 # transport model) — no internal transmission constraints.
 #
@@ -25,19 +25,20 @@
 # generator ensures feasibility in any hour that renewables + storage cannot
 # cover demand.
 #
-# **Technology cost assumptions** (annualised at 7 % WACC):
+# **Technology cost assumptions** — WHOBS 2030 (annualised at 3 % WACC):
+# Source: PyPSA/WHOBS run_single_simulation.ipynb (2030 scenario)
 #
 # | Technology | Overnight capex | Lifetime | Ann. factor | FOM | Total (k€/MW/yr) |
 # |---|---|---|---|---|---|
-# | Solar PV | 600 €/kW | 25 yr | 8.58 % | 10 €/kW/yr | **62** |
-# | Wind onshore | 1 300 €/kW | 25 yr | 8.58 % | 25 €/kW/yr | **137** |
-# | Wind offshore | 2 500 €/kW | 25 yr | 8.58 % | 70 €/kW/yr | **285** |
-# | Battery (4 h, η=90 %) | 1 100 €/kW | 15 yr | 10.98 % | 10 €/kW/yr | **131** |
-# | Hydrogen (168 h, η=42 %) | 1 680 €/kW | 20 yr | 9.44 % | — | **159** |
+# | Solar PV | 600 €/kW | 25 yr | 5.74 % | 3 % capex | **52** |
+# | Wind onshore | 1 182 €/kW | 25 yr | 5.74 % | 3 % capex | **103** |
+# | Battery (4 h, η=81 % rt) | 400 €/kW + 200 €/kWh·4h | 25 yr | 5.74 % | 3 % capex | **105** |
+# | Hydrogen (168 h, η=48 % rt) | 750 €/kW elec + 800 €/kW CCGT + 11 €/kWh steel tank | mixed | — | 3 % power | **292** |
 #
-# Battery capex = 300 €/kW power inverter + 200 €/kWh × 4 h energy cells.
-# Hydrogen capex = 700 €/kW electrolyser + 700 €/kW reconversion (CCGT/FC)
-# + 1 €/kWh × 280 MWh/MW tank (168 h ÷ 0.60 dispatch efficiency).
+# Battery: inverter 400 €/kW (≈ USD at parity) + energy 200 €/kWh × 4 h cells; η=0.90 one-way.
+# Hydrogen: 750 €/kW electrolyser (η=0.80, 20 yr) + 800 €/kW H2-CCGT (η=0.60, 25 yr)
+# + 11 €/kWh steel-tank storage × (168 h ÷ 0.60) MWh/MW (30 yr).
+# Offshore wind excluded (not modelled in WHOBS single-country runs).
 
 # %%
 import matplotlib.pyplot as plt
@@ -65,11 +66,8 @@ paths = ProjPaths()
 # %%
 pecd = pd.read_parquet(paths.pecd_processed_file)
 
-cf_solar_raw    = pecd["solar_photovoltaic_power_generation"]["capacity_factor_ratio"]["DE"]
-cf_onshore_raw  = pecd["wind_power_generation_onshore"]["capacity_factor_ratio"]["DE"]
-cf_offshore_raw = pecd["wind_power_generation_offshore"]["capacity_factor_ratio"].get(
-    "DE", pd.Series(dtype=float)
-)
+cf_solar_raw   = pecd["solar_photovoltaic_power_generation"]["capacity_factor_ratio"]["DE"]
+cf_onshore_raw = pecd["wind_power_generation_onshore"]["capacity_factor_ratio"]["DE"]
 
 
 def pecd_to_smard_index(s: pd.Series) -> pd.Series:
@@ -87,20 +85,11 @@ def convert_and_clean(raw: pd.Series) -> pd.Series:
     return s[~s.index.duplicated(keep="first")]
 
 
-cf_solar    = convert_and_clean(cf_solar_raw)
-cf_onshore  = convert_and_clean(cf_onshore_raw)
-cf_offshore = (
-    convert_and_clean(cf_offshore_raw)
-    if not cf_offshore_raw.empty
-    else pd.Series(dtype=float)
-)
+cf_solar   = convert_and_clean(cf_solar_raw)
+cf_onshore = convert_and_clean(cf_onshore_raw)
 
-print(f"CF solar    : {cf_solar.index[0]} → {cf_solar.index[-1]}  ({len(cf_solar):,} rows)")
-print(f"CF onshore  : {cf_onshore.index[0]} → {cf_onshore.index[-1]}")
-if not cf_offshore.empty:
-    print(f"CF offshore : {cf_offshore.index[0]} → {cf_offshore.index[-1]}")
-else:
-    print("CF offshore : not available for DE — excluded from optimisation")
+print(f"CF solar   : {cf_solar.index[0]} → {cf_solar.index[-1]}  ({len(cf_solar):,} rows)")
+print(f"CF onshore : {cf_onshore.index[0]} → {cf_onshore.index[-1]}")
 
 # %% [markdown]
 # ## Load demand predictions (baseline model, no weather features)
@@ -115,8 +104,6 @@ print(f"Demand      : {demand_pred.index[0]} → {demand_pred.index[-1]}  ({len(
 
 # %%
 shared_idx = cf_solar.index.intersection(cf_onshore.index).intersection(demand_pred.index)
-if not cf_offshore.empty:
-    shared_idx = shared_idx.intersection(cf_offshore.index)
 
 # Walk backwards through available April years; take the first with ≥ 8 000 hours
 opt_year: int | None = None
@@ -139,21 +126,14 @@ print(f"Snapshots           : {len(snapshots):,} hours")
 # Align all series to the chosen snapshots
 cf_s   = cf_solar.reindex(snapshots).clip(0, 1).fillna(0)
 cf_on  = cf_onshore.reindex(snapshots).clip(0, 1).fillna(0)
-cf_off = (
-    cf_offshore.reindex(snapshots).clip(0, 1).fillna(0)
-    if not cf_offshore.empty
-    else None
-)
 demand = demand_pred.reindex(snapshots).interpolate(limit=2)
 
 # Drop any residual NaN rows and re-align
-valid    = demand.notna()
+valid     = demand.notna()
 snapshots = snapshots[valid]
-cf_s   = cf_s[valid]
-cf_on  = cf_on[valid]
-if cf_off is not None:
-    cf_off = cf_off[valid]
-demand = demand[valid]
+cf_s      = cf_s[valid]
+cf_on     = cf_on[valid]
+demand    = demand[valid]
 
 print(f"Demand range: {demand.min():,.0f} – {demand.max():,.0f} MW  (mean {demand.mean():,.0f} MW)")
 
@@ -161,7 +141,8 @@ print(f"Demand range: {demand.min():,.0f} – {demand.max():,.0f} MW  (mean {dem
 # ## Technology cost assumptions
 
 # %%
-WACC = 0.07
+WACC = 0.03       # WHOBS 2030 discount rate
+FOM_RATE = 0.03   # fixed O&M: 3 % of overnight capex/yr (all technologies)
 
 
 def annuity(lifetime: int) -> float:
@@ -169,24 +150,30 @@ def annuity(lifetime: int) -> float:
     return WACC * (1 + WACC) ** lifetime / ((1 + WACC) ** lifetime - 1)
 
 
-# Annualised capital costs in €/MW/yr
-solar_ann_cost    = 600e3  * annuity(25) + 10e3
-onshore_ann_cost  = 1_300e3 * annuity(25) + 25e3
-offshore_ann_cost = 2_500e3 * annuity(25) + 70e3
-
-# Battery: 4 h duration; total capex = power (300 €/kW) + energy (200 €/kWh × 4 h)
+# Annualised capital costs in €/MW/yr  (WHOBS 2030)
+# Solar PV: 600 €/kW, 25 yr
+solar_ann_cost   = 600e3   * (annuity(25) + FOM_RATE)
+# Wind onshore: 1 182 €/kW, 25 yr
+onshore_ann_cost = 1_182e3 * (annuity(25) + FOM_RATE)
+# Battery: 4 h duration
+#   inverter 400 €/kW (USD≈EUR) + energy cells 200 €/kWh × 4 h; one-way η = 0.90
 BAT_MAX_HOURS = 4
-bat_ann_cost  = (300e3 + 200e3 * BAT_MAX_HOURS) * annuity(15) + 10e3
-BAT_EFF       = 0.95   # one-way (store and dispatch)
+BAT_EFF       = 0.90   # one-way (WHOBS: 0.9)
+_bat_capex    = 400e3 + 200e3 * BAT_MAX_HOURS   # €/MW total
+bat_ann_cost  = _bat_capex * (annuity(25) + FOM_RATE)
 
 # Hydrogen: 168 h (1 week) duration
-#   power capex: 700 €/kW electrolyser + 700 €/kW reconversion
-#   energy capex: 1 €/kWh tank × (168 h ÷ 0.60 dispatch eff) MWh/MW = 280 €/kW
+#   750 €/kW electrolyser (η=0.80, 20 yr) + 800 €/kW H2-CCGT (η=0.60, 25 yr)
+#   + 11 €/kWh steel-tank × (168 h ÷ 0.60) MWh/MW (30 yr, no FOM)
 H2_MAX_HOURS    = 168
-H2_EFF_STORE    = 0.70   # electrolysis
-H2_EFF_DISPATCH = 0.60   # CCGT or fuel cell
-h2_tank_cost_per_mw = 1e3 * H2_MAX_HOURS / H2_EFF_DISPATCH
-h2_ann_cost  = (700e3 + 700e3 + h2_tank_cost_per_mw) * annuity(20)
+H2_EFF_STORE    = 0.80   # electrolysis (WHOBS 2030)
+H2_EFF_DISPATCH = 0.60   # H2-CCGT
+_h2_tank_kwh_per_mw = H2_MAX_HOURS / H2_EFF_DISPATCH   # kWh H2 per kW output
+h2_ann_cost = (
+    750e3 * (annuity(20) + FOM_RATE)            # electrolyser
+    + 800e3 * (annuity(25) + FOM_RATE)          # H2-CCGT
+    + 11e3 * _h2_tank_kwh_per_mw * annuity(30)  # steel-tank storage
+)
 
 # Backup / value of lost load
 BACKUP_VOLL = 300_000.  # €/MWh — very high cost to deter use; not extendable
@@ -195,7 +182,6 @@ print("Annualised technology costs (€/MW/yr):")
 for label, cost in [
     ("Solar PV",         solar_ann_cost),
     ("Wind onshore",     onshore_ann_cost),
-    ("Wind offshore",    offshore_ann_cost),
     (f"Battery  ({BAT_MAX_HOURS}h, η={BAT_EFF**2:.0%} rt)",  bat_ann_cost),
     (f"Hydrogen ({H2_MAX_HOURS}h, η={H2_EFF_STORE * H2_EFF_DISPATCH:.0%} rt)", h2_ann_cost),
 ]:
@@ -225,13 +211,6 @@ n.add("Generator", "wind_onshore", bus="DE",
       p_max_pu=cf_on,
       capital_cost=onshore_ann_cost,
       marginal_cost=0.)
-
-if cf_off is not None:
-    n.add("Generator", "wind_offshore", bus="DE",
-          p_nom_extendable=True,
-          p_max_pu=cf_off,
-          capital_cost=offshore_ann_cost,
-          marginal_cost=0.)
 
 # --- Storage units (extendable) ---
 n.add("StorageUnit", "battery", bus="DE",
@@ -300,8 +279,6 @@ total_demand_mwh = demand.sum()
 
 # Curtailment: available RE minus actual dispatch
 avail_re = cf_s * cap_mw.get("solar", 0) + cf_on * cap_mw.get("wind_onshore", 0)
-if cf_off is not None:
-    avail_re += cf_off * cap_mw.get("wind_offshore", 0)
 curtail_mwh = (avail_re - n.generators_t.p[GEN_TECH].sum(axis=1)).clip(lower=0).sum()
 
 # System LCOE
@@ -330,18 +307,16 @@ for tech, cost in ann_cost_by_tech.items():
 
 # %%
 TECH_COLORS = {
-    "solar":         "#f1c40f",
-    "wind_onshore":  "#27ae60",
-    "wind_offshore": "#1abc9c",
-    "battery":       "#3498db",
-    "hydrogen":      "#9b59b6",
+    "solar":        "#f1c40f",
+    "wind_onshore": "#27ae60",
+    "battery":      "#3498db",
+    "hydrogen":     "#9b59b6",
 }
 TECH_LABELS = {
-    "solar":         "Solar PV",
-    "wind_onshore":  "Wind onshore",
-    "wind_offshore": "Wind offshore",
-    "battery":       f"Battery ({BAT_MAX_HOURS}h)",
-    "hydrogen":      f"Hydrogen ({H2_MAX_HOURS}h)",
+    "solar":        "Solar PV",
+    "wind_onshore": "Wind onshore",
+    "battery":      f"Battery ({BAT_MAX_HOURS}h)",
+    "hydrogen":     f"Hydrogen ({H2_MAX_HOURS}h)",
 }
 
 techs_ordered = [t for t in TECH_LABELS if t in cap_mw.index]
@@ -380,18 +355,45 @@ show()
 # ## Chart 2 — Annual cost breakdown
 
 # %%
-fig, ax = plt.subplots(figsize=(9, 5))
-bar_labels  = [TECH_LABELS.get(t, t) for t in techs_ordered]
-bar_values  = [ann_cost_by_tech[t] / 1e6 for t in techs_ordered]
-bar_colors  = [TECH_COLORS[t] for t in techs_ordered]
+# WHOBS colour scheme (matches PyPSA/WHOBS run_single_simulation.ipynb)
+WHOBS_COLORS = {
+    "onshore wind":          "#1f77b4",  # tab:blue
+    "utility solar PV":      "#bcbd22",  # tab:olive
+    "battery storage":       "#7f7f7f",  # tab:gray
+    "battery inverter":      "#212121",  # near-black
+    "hydrogen storage":      "#e377c2",  # tab:pink
+    "hydrogen electrolysis": "#17becf",  # tab:cyan
+    "hydrogen turbine":      "#d62728",  # tab:red
+}
 
-bars = ax.bar(bar_labels, bar_values, color=bar_colors, edgecolor="white", linewidth=0.8)
-for bar, val in zip(bars, bar_values):
-    ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 10,
-            f"{val:.0f}", ha="center", va="bottom", fontsize=9, fontweight="bold")
+# Split annualised costs into WHOBS sub-components; normalise to €/MWh of demand
+bat_p_nom = n.storage_units.loc["battery", "p_nom_opt"]
+h2_p_nom  = n.storage_units.loc["hydrogen", "p_nom_opt"]
 
-ax.set_ylabel("Annualised cost (M€/yr)")
-ax.set_title("Annual cost contribution by technology", fontsize=11)
+lcoe_components = {
+    # order matches WHOBS stacking (bottom → top)
+    "onshore wind":          onshore_ann_cost * cap_mw.get("wind_onshore", 0),
+    "utility solar PV":      solar_ann_cost   * cap_mw.get("solar", 0),
+    "battery inverter":      400e3 * (annuity(25) + FOM_RATE) * bat_p_nom,
+    "battery storage":       200e3 * BAT_MAX_HOURS * (annuity(25) + FOM_RATE) * bat_p_nom,
+    "hydrogen electrolysis": 750e3 * (annuity(20) + FOM_RATE) * h2_p_nom,
+    "hydrogen storage":      11e3 * _h2_tank_kwh_per_mw * annuity(30) * h2_p_nom,
+    "hydrogen turbine":      800e3 * (annuity(25) + FOM_RATE) * h2_p_nom,
+}
+lcoe_comp = {k: v / total_demand_mwh for k, v in lcoe_components.items()}
+
+fig, ax = plt.subplots(figsize=(5, 6))
+bottom = 0.
+for label, val in lcoe_comp.items():
+    ax.bar("Germany", val, bottom=bottom, color=WHOBS_COLORS[label], label=label, width=0.5)
+    bottom += val
+
+ax.set_ylabel("Average system cost [EUR/MWh]")
+ax.set_title(
+    f"github.com/PyPSA/WHOBS cost breakdown\nGermany  ({opt_year}-04 → {opt_year + 1}-03)",
+    fontsize=10,
+)
+ax.legend(fontsize=8, bbox_to_anchor=(1.02, 1), loc="upper left")
 ax.yaxis.grid(True, linewidth=0.4, alpha=0.6)
 ax.set_axisbelow(True)
 fig.tight_layout()
@@ -401,9 +403,9 @@ show()
 # %% [markdown]
 # ```{figure} ../../output/images/42_annual_costs.png
 # :name: fig-42-annual-costs
-# Annualised cost contribution (M€/yr) for each technology in the optimal mix.
-# The height reflects both the unit cost assumption and the amount of capacity
-# installed by the optimiser.
+# WHOBS-style stacked bar showing the LCOE contribution (€/MWh) of each
+# technology sub-component for Germany, using the same colour scheme as the
+# PyPSA/WHOBS run_single_simulation.ipynb notebook.
 # ```
 
 # %% [markdown]
