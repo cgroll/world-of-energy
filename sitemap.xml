@@ -32,6 +32,12 @@
     <loc>http://localhost:3000/notebooks/demand-reconstruction</loc>
   </url>
   <url>
+    <loc>http://localhost:3000/notebooks/residual-load-reconstruction</loc>
+  </url>
+  <url>
+    <loc>http://localhost:3000/notebooks/germany-energy-battery-mix-costs</loc>
+  </url>
+  <url>
     <loc>http://localhost:3000/notebooks/ee-seasons</loc>
   </url>
   <url>
