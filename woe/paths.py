@@ -183,6 +183,16 @@ class ProjPaths:
         """Combined PECD capacity factors and power generation parquet file."""
         return self.processed_data_path / "pecd" / "pecd_regions.parquet"
 
+    @property
+    def pecd_nuts1_de_downloads_path(self) -> Path:
+        """PECD NUTS 1 (Germany) downloads directory."""
+        return self.pecd_downloads_path / "nuts1_de"
+
+    @property
+    def pecd_nuts1_de_processed_file(self) -> Path:
+        """Processed PECD NUTS 1 capacity factors for German Bundesländer."""
+        return self.processed_data_path / "pecd" / "pecd_nuts1_de.parquet"
+
     # ERA5 reanalysis paths
     @property
     def era5_downloads_path(self) -> Path:
@@ -339,6 +349,16 @@ class ProjPaths:
     def ninja_wind_offshore_cf_file(self) -> Path:
         """Hourly offshore wind capacity factors (0–1) per sea region (Nordsee/Ostsee) for 2019, from renewables.ninja (parquet)."""
         return self.renewable_plants_processed_path / "ninja_wind_offshore_cf.parquet"
+
+    @property
+    def copper_plate_opt_capacities_de_file(self) -> Path:
+        """Optimal copper-plate capacities for Germany from script 42 (parquet)."""
+        return self.processed_data_path / "copper_plate_opt_capacities_de.parquet"
+
+    @property
+    def re_drawdowns_file(self) -> Path:
+        """Maximum drawdown periods per renewable source from script 45 (parquet)."""
+        return self.processed_data_path / "re_drawdowns.parquet"
 
     @property
     def residual_load_reconstruction_file(self) -> Path:
