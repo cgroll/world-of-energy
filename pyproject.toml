@@ -32,6 +32,7 @@ dependencies = [
     "demandlib>=0.2.2",
     "xgboost>=3.2.0",
     "holidays>=0.92",
+    "pypsa>=1.0.6",
 ]
 
 [build-system]

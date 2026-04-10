@@ -26,6 +26,11 @@ project:
         - file: notebooks/38_bdew_profiles.ipynb
         - file: notebooks/39_demand_reconstruction.ipynb
         - file: notebooks/40_residual_load_reconstruction.ipynb
+        - file: notebooks/41_demand_coverage.ipynb
+        - file: notebooks/42_optimal_copper_plate_mix.ipynb
+        - file: notebooks/45_RE_drawdowns.ipynb
+        - file: notebooks/46_RE_ddown_jetstream.ipynb
+        - file: notebooks/54_germany_energy_battery_mix_costs.ipynb
     - title: Weather
       children:
         - file: notebooks/10_ee_seasons.ipynb

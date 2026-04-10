@@ -567,3 +567,150 @@ stages:
           cache: false
       - output/images/40_monthly_residual_load.png:
           cache: false
+  process_demand_coverage:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/41_demand_coverage.ipynb pipeline/41_demand_coverage.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/41_demand_coverage.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/41_demand_coverage.ipynb')"
+    deps:
+      - pipeline/41_demand_coverage.py
+      - data/processed/de_demand_predictions.parquet
+      - data/processed/pecd/pecd_regions.parquet
+      - data/downloads/smard/capacities.parquet
+    outs:
+      - book/notebooks/41_demand_coverage.ipynb:
+          cache: false
+      - output/images/41_annual_coverage_bars.png:
+          cache: false
+      - output/images/41_annual_coverage_pct.png:
+          cache: false
+      - output/images/41_monthly_coverage.png:
+          cache: false
+      - output/images/41_monthly_coverage_pct_gen.png:
+          cache: false
+      - output/images/41_monthly_coverage_pct_needed.png:
+          cache: false
+  process_optimal_copper_plate_mix:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/42_optimal_copper_plate_mix.ipynb pipeline/42_optimal_copper_plate_mix.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/42_optimal_copper_plate_mix.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/42_optimal_copper_plate_mix.ipynb')"
+    deps:
+      - pipeline/42_optimal_copper_plate_mix.py
+      - data/processed/de_demand_predictions.parquet
+      - data/processed/pecd/pecd_regions.parquet
+    outs:
+      - book/notebooks/42_optimal_copper_plate_mix.ipynb:
+          cache: false
+      - output/images/42_optimal_capacities.png:
+          cache: false
+      - output/images/42_annual_costs.png:
+          cache: false
+      - output/images/42_generation_week.png:
+          cache: false
+      - output/images/42_monthly_mix.png:
+          cache: false
+      - output/images/42_storage_soc.png:
+          cache: false
+      - output/images/42_curtailment.png:
+          cache: false
+      - data/processed/copper_plate_opt_capacities_de.parquet
+  process_simulate:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/43_simulate.ipynb pipeline/43_simulate.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/43_simulate.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/43_simulate.ipynb')"
+    deps:
+      - pipeline/43_simulate.py
+      - data/processed/copper_plate_opt_capacities_de.parquet
+      - data/processed/de_demand_predictions.parquet
+      - data/processed/pecd/pecd_regions.parquet
+    outs:
+      - book/notebooks/43_simulate.ipynb:
+          cache: false
+      - output/images/43_storage_soc.png:
+          cache: false
+      - output/images/43_curtailment.png:
+          cache: false
+      - output/images/43_generation_vs_demand.png:
+          cache: false
+      - output/images/43_capacity_vs_demand.png:
+          cache: false
+  process_RE_drawdowns:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/45_RE_drawdowns.ipynb pipeline/45_RE_drawdowns.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/45_RE_drawdowns.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/45_RE_drawdowns.ipynb')"
+    deps:
+      - pipeline/45_RE_drawdowns.py
+      - data/processed/pecd/pecd_regions.parquet
+    outs:
+      - book/notebooks/45_RE_drawdowns.ipynb:
+          cache: false
+      - output/images/45_cumulative_balance.png:
+          cache: false
+      - output/images/45_drawdown_series.png:
+          cache: false
+      - output/images/45_drawdown_summary.png:
+          cache: false
+      - output/images/45_drawdown_scatter.png:
+          cache: false
+      - output/images/45_solar_pv_rolling.png:
+          cache: false
+      - output/images/45_solar_pv_lowest_rolling.png:
+          cache: false
+      - output/images/45_wind_onshore_rolling.png:
+          cache: false
+      - output/images/45_wind_onshore_lowest_rolling.png:
+          cache: false
+      - output/images/45_wind_offshore_rolling.png:
+          cache: false
+      - output/images/45_wind_offshore_lowest_rolling.png:
+          cache: false
+      - data/processed/re_drawdowns.parquet
+  process_RE_ddown_jetstream:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/46_RE_ddown_jetstream.ipynb pipeline/46_RE_ddown_jetstream.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/46_RE_ddown_jetstream.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/46_RE_ddown_jetstream.ipynb')"
+    deps:
+      - pipeline/46_RE_ddown_jetstream.py
+      - data/processed/pecd/pecd_regions.parquet
+      - data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
+    outs:
+      - book/notebooks/46_RE_ddown_jetstream.ipynb:
+          cache: false
+      - output/images/46_solar_pv_jetstream.png:
+          cache: false
+      - output/images/46_wind_onshore_jetstream.png:
+          cache: false
+      - output/images/46_wind_offshore_jetstream.png:
+          cache: false
+  process_germany_energy_battery_mix_costs:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/54_germany_energy_battery_mix_costs.ipynb pipeline/54_germany_energy_battery_mix_costs.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/54_germany_energy_battery_mix_costs.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/54_germany_energy_battery_mix_costs.ipynb')"
+    deps:
+      - pipeline/54_germany_energy_battery_mix_costs.py
+      - data/processed/pecd/pecd_regions.parquet
+      - data/processed/pecd_fraunhofer_scaling_factors.csv
+    outs:
+      - book/notebooks/54_germany_energy_battery_mix_costs.ipynb:
+          cache: false
+      - output/images/54_dispatch_balance.png:
+          cache: false
+      - output/images/54_soc.png:
+          cache: false
+      - output/images/54_annual_costs.png:
+          cache: false
+      - output/images/54_energy_fate.png:
+          cache: false
+      - output/images/54_lcoe_comparison.png:
+          cache: false
+      - output/images/54_installed_capacities.png:
+          cache: false
+      - output/images/54_demand_fulfilment.png:
+          cache: false
+      - output/images/54_battery_throughput.png:
+          cache: false
+      - output/images/54_re_utilisation.png:
+          cache: false
+      - output/images/54_system_drawdown.png:
+          cache: false
+      - output/images/54_system_drawdown_episodes.png:
+          cache: false

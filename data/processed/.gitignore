@@ -1,2 +1,3 @@
 /residual_load_reconstruction.parquet
 /de_demand_predictions.parquet
+/copper_plate_opt_capacities_de.parquet

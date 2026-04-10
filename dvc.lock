@@ -1149,30 +1149,30 @@ stages:
       size: 3848
     - path: woe/paths.py
       hash: md5
-      md5: 239506caacfd69be9738cf9b7e76bdf7
-      size: 14066
+      md5: 78a6a49e8fdb09047a802f46efb2503e
+      size: 14912
     outs:
     - path: data/downloads/pecd
       hash: md5
-      md5: 329efd156d65cff268121770ddddb251.dir
-      size: 337482901
-      nfiles: 6
+      md5: 601383b829e505bd182f078d6dd5c0a7.dir
+      size: 1342870531
+      nfiles: 8
   process_pecd_regions:
     cmd: python pipeline/36_process_pecd_regions.py
     deps:
     - path: data/downloads/pecd
       hash: md5
-      md5: 329efd156d65cff268121770ddddb251.dir
-      size: 337482901
-      nfiles: 6
+      md5: 601383b829e505bd182f078d6dd5c0a7.dir
+      size: 1342870531
+      nfiles: 8
     - path: pipeline/36_process_pecd_regions.py
       hash: md5
       md5: c1db7acf63c548ca3d79cf2481ecb0a9
       size: 3397
     - path: woe/paths.py
       hash: md5
-      md5: 239506caacfd69be9738cf9b7e76bdf7
-      size: 14066
+      md5: 78a6a49e8fdb09047a802f46efb2503e
+      size: 14912
     outs:
     - path: data/processed/pecd/pecd_regions.parquet
       hash: md5
@@ -1458,3 +1458,252 @@ stages:
       hash: md5
       md5: d1edaaa71766cb05405042383d3d8885
       size: 633190
+  process_demand_coverage:
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/41_demand_coverage.ipynb pipeline/41_demand_coverage.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/41_demand_coverage.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/41_demand_coverage.ipynb')\"\
+      \n"
+    deps:
+    - path: data/downloads/smard/capacities.parquet
+      hash: md5
+      md5: 09ff4edfc9e9bc8c5e6b42b1afe5a377
+      size: 9534
+    - path: data/processed/de_demand_predictions.parquet
+      hash: md5
+      md5: e3c6a221accc0f9d7b4e0b9b8d4af208
+      size: 5570066
+    - path: data/processed/pecd/pecd_regions.parquet
+      hash: md5
+      md5: 6a4b45ce2c25bc3c40a37d4a75645c5a
+      size: 616016135
+    - path: pipeline/41_demand_coverage.py
+      hash: md5
+      md5: e4780dcec26707a03dd8fb5a426e16fa
+      size: 32536
+    outs:
+    - path: book/notebooks/41_demand_coverage.ipynb
+      hash: md5
+      md5: 111b4af5fa620578c7b71c84051ef386
+      size: 61538
+    - path: output/images/41_annual_coverage_bars.png
+      hash: md5
+      md5: 9bf2ecee2a164d277e0eef922f119143
+      size: 115744
+    - path: output/images/41_annual_coverage_pct.png
+      hash: md5
+      md5: 1bb9dc7e416295730702c0584a08a08a
+      size: 121043
+    - path: output/images/41_monthly_coverage.png
+      hash: md5
+      md5: b0908d292d2cf0b804268e8af6b74a9e
+      size: 89107
+    - path: output/images/41_monthly_coverage_pct_gen.png
+      hash: md5
+      md5: 9c4b3b81a8b600d5c992e9b2bd8e1bd4
+      size: 126059
+    - path: output/images/41_monthly_coverage_pct_needed.png
+      hash: md5
+      md5: f0f7818ce7da79231334ad71d079c802
+      size: 123294
+  process_optimal_copper_plate_mix:
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/42_optimal_copper_plate_mix.ipynb pipeline/42_optimal_copper_plate_mix.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/42_optimal_copper_plate_mix.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/42_optimal_copper_plate_mix.ipynb')\"\
+      \n"
+    deps:
+    - path: data/processed/de_demand_predictions.parquet
+      hash: md5
+      md5: e3c6a221accc0f9d7b4e0b9b8d4af208
+      size: 5570066
+    - path: data/processed/pecd/pecd_regions.parquet
+      hash: md5
+      md5: 6a4b45ce2c25bc3c40a37d4a75645c5a
+      size: 616016135
+    - path: pipeline/42_optimal_copper_plate_mix.py
+      hash: md5
+      md5: ef5299880d93a33e2832add6412ed9eb
+      size: 25709
+    outs:
+    - path: book/notebooks/42_optimal_copper_plate_mix.ipynb
+      hash: md5
+      md5: be6fcf47bd3bd9223484da4778cd5605
+      size: 53926
+    - path: data/processed/copper_plate_opt_capacities_de.parquet
+      hash: md5
+      md5: edb39958ed5c7be152ea40fb87e7e536
+      size: 4030
+    - path: output/images/42_annual_costs.png
+      hash: md5
+      md5: 1912dfe8cd9d5ec2d3ff940f953f33b7
+      size: 56977
+    - path: output/images/42_curtailment.png
+      hash: md5
+      md5: 72ee4242eca6699dbfdc0aa8d28f0e0c
+      size: 250445
+    - path: output/images/42_generation_week.png
+      hash: md5
+      md5: e41df59d4d341dc481b4daf2b9374689
+      size: 244155
+    - path: output/images/42_monthly_mix.png
+      hash: md5
+      md5: 5c43bcbac960bfa4c3e8715360ee8094
+      size: 68823
+    - path: output/images/42_optimal_capacities.png
+      hash: md5
+      md5: 14f73352a7ccfb76cfab0f5e87972526
+      size: 55415
+    - path: output/images/42_storage_soc.png
+      hash: md5
+      md5: 50b5ab018bcaabf0c758cf6125e2faa1
+      size: 182296
+  process_simulate:
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/43_simulate.ipynb pipeline/43_simulate.py && uv run
+      python -c \"import nbformat; nb = nbformat.read('book/notebooks/43_simulate.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/43_simulate.ipynb')\"\
+      \n"
+    deps:
+    - path: data/processed/copper_plate_opt_capacities_de.parquet
+      hash: md5
+      md5: edb39958ed5c7be152ea40fb87e7e536
+      size: 4030
+    - path: data/processed/de_demand_predictions.parquet
+      hash: md5
+      md5: e3c6a221accc0f9d7b4e0b9b8d4af208
+      size: 5570066
+    - path: data/processed/pecd/pecd_regions.parquet
+      hash: md5
+      md5: 6a4b45ce2c25bc3c40a37d4a75645c5a
+      size: 616016135
+    - path: pipeline/43_simulate.py
+      hash: md5
+      md5: a62f94020a09fed91f181e7e2832239e
+      size: 22236
+    outs:
+    - path: book/notebooks/43_simulate.ipynb
+      hash: md5
+      md5: 50d712e67d4016596e4ec481b515012a
+      size: 36010
+    - path: output/images/43_capacity_vs_demand.png
+      hash: md5
+      md5: 275a18754216bf8ef9c8e4a7ae8a51b7
+      size: 131030
+    - path: output/images/43_curtailment.png
+      hash: md5
+      md5: 4c5d1588ab23cda094cebf09577c95a2
+      size: 263809
+    - path: output/images/43_generation_vs_demand.png
+      hash: md5
+      md5: 1dd2ca4aa59e9abe5124ce577cba77d1
+      size: 249538
+    - path: output/images/43_storage_soc.png
+      hash: md5
+      md5: a62c3ff3f407e74fb8666216d6414f6f
+      size: 230971
+  process_RE_drawdowns:
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/45_RE_drawdowns.ipynb pipeline/45_RE_drawdowns.py &&
+      uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/45_RE_drawdowns.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/45_RE_drawdowns.ipynb')\"\
+      \n"
+    deps:
+    - path: data/processed/pecd/pecd_regions.parquet
+      hash: md5
+      md5: 6a4b45ce2c25bc3c40a37d4a75645c5a
+      size: 616016135
+    - path: pipeline/45_RE_drawdowns.py
+      hash: md5
+      md5: 3f7f00f3296f40a3a7448342f359b4ff
+      size: 20423
+    outs:
+    - path: book/notebooks/45_RE_drawdowns.ipynb
+      hash: md5
+      md5: de82b3d4aaa12d3ef0a633af538669ab
+      size: 36221
+    - path: output/images/45_cumulative_balance.png
+      hash: md5
+      md5: 153570dfa8b4e76cbcb4e6a8d79b8ff3
+      size: 254204
+    - path: output/images/45_drawdown_series.png
+      hash: md5
+      md5: 4af2f544b5a84ded2490cff03154a9e8
+      size: 339898
+    - path: output/images/45_drawdown_summary.png
+      hash: md5
+      md5: af7f39e015aa5ed8af2656313e4174f0
+      size: 187324
+  process_germany_energy_battery_mix_costs:
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/54_germany_energy_battery_mix_costs.ipynb pipeline/54_germany_energy_battery_mix_costs.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/54_germany_energy_battery_mix_costs.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/54_germany_energy_battery_mix_costs.ipynb')\"\
+      \n"
+    deps:
+    - path: data/processed/pecd/pecd_regions.parquet
+      hash: md5
+      md5: 6a4b45ce2c25bc3c40a37d4a75645c5a
+      size: 616016135
+    - path: data/processed/pecd_fraunhofer_scaling_factors.csv
+      hash: md5
+      md5: f45cc4a2c73eef38c2b0dd68b2213020
+      size: 356
+    - path: pipeline/54_germany_energy_battery_mix_costs.py
+      hash: md5
+      md5: fbecf1840788d76193d5e741d3a74ced
+      size: 56978
+    outs:
+    - path: book/notebooks/54_germany_energy_battery_mix_costs.ipynb
+      hash: md5
+      md5: 6ab0a107b4c4b8d94f28bc02488bc403
+      size: 94715
+    - path: output/images/54_annual_costs.png
+      hash: md5
+      md5: 6806a11b5da66117f79f3d85e6ec628e
+      size: 65225
+    - path: output/images/54_battery_throughput.png
+      hash: md5
+      md5: f49642837d495aebc567847d9195dad9
+      size: 45099
+    - path: output/images/54_demand_fulfilment.png
+      hash: md5
+      md5: 54e6d3df2cfece835952040c0dd004bd
+      size: 71217
+    - path: output/images/54_dispatch_balance.png
+      hash: md5
+      md5: 9810cb0460c9e98c026fba5b5c21449b
+      size: 135229
+    - path: output/images/54_energy_fate.png
+      hash: md5
+      md5: 52412b5d5898e5a8aa8f91f6698b9dc8
+      size: 75441
+    - path: output/images/54_installed_capacities.png
+      hash: md5
+      md5: 54455062cc4b0173c476713df604f0fa
+      size: 76549
+    - path: output/images/54_lcoe_comparison.png
+      hash: md5
+      md5: c17d2f9cfafbdd2149295f2add026c54
+      size: 65746
+    - path: output/images/54_re_utilisation.png
+      hash: md5
+      md5: 03e426f19eb13816799954e1e1df1202
+      size: 62746
+    - path: output/images/54_soc.png
+      hash: md5
+      md5: 3e4b0f1ea04de02b080a041d16b4c288
+      size: 279496
+    - path: output/images/54_system_drawdown.png
+      hash: md5
+      md5: b76ca132e289a0dc0b17823127c9cfe3
+      size: 209551
+    - path: output/images/54_system_drawdown_episodes.png
+      hash: md5
+      md5: 1b492e48a2865c390f85a7cbfef873b1
+      size: 78128
