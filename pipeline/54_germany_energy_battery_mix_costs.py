@@ -149,7 +149,7 @@ TECH_COLORS = {
     "wind_onshore":     "#4a90d9",
     "wind_offshore":    "#1a5fa8",
     "battery":          "#7fbc41",
-    "gas":              "#888888",
+    "gas":              "#8B4513",
     "curtailment":      "#cc4444",
 }
 
@@ -1493,6 +1493,274 @@ show()
 # Top-5 system drawdown episodes ranked by cumulative gas consumption.
 # Left: depth (total gas energy in the episode).  Right: duration from
 # peak to trough.
+# ```
+
+# %% [markdown]
+# ### Dispatch balance — full longest drawdown (peak to trough)
+#
+# Same stacked-area layout as the 14-day window, but the x-axis now
+# spans the entire worst drawdown episode from its peak to its trough.
+
+# %%
+worst = top_sys_dd.iloc[0]
+dd_start = worst["peak_time"]
+dd_end = worst["trough_time"]
+dw_dd = dispatch.loc[dd_start:dd_end].copy()
+
+pos_dd = sum(dw_dd[t] for t in re_techs) + dw_dd["bat_discharge"] + dw_dd["gas"]
+neg_dd = dw_dd["demand"] + dw_dd["bat_charge"] + dw_dd["curtailment"]
+assert (pos_dd - neg_dd).abs().max() < 1e-9, "Dispatch balance broken (drawdown window)"
+
+fig_dd_disp, ax_dd_disp = plt.subplots(figsize=(16, 6))
+
+hours_dd = dw_dd.index
+pos_bottom_dd = np.zeros(len(dw_dd))
+for col, label, color in pos_layers:
+    vals = dw_dd[col].values
+    ax_dd_disp.fill_between(hours_dd, pos_bottom_dd, pos_bottom_dd + vals,
+                            color=color, alpha=0.85, label=label, linewidth=0)
+    pos_bottom_dd += vals
+
+neg_bottom_dd = np.zeros(len(dw_dd))
+for col, label, color in neg_layers:
+    vals = dw_dd[col].values
+    ax_dd_disp.fill_between(hours_dd, -neg_bottom_dd, -(neg_bottom_dd + vals),
+                            color=color, alpha=0.4, label=label, linewidth=0)
+    neg_bottom_dd += vals
+
+ax_dd_disp.axhline(0, color="black", linewidth=0.8)
+ax_dd_disp.set_ylabel("Power [MW]")
+ax_dd_disp.set_title(
+    f"Hourly dispatch — longest drawdown  "
+    f"({dd_start.strftime('%d %b %Y')} – {dd_end.strftime('%d %b %Y')}, "
+    f"{worst['peak_to_trough_days']:.0f} days)"
+)
+ax_dd_disp.legend(loc="upper left", fontsize=8, ncol=2)
+
+fig_dd_disp.tight_layout()
+fig_dd_disp.savefig(paths.images_path / "54_drawdown_dispatch.png", dpi=150,
+                    bbox_inches="tight")
+show()
+
+# %% [markdown]
+# ```{figure} ../../output/images/54_drawdown_dispatch.png
+# :name: fig-54-drawdown-dispatch
+# Hourly dispatch over the full peak-to-trough span of the worst drawdown
+# episode.  Above zero: supply (RE, battery discharge, gas).
+# Below zero: consumption (demand, battery charging, curtailment).
+# ```
+
+# %% [markdown]
+# ### Energy mix during the longest drawdown episode
+
+# %%
+dd_ful = fulfilment.loc[dd_start:dd_end]
+dd_energy = {k: float(dd_ful[k].sum()) for k in supply_keys}
+dd_total = sum(dd_energy.values())
+
+fig_dd_mix, (ax_dd_abs, ax_dd_pct) = plt.subplots(1, 2, figsize=(9, 5))
+
+bot_abs = 0.0
+bot_pct = 0.0
+for key, label, color in zip(supply_keys, supply_labels, supply_colors):
+    val = dd_energy[key]
+    pct = val / dd_total * 100
+    ax_dd_abs.bar(0, val, bottom=bot_abs, color=color, width=0.5, label=label)
+    ax_dd_pct.bar(0, pct, bottom=bot_pct, color=color, width=0.5)
+    if pct > 4:
+        ax_dd_abs.text(0, bot_abs + val / 2, f"{val:,.1f} MWh\n({pct:.0f}%)",
+                       ha="center", va="center", fontsize=8, fontweight="bold", color="white")
+        ax_dd_pct.text(0, bot_pct + pct / 2, f"{pct:.1f}%",
+                       ha="center", va="center", fontsize=8, fontweight="bold", color="white")
+    bot_abs += val
+    bot_pct += pct
+
+ax_dd_abs.set_ylabel("Energy [MWh]")
+ax_dd_abs.set_title("Absolute energy [MWh]")
+ax_dd_abs.set_xticks([0])
+ax_dd_abs.set_xticklabels([""])
+ax_dd_abs.legend(loc="upper right", fontsize=8)
+ax_dd_abs.yaxis.grid(True, linewidth=0.4, alpha=0.6)
+ax_dd_abs.set_axisbelow(True)
+
+ax_dd_pct.set_ylabel("Share of demand [%]")
+ax_dd_pct.set_title("Percentage mix [%]")
+ax_dd_pct.set_xticks([0])
+ax_dd_pct.set_xticklabels([""])
+ax_dd_pct.set_ylim(0, 100)
+ax_dd_pct.yaxis.grid(True, linewidth=0.4, alpha=0.6)
+ax_dd_pct.set_axisbelow(True)
+
+fig_dd_mix.suptitle(
+    f"Energy mix during worst drawdown  "
+    f"({dd_start.strftime('%d %b %Y')} – {dd_end.strftime('%d %b %Y')}, "
+    f"{worst['peak_to_trough_days']:.0f} days)",
+    fontsize=12,
+)
+fig_dd_mix.tight_layout()
+fig_dd_mix.savefig(paths.images_path / "54_drawdown_energy_mix.png", dpi=150,
+                   bbox_inches="tight")
+show()
+
+# %% [markdown]
+# ```{figure} ../../output/images/54_drawdown_energy_mix.png
+# :name: fig-54-drawdown-energy-mix
+# Left: absolute energy delivered by each source during the worst drawdown
+# episode.  Right: percentage mix — shows how much more gas/battery is
+# needed relative to the annual average during a Dunkelflaute-type event.
+# ```
+
+# %% [markdown]
+# ### Rolling gas share — what fraction of demand came from gas over N days?
+#
+# For each timestamp, the rolling sum of residual load over the past N days
+# is divided by total demand in that window, giving the share of demand
+# that gas had to cover.  Short windows (1–2 days) capture acute shortfall
+# events; longer windows (5–10 days) reveal sustained Dunkelflaute episodes.
+
+# %%
+residual_series = pd.Series(sim["residual_load"], index=hourly_cf.index)
+
+ROLL_WINDOWS = [5, 10, 15, 20]   # days
+ROLL_COLORS  = ["#ff7f0e", "#9467bd", "#2ca02c", "#1f77b4"]
+
+fig_roll, ax_roll = plt.subplots(figsize=(16, 5))
+
+for days, color in zip(ROLL_WINDOWS, ROLL_COLORS):
+    window_h = days * 24
+    # Rolling sum of gas energy over the window
+    roll_gas = residual_series.rolling(window=window_h, min_periods=window_h).sum()
+    # Demand in the same window (constant per hour)
+    roll_demand = DEMAND_MW * window_h
+    roll_pct = roll_gas / roll_demand * 100
+    ax_roll.plot(roll_pct.index, roll_pct.values,
+                 color=color, linewidth=0.9, alpha=0.85,
+                 label=f"{days}-day window")
+
+ax_roll.axhline(0, color="black", linewidth=0.6, linestyle="--", alpha=0.4)
+ax_roll.set_ylabel("Gas share of demand [%]")
+ax_roll.set_title(
+    f"Rolling gas share of demand — 5 / 10 / 15 / 20-day windows "
+    f"({SIM_YEARS[0]}–{SIM_YEARS[-1]})"
+)
+ax_roll.legend(fontsize=9, loc="upper right")
+ax_roll.yaxis.grid(True, linewidth=0.4, alpha=0.6)
+ax_roll.set_axisbelow(True)
+ax_roll.set_ylim(bottom=0)
+
+fig_roll.tight_layout()
+fig_roll.savefig(paths.images_path / "54_rolling_gas_share.png", dpi=150,
+                 bbox_inches="tight")
+show()
+
+# %% [markdown]
+# ```{figure} ../../output/images/54_rolling_gas_share.png
+# :name: fig-54-rolling-gas-share
+# Rolling share of demand covered by gas backup over 5-, 10-, 15-, and
+# 20-day windows.  A 20-day value of 80 % means gas supplied 80 % of
+# total demand in the preceding 20 days — i.e., the RE + battery system
+# was nearly unable to operate independently for that stretch.
+# ```
+
+# %% [markdown]
+# ### Residual load — sorted hourly values
+#
+# All hourly residual load (gas) values sorted from lowest to highest.
+# The x-axis is the relative rank (0 = lowest hour, 1 = highest hour),
+# equivalent to the empirical CDF but with values on the y-axis instead
+# of probabilities.  The share of hours with zero residual load (battery
+# fully covered the deficit) is visible as the flat section at y = 0.
+
+# %%
+sorted_residual = np.sort(residual_series.values)
+ranks = np.linspace(0, 1, len(sorted_residual))
+
+fig_sorted, ax_sorted = plt.subplots(figsize=(10, 5))
+ax_sorted.plot(ranks, sorted_residual, color=TECH_COLORS["gas"], linewidth=1.2)
+ax_sorted.fill_between(ranks, sorted_residual, alpha=0.15, color=TECH_COLORS["gas"])
+ax_sorted.axhline(0, color="black", linewidth=0.6, linestyle="--", alpha=0.4)
+
+zero_share = (sorted_residual <= 1e-9).mean()
+ax_sorted.axvline(zero_share, color="black", linewidth=0.8, linestyle=":", alpha=0.6)
+ax_sorted.text(zero_share + 0.01, sorted_residual.max() * 0.05,
+               f"{zero_share:.1%} of hours\nno gas needed",
+               fontsize=8, va="bottom")
+
+ax_sorted.set_xlabel("Relative rank (0 = lowest hour, 1 = highest hour)")
+ax_sorted.set_ylabel("Residual load [MW]")
+ax_sorted.set_title(f"Sorted hourly residual load (gas backup) — {SIM_YEARS[0]}–{SIM_YEARS[-1]}")
+ax_sorted.set_xlim(0, 1)
+ax_sorted.set_ylim(bottom=0)
+ax_sorted.yaxis.grid(True, linewidth=0.4, alpha=0.6)
+ax_sorted.set_axisbelow(True)
+
+fig_sorted.tight_layout()
+fig_sorted.savefig(paths.images_path / "54_residual_load_sorted.png", dpi=150,
+                   bbox_inches="tight")
+show()
+
+# %% [markdown]
+# ```{figure} ../../output/images/54_residual_load_sorted.png
+# :name: fig-54-residual-load-sorted
+# Hourly residual load values sorted from lowest to highest.  The flat
+# section at y = 0 (left of the dotted line) shows the fraction of hours
+# where RE + battery fully covered demand without gas.  The slope of the
+# rising section reflects how quickly extreme gas shortfalls accumulate.
+# ```
+
+# %% [markdown]
+# ### System costs — EUR per MWh of demand served
+#
+# Same breakdown as the annual cost chart but normalised to the total
+# annual demand, giving each technology's contribution to the system LCOE
+# in EUR / MWh (= ct/kWh × 10).
+
+# %%
+# EUR/MWh contribution to system LCOE per technology
+all_costs_mwh = [c / total_demand for c in all_costs]   # EUR/MWh
+total_cost_mwh = total_annual_cost / total_demand        # EUR/MWh (= system LCOE)
+
+fig_cost_mwh, ax_cm = plt.subplots(figsize=(8, 5))
+
+x_ind_cm = np.arange(len(all_techs))
+bars_cm = ax_cm.bar(x_ind_cm, all_costs_mwh, color=all_colors, alpha=0.85, width=0.6)
+for bar, val in zip(bars_cm, all_costs_mwh):
+    ax_cm.text(bar.get_x() + bar.get_width() / 2,
+               bar.get_height() + total_cost_mwh * 0.01,
+               f"{val:.1f}", ha="center", va="bottom", fontsize=8)
+
+# Stacked system bar
+x_sys_cm = len(all_techs) + 0.8
+bot_cm = 0.0
+for val, color in zip(all_costs_mwh, all_colors):
+    ax_cm.bar(x_sys_cm, val, bottom=bot_cm, color=color, width=0.6)
+    if val / total_cost_mwh > 0.06:
+        ax_cm.text(x_sys_cm, bot_cm + val / 2, f"{val / total_cost_mwh:.0%}",
+                   ha="center", va="center", fontsize=8, fontweight="bold", color="white")
+    bot_cm += val
+ax_cm.text(x_sys_cm, bot_cm + total_cost_mwh * 0.01,
+           f"{total_cost_mwh:.1f}", ha="center", va="bottom",
+           fontsize=9, fontweight="bold")
+
+ax_cm.set_ylabel("Cost [EUR / MWh demand]")
+ax_cm.set_title(f"System costs per MWh of demand served (1 MW, {RE_SCALING:.0f}× RE)")
+ax_cm.set_xticks(list(x_ind_cm) + [x_sys_cm])
+ax_cm.set_xticklabels(all_labels + ["System\ntotal"], fontsize=8, rotation=25, ha="right")
+ax_cm.yaxis.grid(True, linewidth=0.4, alpha=0.6)
+ax_cm.set_axisbelow(True)
+ax_cm.set_ylim(0, total_cost_mwh * 1.15)
+
+fig_cost_mwh.tight_layout()
+fig_cost_mwh.savefig(paths.images_path / "54_costs_per_mwh.png", dpi=150,
+                     bbox_inches="tight")
+show()
+
+# %% [markdown]
+# ```{figure} ../../output/images/54_costs_per_mwh.png
+# :name: fig-54-costs-per-mwh
+# Annual cost of each technology divided by total annual demand, giving
+# each technology's EUR/MWh contribution to the system LCOE.  The stacked
+# bar on the right equals the system LCOE (sum of all contributions).
 # ```
 
 # %%
