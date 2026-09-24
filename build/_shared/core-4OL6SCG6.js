@@ -1,1 +1,0 @@
-import{a}from"/world-of-energy/build/_shared/chunk-ZW3ZE2TT.js";import"/world-of-energy/build/_shared/chunk-TFZDQLJI.js";import"/world-of-energy/build/_shared/chunk-3FJ63ARC.js";import"/world-of-energy/build/_shared/chunk-KKLOHGIO.js";import"/world-of-energy/build/_shared/chunk-I2P5JYEV.js";import"/world-of-energy/build/_shared/chunk-OZE3FFNP.js";export default a();
