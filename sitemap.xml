@@ -41,6 +41,9 @@
     <loc>http://localhost:3000/notebooks/optimal-copper-plate-mix</loc>
   </url>
   <url>
+    <loc>http://localhost:3000/notebooks/simulate</loc>
+  </url>
+  <url>
     <loc>http://localhost:3000/notebooks/re-drawdowns</loc>
   </url>
   <url>
