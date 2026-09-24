@@ -240,6 +240,11 @@ class ProjPaths:
         return self.era5_downloads_path / "nao_jetstream"
 
     @property
+    def z500_downloads_path(self) -> Path:
+        """Z500 (geopotential height at 500 hPa) downloads directory."""
+        return self.downloads_path / "z500"
+
+    @property
     def era5_snapshot_20250603_1200_path(self) -> Path:
         """ERA5 single-timestamp snapshot directory for 2025-06-03 12:00 UTC."""
         return self.era5_downloads_path / "20250603_1200"

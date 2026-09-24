@@ -9,13 +9,14 @@
 # ---
 
 # %% [markdown]
-# # Germany Energy Mix Costs: Renewables + Gas Backup
+# # Germany Energy Mix Costs: Renewables + Battery + Gas Backup
 #
-# Simulates an hourly dispatch for Germany in 2025 using PECD capacity factors
+# Simulates an hourly dispatch for Germany using PECD capacity factors
 # (scaled to align with Fraunhofer ISE 2024 midpoint full-load hours) with a
 # simple merit order: all available renewable generation is dispatched first;
-# any surplus above demand is curtailed pro-rata; the residual shortfall is
-# met by gas-fired combined-cycle (CCGT) plants.
+# any surplus is stored in a lithium-ion battery (until full); remaining
+# surplus is curtailed pro-rata; shortfalls are covered first by the battery,
+# then by gas-fired combined-cycle (CCGT) plants.
 #
 # Installed renewable capacities are set proportional to Germany's actual
 # end-2024 fleet relative to average demand. Demand is normalised to a
@@ -26,10 +27,11 @@
 #
 # ## Key outputs
 #
-# - Energy share per source (solar PV, wind onshore, wind offshore, gas)
-# - Curtailed energy
+# - Energy share per source (solar PV, wind onshore, wind offshore, battery, gas)
+# - Per-source energy accounting (direct use, stored, delivered from battery,
+#   round-trip loss, curtailed)
 # - Annualised system cost and system LCOE
-# - Technology-level LCOE (with and without curtailment effect)
+# - Technology-level LCOE (with and without curtailment/storage effect)
 
 # %%
 import numpy as np
@@ -76,6 +78,20 @@ N_YEARS = len(SIM_YEARS)
 # | Natural gas price (2025)   | 36 €/MWh\_th        | interpolated          |
 # | CO₂ price (2025)           | 90 €/t              | mid of 79–100         |
 # | CO₂ intensity (nat. gas)   | 0.202 t/MWh\_th     | stoichiometric        |
+#
+# ### Battery storage (Li-ion, utility-scale)
+#
+# From the same study (PV + battery utility-scale component, Tables 1–2).
+# Fraunhofer reports battery costs only in the context of PV+battery systems;
+# we extract the battery component for standalone use.
+#
+# | Parameter                  | Value              | Source                |
+# |----------------------------|-------------------:|:----------------------|
+# | CAPEX                      | 500 €/kWh          | mid of 400–600        |
+# | Lifetime                   | 15 years            | Table 2               |
+# | WACC (real)                | 2.5 %               | Table 2               |
+# | Fixed OPEX                 | 10 €/kWh/yr         | ~2 % of CAPEX         |
+# | Round-trip efficiency      | 90 %                | Table 2               |
 
 # %%
 RE_COSTS = {
@@ -121,6 +137,15 @@ GAS = {
     "co2_intensity": 0.202,       # t CO₂ / MWh_th (stoichiometric for nat. gas)
 }
 
+BAT = {
+    "label": "Battery (Li-ion)",
+    "capex_kwh": 500,              # EUR/kWh usable capacity (mid of 400–600)
+    "lifetime": 15,                # years
+    "wacc_real": 0.025,            # 2.5 %
+    "opex_fix_kwh": 10.0,         # EUR/kWh/yr (~2 % of CAPEX)
+    "rt_efficiency": 0.90,        # round-trip efficiency
+}
+
 PECD_VARIABLES = {
     "solar_pv_utility": "solar_photovoltaic_power_generation",
     "wind_onshore":     "wind_power_generation_onshore",
@@ -131,12 +156,13 @@ TECH_COLORS = {
     "solar_pv_utility": "#f4b942",
     "wind_onshore":     "#4a90d9",
     "wind_offshore":    "#1a5fa8",
+    "battery":          "#7fbc41",
     "gas":              "#888888",
     "curtailment":      "#cc4444",
 }
 
 # %% [markdown]
-# ## Installed capacities
+# ## Installed capacities and battery sizing
 #
 # Germany end-2024 approximate installed capacities normalised to 1 MW of
 # constant demand (~57 GW average load, ~500 TWh/yr):
@@ -146,6 +172,10 @@ TECH_COLORS = {
 # | Solar PV      |       96 GW    |        1.68 MW  |
 # | Wind onshore  |       62 GW    |        1.09 MW  |
 # | Wind offshore |        9 GW    |        0.16 MW  |
+#
+# Battery sizing: 4-hour duration at 1 MW rated power (matching demand),
+# giving 4 MWh of usable capacity. This is a common reference for
+# grid-scale storage studies and captures typical daily cycling patterns.
 
 # %%
 AVG_DEMAND_GW = 57.0
@@ -158,10 +188,16 @@ INSTALLED_CAP = {
 }
 DEMAND_MW = 1.0
 
+BAT_POWER_MW = 1.0                              # max charge/discharge rate
+BAT_DURATION_H = 4                               # hours at rated power
+BAT_CAPACITY_MWH = BAT_POWER_MW * BAT_DURATION_H  # usable energy capacity
+
 print(f"RE scaling factor: {RE_SCALING:.1f}x\n")
 for tech, cap in INSTALLED_CAP.items():
     print(f"{RE_COSTS[tech]['label']:20s}  {cap:.3f} MW per MW demand")
 print(f"{'Total RE':20s}  {sum(INSTALLED_CAP.values()):.3f} MW per MW demand")
+print(f"\nBattery: {BAT_POWER_MW:.1f} MW / {BAT_CAPACITY_MWH:.1f} MWh "
+      f"({BAT_DURATION_H}h, η_rt={BAT['rt_efficiency']:.0%})")
 
 
 # %% [markdown]
@@ -198,60 +234,189 @@ print(hourly_cf.describe().round(4))
 # ## Hourly dispatch simulation
 #
 # Merit order: all available RE is dispatched first. If total RE exceeds
-# demand, the excess is curtailed pro-rata across RE sources. Remaining
-# demand is met by gas (CCGT).
+# demand, the surplus charges the battery (pro-rata across RE sources).
+# Once the battery is full, remaining surplus is curtailed pro-rata.
+# When demand exceeds RE, the battery discharges first; any remaining
+# shortfall is met by gas (CCGT).
+#
+# Round-trip losses are applied at charge time: for every 1 MWh entering
+# the battery from the grid, only η\_rt MWh is stored (and later delivered
+# 1:1). This simplifies attribution — the loss is immediately assigned
+# to the source that produced it.
 
 # %%
+re_techs = list(INSTALLED_CAP.keys())
+n_hours = total_hours
+η = BAT["rt_efficiency"]
+
+# --- Pre-compute raw generation arrays ---
+gen_arrays = {}
+for tech in re_techs:
+    gen_arrays[tech] = hourly_cf[tech].values * INSTALLED_CAP[tech]
+
+# --- Hourly result arrays ---
+soc = np.zeros(n_hours + 1)            # SOC at start of each hour (MWh)
+bat_charge_grid = np.zeros(n_hours)    # grid-side energy into battery
+bat_discharge = np.zeros(n_hours)      # energy from battery to grid
+bat_rt_loss = np.zeros(n_hours)        # round-trip loss (at charge time)
+gas_hourly = np.zeros(n_hours)
+curt_hourly = np.zeros(n_hours)
+
+# Per-source hourly tracking
+direct_h = {t: np.zeros(n_hours) for t in re_techs}
+stored_h = {t: np.zeros(n_hours) for t in re_techs}     # grid-side into battery
+from_bat_h = {t: np.zeros(n_hours) for t in re_techs}   # delivered from battery
+loss_h = {t: np.zeros(n_hours) for t in re_techs}       # RT loss
+curt_src_h = {t: np.zeros(n_hours) for t in re_techs}   # curtailed
+
+# SOC composition: absolute MWh in SOC per source (running state)
+soc_src = {t: 0.0 for t in re_techs}
+
+for h in range(n_hours):
+    # Raw generation per source
+    gen = {t: gen_arrays[t][h] for t in re_techs}
+    total_gen = sum(gen.values())
+    demand = DEMAND_MW
+
+    if total_gen >= demand and total_gen > 0:
+        # --- Surplus hour: RE covers demand ---
+        frac_demand = demand / total_gen
+        for t in re_techs:
+            direct_h[t][h] = gen[t] * frac_demand
+
+        excess = total_gen - demand
+
+        # Charge battery: limited by power, remaining capacity, and excess
+        space = BAT_CAPACITY_MWH - soc[h]
+        # Grid-side energy that would fill remaining space: space / η
+        max_charge_grid = space / η if η > 0 else 0
+        charge_grid = min(excess, BAT_POWER_MW, max_charge_grid)
+        charge_to_soc = charge_grid * η
+        loss = charge_grid - charge_to_soc
+
+        bat_charge_grid[h] = charge_grid
+        bat_rt_loss[h] = loss
+
+        # Attribute charge, loss, curtailment pro-rata to sources
+        frac_charge = charge_grid / excess if excess > 0 else 0
+        for t in re_techs:
+            src_excess = gen[t] - direct_h[t][h]
+            src_charge = src_excess * frac_charge
+            stored_h[t][h] = src_charge
+            loss_h[t][h] = src_charge * (1 - η)
+            curt_src_h[t][h] = src_excess - src_charge
+            soc_src[t] += src_charge * η  # deliverable portion
+
+        soc[h + 1] = soc[h] + charge_to_soc
+        curt_hourly[h] = excess - charge_grid
+
+    else:
+        # --- Deficit hour: RE < demand ---
+        for t in re_techs:
+            direct_h[t][h] = gen[t]
+
+        shortfall = demand - total_gen
+
+        # Discharge battery
+        max_discharge = min(soc[h], BAT_POWER_MW)
+        discharge = min(shortfall, max_discharge)
+        bat_discharge[h] = discharge
+
+        # Attribute discharge pro-rata to SOC composition
+        if discharge > 0 and soc[h] > 0:
+            for t in re_techs:
+                frac = soc_src[t] / soc[h]
+                from_bat_h[t][h] = discharge * frac
+                soc_src[t] -= discharge * frac
+
+        soc[h + 1] = soc[h] - discharge
+        gas_hourly[h] = shortfall - discharge
+
+# %% [markdown]
+# ### Dispatch summary
+
+# %%
+# --- Build dispatch DataFrame for plotting ---
 dispatch = pd.DataFrame(index=hourly_cf.index)
+for tech in re_techs:
+    dispatch[f"{tech}_raw"] = gen_arrays[tech]
+    dispatch[f"{tech}_direct"] = direct_h[tech]
+    dispatch[f"{tech}_useful"] = direct_h[tech] + from_bat_h[tech]
+    dispatch[f"{tech}_curtailed"] = curt_src_h[tech]
 
-for tech, cap in INSTALLED_CAP.items():
-    dispatch[f"{tech}_raw"] = hourly_cf[tech] * cap
-
-dispatch["re_total_raw"] = sum(dispatch[f"{tech}_raw"] for tech in INSTALLED_CAP)
+dispatch["re_total_raw"] = sum(gen_arrays[t] for t in re_techs)
+dispatch["re_total_direct"] = sum(direct_h[t] for t in re_techs)
+dispatch["bat_charge"] = bat_charge_grid
+dispatch["bat_discharge"] = bat_discharge
+dispatch["bat_rt_loss"] = bat_rt_loss
+dispatch["soc"] = soc[:-1]
+dispatch["gas"] = gas_hourly
+dispatch["curtailment"] = curt_hourly
 dispatch["demand"] = DEMAND_MW
 
-# Pro-rata utilisation: when RE > demand, each source is scaled down equally
-dispatch["re_util"] = np.where(
-    dispatch["re_total_raw"] > 0,
-    np.minimum(1.0, dispatch["demand"] / dispatch["re_total_raw"]),
-    1.0,
-)
-
-for tech in INSTALLED_CAP:
-    dispatch[f"{tech}_useful"] = dispatch[f"{tech}_raw"] * dispatch["re_util"]
-
-dispatch["re_total_useful"] = sum(dispatch[f"{tech}_useful"] for tech in INSTALLED_CAP)
-dispatch["curtailment"] = (dispatch["re_total_raw"] - dispatch["re_total_useful"]).clip(lower=0)
-dispatch["gas"] = (dispatch["demand"] - dispatch["re_total_useful"]).clip(lower=0)
-
-# Sanity check: useful RE + gas = demand
-balance = dispatch["re_total_useful"] + dispatch["gas"] - dispatch["demand"]
+# Sanity check: supply = demand at every hour
+supply = dispatch["re_total_direct"] + dispatch["bat_discharge"] + dispatch["gas"]
+balance = supply - dispatch["demand"]
 assert balance.abs().max() < 1e-9, f"Energy balance error: {balance.abs().max():.2e}"
 
 total_demand_mwh = dispatch["demand"].sum() / N_YEARS  # annual average
 
 print(f"Annual energy summary (MWh/yr, averaged over {N_YEARS} years):")
-print(f"  Demand:            {total_demand_mwh:>10,.1f}")
-print(f"  RE produced (raw): {dispatch['re_total_raw'].sum() / N_YEARS:>10,.1f}")
-print(f"  RE useful:         {dispatch['re_total_useful'].sum() / N_YEARS:>10,.1f}")
-print(f"  Curtailment:       {dispatch['curtailment'].sum() / N_YEARS:>10,.1f}")
-print(f"  Gas:               {dispatch['gas'].sum() / N_YEARS:>10,.1f}")
+print(f"  Demand:              {total_demand_mwh:>10,.1f}")
+print(f"  RE produced (raw):   {dispatch['re_total_raw'].sum() / N_YEARS:>10,.1f}")
+print(f"  RE direct use:       {dispatch['re_total_direct'].sum() / N_YEARS:>10,.1f}")
+print(f"  Battery charged:     {bat_charge_grid.sum() / N_YEARS:>10,.1f}  (grid-side)")
+print(f"  Battery discharged:  {bat_discharge.sum() / N_YEARS:>10,.1f}")
+print(f"  RT loss:             {bat_rt_loss.sum() / N_YEARS:>10,.1f}")
+print(f"  Curtailment:         {dispatch['curtailment'].sum() / N_YEARS:>10,.1f}")
+print(f"  Gas:                 {dispatch['gas'].sum() / N_YEARS:>10,.1f}")
+print(f"\n  Battery utilisation: {bat_discharge.sum() / N_YEARS / BAT_CAPACITY_MWH:.0f} "
+      f"equiv. full cycles/yr")
 
 
 # %% [markdown]
 # ## Energy mix breakdown
+#
+# For each RE source we track:
+# - **Direct use** — generation dispatched straight to demand
+# - **Stored** — energy sent to battery (grid-side, before RT loss)
+# - **Delivered from battery** — energy returned from battery to demand
+# - **Round-trip loss** — energy lost in storage (= stored × (1 − η\_rt))
+# - **Still in battery** — remaining SOC attributed to this source
+# - **Curtailed** — excess that could not be stored
+# - **Useful** — directly used + delivered from battery
 
 # %%
 annual_energy = {}
-for tech in INSTALLED_CAP:
-    produced = dispatch[f"{tech}_raw"].sum() / N_YEARS
-    useful = dispatch[f"{tech}_useful"].sum() / N_YEARS
-    annual_energy[tech] = {"produced": produced, "useful": useful,
-                           "curtailed": produced - useful}
+for tech in re_techs:
+    produced = gen_arrays[tech].sum() / N_YEARS
+    direct = direct_h[tech].sum() / N_YEARS
+    stored = stored_h[tech].sum() / N_YEARS
+    delivered = from_bat_h[tech].sum() / N_YEARS
+    rt_loss = loss_h[tech].sum() / N_YEARS
+    still_in_bat = soc_src[tech] / N_YEARS
+    curtailed = curt_src_h[tech].sum() / N_YEARS
+    useful = direct + delivered
 
-gas_energy_mwh = dispatch["gas"].sum() / N_YEARS
-annual_energy["gas"] = {"produced": gas_energy_mwh, "useful": gas_energy_mwh,
-                        "curtailed": 0.0}
+    annual_energy[tech] = {
+        "produced": produced,
+        "direct": direct,
+        "stored": stored,
+        "delivered_from_bat": delivered,
+        "rt_loss": rt_loss,
+        "still_in_bat": still_in_bat,
+        "curtailed": curtailed,
+        "useful": useful,
+    }
+
+gas_energy_mwh = gas_hourly.sum() / N_YEARS
+bat_delivered_mwh = bat_discharge.sum() / N_YEARS
+
+annual_energy["gas"] = {
+    "produced": gas_energy_mwh, "direct": gas_energy_mwh,
+    "stored": 0, "delivered_from_bat": 0, "rt_loss": 0,
+    "still_in_bat": 0, "curtailed": 0, "useful": gas_energy_mwh,
+}
 
 mix_rows = []
 for tech, vals in annual_energy.items():
@@ -260,18 +425,22 @@ for tech, vals in annual_energy.items():
         "technology": label,
         "tech_key": tech,
         "produced_mwh": vals["produced"],
-        "useful_mwh": vals["useful"],
+        "direct_mwh": vals["direct"],
+        "stored_mwh": vals["stored"],
+        "delivered_bat_mwh": vals["delivered_from_bat"],
+        "rt_loss_mwh": vals["rt_loss"],
         "curtailed_mwh": vals["curtailed"],
+        "useful_mwh": vals["useful"],
         "share_pct": vals["useful"] / total_demand_mwh * 100,
-        "curtailment_pct": (vals["curtailed"] / vals["produced"] * 100
-                            if vals["produced"] > 0 else 0),
     })
 
 mix_df = pd.DataFrame(mix_rows)
-print(mix_df.to_string(index=False))
+print(mix_df[["technology", "produced_mwh", "direct_mwh", "stored_mwh",
+              "delivered_bat_mwh", "rt_loss_mwh", "curtailed_mwh",
+              "useful_mwh", "share_pct"]].to_string(index=False))
 
 # %%
-gas_capacity_mw = dispatch["gas"].max()
+gas_capacity_mw = gas_hourly.max()
 gas_cf = (gas_energy_mwh / (gas_capacity_mw * total_hours / N_YEARS)
           if gas_capacity_mw > 0 else 0)
 
@@ -288,18 +457,16 @@ print(f"Gas capacity factor:  {gas_cf:.4f}  ({gas_cf * HOURS_PER_YEAR:,.0f} FLH)
 # lifetime. Multiplying EAC per kW by installed capacity gives the annual
 # system cost attributable to that technology.
 #
-# - **RE LCOE with curtailment**: annual cost stays the same (full capacity
-#   is paid for) but useful energy shrinks, raising the effective LCOE.
+# - **RE LCOE with curtailment/storage**: annual cost stays the same (full
+#   capacity is paid for) but useful energy now includes direct use plus
+#   energy delivered through the battery, reducing the effective LCOE
+#   compared to pure curtailment.
+# - **Battery**: annualised CAPEX + OPEX spread over delivered energy gives
+#   the levelised cost of storage (LCOS).
 # - **Gas LCOE**: fixed costs (CAPEX annuity + fixed OPEX) are spread over
 #   actual output; variable costs (fuel, CO₂, var OPEX) scale with
 #   generation.
-# - **System LCOE**: sum of all annual costs ÷ total demand. Equivalently,
-#   the demand-share-weighted average of per-technology LCOEs.
-#
-# The capital recovery factor (CRF) converts CAPEX to an equivalent annual
-# payment:
-#
-# $$\text{CRF} = \frac{r\,(1+r)^N}{(1+r)^N - 1}$$
+# - **System LCOE**: sum of all annual costs ÷ total demand.
 
 # %%
 def capital_recovery_factor(wacc: float, lifetime: int) -> float:
@@ -336,11 +503,8 @@ for tech, p in RE_COSTS.items():
     curt_frac = 1 - useful / produced if produced > 0 else 0
 
     eac_per_kw = re_equivalent_annual_cost(p, cf)
-    # Total annual cost: EUR/kW/yr × MW × 1000 kW/MW = EUR/yr
-    annual_cost = eac_per_kw * cap_mw * 1000
+    annual_cost = eac_per_kw * cap_mw * 1000  # EUR/yr
 
-    # LCOE: EUR/kW/yr × MW cancels with MWh to give EUR/kWh
-    # (since EUR/kW × MW / MWh = EUR × 1000 / (1000 kWh) = EUR/kWh)
     lcoe_no_curt = eac_per_kw * cap_mw / produced if produced > 0 else 0
     lcoe_with_curt = eac_per_kw * cap_mw / useful if useful > 0 else float("inf")
 
@@ -355,22 +519,50 @@ for tech, p in RE_COSTS.items():
         "annual_cost_eur": annual_cost,
     })
 
-# Gas costs
+# --- Battery costs ---
+bat_crf = capital_recovery_factor(BAT["wacc_real"], BAT["lifetime"])
+bat_annual_capex = BAT["capex_kwh"] * BAT_CAPACITY_MWH * 1000 * bat_crf
+bat_annual_opex = BAT["opex_fix_kwh"] * BAT_CAPACITY_MWH * 1000
+bat_annual_cost = bat_annual_capex + bat_annual_opex
+bat_lcos = (bat_annual_cost / (bat_delivered_mwh * 1000)
+            if bat_delivered_mwh > 0 else float("inf"))
+
+print("Battery cost detail:")
+print(f"  CAPEX:       {BAT['capex_kwh']} EUR/kWh × {BAT_CAPACITY_MWH * 1000:.0f} kWh"
+      f" = {BAT['capex_kwh'] * BAT_CAPACITY_MWH * 1000:,.0f} EUR")
+print(f"  CRF (WACC={BAT['wacc_real']:.1%}, N={BAT['lifetime']}yr):  {bat_crf:.4f}")
+print(f"  Annual CAPEX:  {bat_annual_capex:>10,.0f} EUR/yr")
+print(f"  Annual OPEX:   {bat_annual_opex:>10,.0f} EUR/yr")
+print(f"  Total annual:  {bat_annual_cost:>10,.0f} EUR/yr")
+print(f"  Delivered:     {bat_delivered_mwh:>10,.1f} MWh/yr")
+print(f"  LCOS:          {bat_lcos * 100:>10.2f} ct/kWh")
+
+cost_rows.append({
+    "technology": BAT["label"],
+    "tech_key": "battery",
+    "installed_mw": BAT_POWER_MW,
+    "useful_mwh": bat_delivered_mwh,
+    "curtailment_pct": 0.0,
+    "lcoe_ct": bat_lcos * 100,
+    "lcoe_no_curt_ct": bat_lcos * 100,
+    "annual_cost_eur": bat_annual_cost,
+})
+
+# --- Gas costs ---
 g = GAS
 crf = capital_recovery_factor(g["wacc_real"], g["lifetime"])
-gas_fixed_per_kw = g["capex_mid"] * crf + g["opex_fix"]   # EUR/kW/yr
+gas_fixed_per_kw = g["capex_mid"] * crf + g["opex_fix"]
 
-fuel_per_kwh = g["gas_price"] / 1000 / g["efficiency"]     # EUR/kWh_el
-co2_per_kwh = (g["co2_intensity"] * g["co2_price"]
-               / 1000 / g["efficiency"])                    # EUR/kWh_el
-gas_marginal = fuel_per_kwh + co2_per_kwh + g["opex_var"]  # EUR/kWh_el
+fuel_per_kwh = g["gas_price"] / 1000 / g["efficiency"]
+co2_per_kwh = g["co2_intensity"] * g["co2_price"] / 1000 / g["efficiency"]
+gas_marginal = fuel_per_kwh + co2_per_kwh + g["opex_var"]
 
-gas_total_fixed = gas_fixed_per_kw * gas_capacity_mw * 1000     # EUR/yr
-gas_total_variable = gas_marginal * gas_energy_mwh * 1000       # EUR/yr
+gas_total_fixed = gas_fixed_per_kw * gas_capacity_mw * 1000
+gas_total_variable = gas_marginal * gas_energy_mwh * 1000
 gas_annual_cost = gas_total_fixed + gas_total_variable
 gas_lcoe = gas_annual_cost / (gas_energy_mwh * 1000) if gas_energy_mwh > 0 else 0
 
-print("Gas cost detail:")
+print("\nGas cost detail:")
 print(f"  CRF (WACC={g['wacc_real']:.1%}, N={g['lifetime']}yr):  {crf:.4f}")
 print(f"  Annual fixed cost:   {gas_fixed_per_kw:>8.2f} EUR/kW/yr")
 print(f"  Fuel cost:           {fuel_per_kwh * 100:>8.2f} ct/kWh_el")
@@ -415,21 +607,22 @@ print(f"  {'-' * 60}")
 print(f"  {'TOTAL SYSTEM':20s}  {total_annual_cost:>14,.0f}"
       f"  {total_demand_mwh:>12,.1f}  {system_lcoe * 100:>10.2f}")
 
-total_re_produced = sum(annual_energy[t]["produced"] for t in INSTALLED_CAP)
+total_re_produced = sum(annual_energy[t]["produced"] for t in re_techs)
 total_curtailed = dispatch["curtailment"].sum() / N_YEARS
+total_rt_loss = bat_rt_loss.sum() / N_YEARS
 print(f"\n  Total RE produced:  {total_re_produced:>10,.1f} MWh/yr")
 print(f"  Total curtailed:    {total_curtailed:>10,.1f} MWh/yr"
       f"  ({total_curtailed / total_re_produced:.1%} of RE production)")
+print(f"  Total RT loss:      {total_rt_loss:>10,.1f} MWh/yr")
 
 # %%
 # --- Cost attribution: each source's contribution to system LCOE ---
 print("\nCost attribution to system LCOE:")
 attr_sum = 0
 for _, row in cost_df.iterrows():
-    # Attribution = annualised cost of source / total system demand
-    attr_ct = row["annual_cost_eur"] / (total_demand_mwh * 1000) * 100  # ct/kWh
+    attr_ct = row["annual_cost_eur"] / (total_demand_mwh * 1000) * 100
     attr_sum += attr_ct
-    share = row["useful_mwh"] / total_demand_mwh
+    share = row["useful_mwh"] / total_demand_mwh if row["tech_key"] != "battery" else 0
     print(f"  {row['technology']:20s}  share={share:>5.1%}  "
           f"LCOE={row['lcoe_ct']:>6.2f} ct  ->  attribution={attr_ct:>5.2f} ct/kWh")
 print(f"  {'Sum':20s}  {attr_sum:>42.2f} ct/kWh")
@@ -446,11 +639,12 @@ print(f"  {'System LCOE':20s}  {system_lcoe * 100:>42.2f} ct/kWh")
 fig_mix, (ax_share, ax_curt) = plt.subplots(1, 2, figsize=(12, 5))
 
 # Left: share of demand
-techs = list(annual_energy.keys())
-labels = [RE_COSTS[t]["label"] if t in RE_COSTS else GAS["label"] for t in techs]
-shares = [annual_energy[t]["useful"] / total_demand_mwh * 100 for t in techs]
-colors = [TECH_COLORS[t] for t in techs]
-bars = ax_share.barh(labels, shares, color=colors)
+all_techs_mix = list(re_techs) + ["gas"]
+labels_mix = [RE_COSTS[t]["label"] if t in RE_COSTS else GAS["label"]
+              for t in all_techs_mix]
+shares = [annual_energy[t]["useful"] / total_demand_mwh * 100 for t in all_techs_mix]
+colors_mix = [TECH_COLORS[t] for t in all_techs_mix]
+bars = ax_share.barh(labels_mix, shares, color=colors_mix)
 for bar, s in zip(bars, shares):
     ax_share.text(bar.get_width() + 0.5, bar.get_y() + bar.get_height() / 2,
                   f"{s:.1f} %", va="center", fontsize=9)
@@ -460,28 +654,35 @@ ax_share.set_xlim(0, max(shares) * 1.2)
 ax_share.xaxis.grid(True, linewidth=0.4, alpha=0.6)
 ax_share.set_axisbelow(True)
 
-# Right: produced vs useful vs curtailed
-re_techs = [t for t in techs if t != "gas"]
+# Right: produced vs useful (direct + battery) vs curtailed + loss
 re_labels = [RE_COSTS[t]["label"] for t in re_techs]
-produced = [annual_energy[t]["produced"] for t in re_techs]
-useful = [annual_energy[t]["useful"] for t in re_techs]
-curtailed = [annual_energy[t]["curtailed"] for t in re_techs]
 re_colors = [TECH_COLORS[t] for t in re_techs]
+direct_vals = [annual_energy[t]["direct"] for t in re_techs]
+delivered_vals = [annual_energy[t]["delivered_from_bat"] for t in re_techs]
+curtailed_vals = [annual_energy[t]["curtailed"] for t in re_techs]
+loss_vals = [annual_energy[t]["rt_loss"] for t in re_techs]
 
 y = np.arange(len(re_techs))
-ax_curt.barh(y, useful, color=re_colors, alpha=0.9, label="Useful")
-ax_curt.barh(y, curtailed, left=useful, color=TECH_COLORS["curtailment"],
+ax_curt.barh(y, direct_vals, color=re_colors, alpha=0.9, label="Direct use")
+ax_curt.barh(y, delivered_vals, left=direct_vals, color=re_colors, alpha=0.5,
+             hatch="//", label="Via battery")
+left_2 = [d + v for d, v in zip(direct_vals, delivered_vals)]
+ax_curt.barh(y, loss_vals, left=left_2, color="#ff9900", alpha=0.6,
+             label="RT loss")
+left_3 = [l + v for l, v in zip(left_2, loss_vals)]
+ax_curt.barh(y, curtailed_vals, left=left_3, color=TECH_COLORS["curtailment"],
              alpha=0.6, label="Curtailed")
-for yi, u, c in zip(y, useful, curtailed):
+for yi, d, b, lo, c in zip(y, direct_vals, delivered_vals, loss_vals, curtailed_vals):
+    total = d + b + lo + c
     if c > 0:
-        pct = c / (u + c) * 100
-        ax_curt.text(u + c + 10, yi, f"{pct:.1f} % curtailed",
-                     va="center", fontsize=8, color=TECH_COLORS["curtailment"])
+        pct = c / total * 100
+        ax_curt.text(total + 10, yi, f"{pct:.1f}% curt",
+                     va="center", fontsize=7, color=TECH_COLORS["curtailment"])
 ax_curt.set_yticks(y)
 ax_curt.set_yticklabels(re_labels)
 ax_curt.set_xlabel("Energy [MWh / yr]")
-ax_curt.set_title("RE production: useful vs curtailed")
-ax_curt.legend(loc="lower right", fontsize=9)
+ax_curt.set_title("RE production: direct, battery, loss, curtailed")
+ax_curt.legend(loc="lower right", fontsize=8)
 ax_curt.xaxis.grid(True, linewidth=0.4, alpha=0.6)
 ax_curt.set_axisbelow(True)
 
@@ -493,16 +694,17 @@ show()
 # ```{figure} ../../output/images/53_energy_mix.png
 # :name: fig-53-energy-mix
 # Left: share of annual demand served by each technology. Right: total
-# renewable production split into useful energy and curtailed excess.
-# Curtailment occurs when combined RE output exceeds the constant 1 MW
-# demand.
+# renewable production split into direct use, battery-mediated delivery,
+# round-trip losses, and curtailed excess.
 # ```
 
 # %% [markdown]
 # ### Sample dispatch week
 #
 # The week with the highest cumulative gas usage illustrates the worst-case
-# Dunkelflaute dynamics.
+# Dunkelflaute dynamics. The chart uses a supply/demand layout: sources of
+# power (RE generation, battery discharge, gas) are stacked above zero;
+# consumption (demand, battery charging, curtailment) is stacked below zero.
 
 # %%
 # Find week with most gas usage
@@ -514,40 +716,45 @@ week_mask = dispatch["week"] == worst_week
 dw = dispatch.loc[week_mask].copy()
 hours = np.arange(len(dw))
 
-fig_week, ax_w = plt.subplots(figsize=(14, 5))
-# Stack: solar, onshore, offshore, gas (bottom to top)
-stack_techs = ["solar_pv_utility", "wind_onshore", "wind_offshore", "gas"]
-stack_labels = ["Solar PV", "Wind onshore", "Wind offshore", "Gas (CCGT)"]
-stack_colors = [TECH_COLORS[t] for t in stack_techs]
-stack_data = np.array([dw[f"{t}_useful" if t != "gas" else t].values
-                       for t in stack_techs])
+fig_week, ax_w = plt.subplots(figsize=(14, 6))
 
-# Add curtailment on top of the dispatch stack (above the demand line)
-curt = dw["curtailment"].values
-all_stack_data = np.vstack([stack_data, [curt]])
-all_labels = stack_labels + ["Curtailment"]
-all_colors = stack_colors + [TECH_COLORS["curtailment"]]
-all_alpha = [0.85] * len(stack_techs) + [0.5]
+# --- Positive side: supply sources ---
+pos_layers = [
+    ("solar_pv_utility_raw", "Solar PV", TECH_COLORS["solar_pv_utility"], 0.85),
+    ("wind_onshore_raw", "Wind onshore", TECH_COLORS["wind_onshore"], 0.85),
+    ("wind_offshore_raw", "Wind offshore", TECH_COLORS["wind_offshore"], 0.85),
+    ("bat_discharge", "Battery discharge", TECH_COLORS["battery"], 0.75),
+    ("gas", "Gas (CCGT)", TECH_COLORS["gas"], 0.75),
+]
+pos_bottom = np.zeros(len(hours))
+for col, label, color, alpha in pos_layers:
+    vals = dw[col].values
+    ax_w.fill_between(hours, pos_bottom, pos_bottom + vals, color=color,
+                      alpha=alpha, label=label, linewidth=0)
+    pos_bottom += vals
 
-# stackplot doesn't support per-layer alpha, so draw manually
-bottoms = np.zeros(len(hours))
-for data_row, label, color, alpha in zip(all_stack_data, all_labels,
-                                          all_colors, all_alpha):
-    ax_w.fill_between(hours, bottoms, bottoms + data_row, color=color,
-                      alpha=alpha, label=label)
-    bottoms += data_row
+# --- Negative side: consumption ---
+neg_layers = [
+    ("demand", "Demand", "#333333", 0.35),
+    ("bat_charge", "Battery charging", TECH_COLORS["battery"], 0.35),
+    ("curtailment", "Curtailment", TECH_COLORS["curtailment"], 0.45),
+]
+neg_bottom = np.zeros(len(hours))
+for col, label, color, alpha in neg_layers:
+    vals = dw[col].values
+    ax_w.fill_between(hours, -neg_bottom, -(neg_bottom + vals), color=color,
+                      alpha=alpha, label=label, linewidth=0)
+    neg_bottom += vals
 
-ax_w.plot(hours, dw["demand"].values, "k--", linewidth=1.2, label="Demand")
-
+ax_w.axhline(0, color="black", linewidth=0.8)
 ax_w.set_xlabel("Hour of week")
-ax_w.set_ylabel("Dispatch [MWh/h]")
+ax_w.set_ylabel("Power [MW]")
 start_date = dw.index[0].strftime("%d %b")
 end_date = dw.index[-1].strftime("%d %b %Y")
 ax_w.set_title(f"Hourly dispatch — week {worst_week} ({start_date} – {end_date}), "
                f"highest gas usage")
-ax_w.legend(loc="upper left", fontsize=9)
+ax_w.legend(loc="upper left", fontsize=8, ncol=2)
 ax_w.set_xlim(0, len(dw) - 1)
-ax_w.set_ylim(0)
 
 fig_week.tight_layout()
 fig_week.savefig(paths.images_path / "53_dispatch_week.png", dpi=150,
@@ -557,9 +764,9 @@ show()
 # %% [markdown]
 # ```{figure} ../../output/images/53_dispatch_week.png
 # :name: fig-53-dispatch-week
-# Hourly dispatch during the week with the highest gas usage in 2025.
-# Stacked areas show useful generation by source; the dashed line marks
-# constant demand (1 MW). The secondary axis shows curtailment, if any.
+# Hourly dispatch during the week with the highest gas usage. Above zero:
+# supply (RE generation, battery discharge, gas). Below zero: consumption
+# (demand, battery charging, curtailment). The areas balance at every hour.
 # ```
 
 # %% [markdown]
@@ -568,31 +775,30 @@ show()
 # %%
 dispatch["month"] = dispatch.index.month
 monthly = dispatch.groupby("month").agg({
-    "solar_pv_utility_useful": "sum",
-    "wind_onshore_useful": "sum",
-    "wind_offshore_useful": "sum",
+    "solar_pv_utility_direct": "sum",
+    "wind_onshore_direct": "sum",
+    "wind_offshore_direct": "sum",
+    "bat_discharge": "sum",
     "gas": "sum",
     "curtailment": "sum",
     "demand": "sum",
-}) / N_YEARS  # average across simulation years
+}) / N_YEARS
 
 fig_month, ax_m = plt.subplots(figsize=(10, 5))
 months = monthly.index.values
 bottom = np.zeros(len(months))
-for tech, label in zip(["solar_pv_utility", "wind_onshore", "wind_offshore", "gas"],
-                       ["Solar PV", "Wind onshore", "Wind offshore", "Gas (CCGT)"]):
-    col = f"{tech}_useful" if tech != "gas" else tech
-    vals = monthly[col].values
-    ax_m.bar(months, vals, bottom=bottom, color=TECH_COLORS[tech],
-             label=label, width=0.7)
-    bottom += vals
 
-# Curtailment markers
-curt_monthly = monthly["curtailment"].values
-for m, c in zip(months, curt_monthly):
-    if c > 1:
-        ax_m.annotate(f"{c:.0f}", (m, bottom[m - 1] + 5), fontsize=7,
-                      ha="center", color=TECH_COLORS["curtailment"])
+month_techs = [
+    ("solar_pv_utility_direct", "Solar PV", TECH_COLORS["solar_pv_utility"]),
+    ("wind_onshore_direct", "Wind onshore", TECH_COLORS["wind_onshore"]),
+    ("wind_offshore_direct", "Wind offshore", TECH_COLORS["wind_offshore"]),
+    ("bat_discharge", "Battery", TECH_COLORS["battery"]),
+    ("gas", "Gas (CCGT)", TECH_COLORS["gas"]),
+]
+for col, label, color in month_techs:
+    vals = monthly[col].values
+    ax_m.bar(months, vals, bottom=bottom, color=color, label=label, width=0.7)
+    bottom += vals
 
 ax_m.set_xticks(months)
 ax_m.set_xticklabels(["Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -611,9 +817,9 @@ show()
 # %% [markdown]
 # ```{figure} ../../output/images/53_monthly_mix.png
 # :name: fig-53-monthly-mix
-# Monthly generation by source. Winter months are dominated by wind and gas;
-# summer months see higher solar contributions and potentially some
-# curtailment.
+# Monthly generation by source including battery discharge. Winter months
+# are dominated by wind and gas; summer months see higher solar
+# contributions.
 # ```
 
 # %% [markdown]
@@ -623,7 +829,7 @@ show()
 fig_lcoe, (ax_lcoe, ax_cost) = plt.subplots(1, 2, figsize=(13, 5))
 
 # Left: LCOE bars (with and without curtailment)
-techs_ordered = ["solar_pv_utility", "wind_onshore", "wind_offshore", "gas"]
+techs_ordered = ["solar_pv_utility", "wind_onshore", "wind_offshore", "battery", "gas"]
 lcoe_labels = [cost_df.loc[cost_df["tech_key"] == t, "technology"].iloc[0]
                for t in techs_ordered]
 lcoe_no_curt = [cost_df.loc[cost_df["tech_key"] == t, "lcoe_no_curt_ct"].iloc[0]
@@ -654,12 +860,11 @@ ax_lcoe.xaxis.grid(True, linewidth=0.4, alpha=0.6)
 ax_lcoe.set_axisbelow(True)
 ax_lcoe.set_xlim(0)
 
-# Right: annual cost breakdown (stacked bar)
+# Right: annual cost breakdown
 cost_vals = [cost_df.loc[cost_df["tech_key"] == t, "annual_cost_eur"].iloc[0]
              for t in techs_ordered]
-cost_labels = lcoe_labels
 
-ax_cost.barh(cost_labels, cost_vals, color=bar_colors, alpha=0.85)
+ax_cost.barh(lcoe_labels, cost_vals, color=bar_colors, alpha=0.85)
 for bar, val in zip(ax_cost.patches, cost_vals):
     ax_cost.text(bar.get_width() + total_annual_cost * 0.01,
                  bar.get_y() + bar.get_height() / 2,
@@ -678,10 +883,10 @@ show()
 # %% [markdown]
 # ```{figure} ../../output/images/53_cost_lcoe.png
 # :name: fig-53-cost-lcoe
-# Left: LCOE per technology with and without the curtailment penalty. The
-# dashed line marks the system-wide average LCOE. Right: total annualised
-# cost attributable to each technology (CAPEX annuity + OPEX + fuel/CO₂ for
-# gas). All values in real 2024 EUR.
+# Left: LCOE per technology with and without the curtailment penalty. For
+# battery, both bars show the LCOS. The dashed line marks the system-wide
+# average LCOE. Right: total annualised cost attributable to each
+# technology. All values in real 2024 EUR.
 # ```
 
 # %% [markdown]
@@ -690,15 +895,30 @@ show()
 # %%
 fig_ov, (ax_emix, ax_lcoe_s, ax_curt_s) = plt.subplots(1, 3, figsize=(15, 5))
 
-all_techs = ["solar_pv_utility", "wind_onshore", "wind_offshore", "gas"]
-all_labels = [RE_COSTS[t]["label"] if t in RE_COSTS else GAS["label"]
-              for t in all_techs]
-all_colors = [TECH_COLORS[t] for t in all_techs]
+all_techs = ["solar_pv_utility", "wind_onshore", "wind_offshore", "battery", "gas"]
+all_labels = []
+all_colors = []
+for t in all_techs:
+    if t in RE_COSTS:
+        all_labels.append(RE_COSTS[t]["label"])
+    elif t == "battery":
+        all_labels.append(BAT["label"])
+    else:
+        all_labels.append(GAS["label"])
+    all_colors.append(TECH_COLORS[t])
 
 # --- Left: stacked energy mix bar ---
-useful_vals = [annual_energy[t]["useful"] for t in all_techs]
+# Battery delivers energy but shouldn't double-count (it stores RE).
+# Show RE direct, battery discharge (separately), and gas.
+energy_vals = [
+    annual_energy["solar_pv_utility"]["direct"],
+    annual_energy["wind_onshore"]["direct"],
+    annual_energy["wind_offshore"]["direct"],
+    bat_delivered_mwh,
+    gas_energy_mwh,
+]
 bottom_e = 0
-for val, label, color in zip(useful_vals, all_labels, all_colors):
+for val, label, color in zip(energy_vals, all_labels, all_colors):
     ax_emix.bar(0, val, bottom=bottom_e, color=color, label=label, width=0.5)
     if val / total_demand_mwh > 0.04:
         ax_emix.text(0, bottom_e + val / 2, f"{val / total_demand_mwh:.1%}",
@@ -706,47 +926,43 @@ for val, label, color in zip(useful_vals, all_labels, all_colors):
                      color="white")
     bottom_e += val
 ax_emix.set_ylabel("Energy [MWh / yr]")
-ax_emix.set_title("Energy mix\n(after curtailment)")
+ax_emix.set_title("Energy mix\n(demand served by)")
 ax_emix.set_xticks([0])
 ax_emix.set_xticklabels(["Demand\nserved"])
 ax_emix.legend(loc="upper right", fontsize=8)
 ax_emix.yaxis.grid(True, linewidth=0.4, alpha=0.6)
 ax_emix.set_axisbelow(True)
 
-# --- Middle: individual LCOEs, stacked cost attributions, system LCOE ---
+# --- Middle: LCOEs and stacked cost attributions ---
 lcoe_contribs = []
 lcoe_individual = []
 for t in all_techs:
     row = cost_df.loc[cost_df["tech_key"] == t].iloc[0]
-    # Attribution = annualised cost / total system demand
-    attr_ct = row["annual_cost_eur"] / (total_demand_mwh * 1000) * 100  # ct/kWh
+    attr_ct = row["annual_cost_eur"] / (total_demand_mwh * 1000) * 100
     lcoe_contribs.append(attr_ct)
     lcoe_individual.append(row["lcoe_ct"])
 
 lcoe_total = sum(lcoe_contribs)
 
-# Individual LCOE bars (one per technology)
 x_ind = np.arange(len(all_techs))
 for xi, (val, label, color) in enumerate(zip(lcoe_individual, all_labels, all_colors)):
     ax_lcoe_s.bar(xi, val, color=color, width=0.6, alpha=0.85)
     ax_lcoe_s.text(xi, val + 0.2, f"{val:.1f}", ha="center", va="bottom",
-                   fontsize=9)
+                   fontsize=8)
 
-# Stacked weighted contributions
 x_stack = len(all_techs) + 0.8
 bottom_l = 0
 for val, label, color in zip(lcoe_contribs, all_labels, all_colors):
     ax_lcoe_s.bar(x_stack, val, bottom=bottom_l, color=color, width=0.6)
     if val > 0.3:
         ax_lcoe_s.text(x_stack, bottom_l + val / 2, f"{val:.1f}",
-                       ha="center", va="center", fontsize=9, fontweight="bold",
+                       ha="center", va="center", fontsize=8, fontweight="bold",
                        color="white")
     bottom_l += val
 ax_lcoe_s.text(x_stack, bottom_l + 0.2,
                f"{lcoe_total:.2f}", ha="center", va="bottom",
                fontsize=10, fontweight="bold")
 
-# System LCOE bar
 x_sys = len(all_techs) + 1.8
 ax_lcoe_s.bar(x_sys, system_lcoe * 100, color="black", alpha=0.25, width=0.6)
 ax_lcoe_s.text(x_sys, system_lcoe * 100 + 0.2,
@@ -757,20 +973,19 @@ ax_lcoe_s.set_ylabel("LCOE [ct / kWh]")
 all_x = list(x_ind) + [x_stack, x_sys]
 all_xlabels = all_labels + ["Cost\nattribution", "System\nLCOE"]
 ax_lcoe_s.set_xticks(all_x)
-ax_lcoe_s.set_xticklabels(all_xlabels, fontsize=8)
+ax_lcoe_s.set_xticklabels(all_xlabels, fontsize=7, rotation=30, ha="right")
 ax_lcoe_s.set_title("LCOE per source and system LCOE")
 ax_lcoe_s.yaxis.grid(True, linewidth=0.4, alpha=0.6)
 ax_lcoe_s.set_axisbelow(True)
 ax_lcoe_s.set_ylim(0)
 
 # --- Right: curtailed energy per RE source ---
-re_techs_o = [t for t in all_techs if t != "gas"]
-re_labels_o = [RE_COSTS[t]["label"] for t in re_techs_o]
-re_colors_o = [TECH_COLORS[t] for t in re_techs_o]
-curt_vals = [annual_energy[t]["curtailed"] for t in re_techs_o]
+re_labels_o = [RE_COSTS[t]["label"] for t in re_techs]
+re_colors_o = [TECH_COLORS[t] for t in re_techs]
+curt_vals = [annual_energy[t]["curtailed"] for t in re_techs]
 curt_pcts = [annual_energy[t]["curtailed"] / annual_energy[t]["produced"] * 100
              if annual_energy[t]["produced"] > 0 else 0
-             for t in re_techs_o]
+             for t in re_techs]
 
 bars_curt = ax_curt_s.bar(re_labels_o, curt_vals, color=re_colors_o, alpha=0.85)
 for bar, pct in zip(bars_curt, curt_pcts):
@@ -783,12 +998,13 @@ ax_curt_s.yaxis.grid(True, linewidth=0.4, alpha=0.6)
 ax_curt_s.set_axisbelow(True)
 
 total_curt = sum(curt_vals)
-total_re_prod = sum(annual_energy[t]["produced"] for t in re_techs_o)
+total_re_prod = sum(annual_energy[t]["produced"] for t in re_techs)
 ax_curt_s.text(0.95, 0.95, f"Total: {total_curt:.1f} MWh\n({total_curt/total_re_prod:.1%} of RE)",
                transform=ax_curt_s.transAxes, ha="right", va="top", fontsize=9,
                bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="grey", alpha=0.8))
 
-fig_ov.suptitle(f"System overview — RE + Gas backup (Germany {SIM_YEARS[0]}–{SIM_YEARS[-1]}, 1 MW demand)",
+fig_ov.suptitle(f"System overview — RE + Battery + Gas "
+                f"(Germany {SIM_YEARS[0]}–{SIM_YEARS[-1]}, 1 MW demand)",
                 fontsize=12, y=1.02)
 fig_ov.tight_layout()
 fig_ov.savefig(paths.images_path / "53_system_overview.png", dpi=150,
@@ -798,28 +1014,71 @@ show()
 # %% [markdown]
 # ```{figure} ../../output/images/53_system_overview.png
 # :name: fig-53-system-overview
-# System overview combining the energy mix (after curtailment), stacked LCOE
-# contributions and annual cost breakdown, and curtailed energy per renewable
-# source. Percentage labels on the curtailment bars show the fraction of each
-# technology's total production that was curtailed.
+# System overview combining the energy mix (after curtailment and storage),
+# stacked LCOE contributions and annual cost breakdown, and curtailed energy
+# per renewable source. Battery costs are included in the system LCOE.
+# ```
+
+# %% [markdown]
+# ### Battery state of charge
+
+# %%
+fig_soc, (ax_soc_full, ax_soc_week) = plt.subplots(2, 1, figsize=(16, 7))
+
+# --- Top: full simulation period ---
+ax_soc_full.fill_between(dispatch.index, dispatch["soc"].values,
+                         color=TECH_COLORS["battery"], alpha=0.4, linewidth=0)
+ax_soc_full.plot(dispatch.index, dispatch["soc"].values,
+                 color=TECH_COLORS["battery"], linewidth=0.5)
+ax_soc_full.axhline(BAT_CAPACITY_MWH, color="black", linewidth=0.8,
+                     linestyle="--", alpha=0.5, label=f"Capacity: {BAT_CAPACITY_MWH} MWh")
+ax_soc_full.set_ylabel("SOC [MWh]")
+ax_soc_full.set_title(f"Battery state of charge — {BAT_POWER_MW:.0f} MW / "
+                       f"{BAT_CAPACITY_MWH:.0f} MWh ({BAT_DURATION_H}h)")
+ax_soc_full.legend(loc="upper right", fontsize=9)
+ax_soc_full.set_ylim(0, BAT_CAPACITY_MWH * 1.1)
+ax_soc_full.yaxis.grid(True, linewidth=0.4, alpha=0.5)
+ax_soc_full.set_axisbelow(True)
+
+# --- Bottom: worst gas week ---
+soc_week = dw["soc"].values
+ax_soc_week.fill_between(hours, soc_week, color=TECH_COLORS["battery"],
+                         alpha=0.4, linewidth=0)
+ax_soc_week.plot(hours, soc_week, color=TECH_COLORS["battery"], linewidth=1.0)
+ax_soc_week.axhline(BAT_CAPACITY_MWH, color="black", linewidth=0.8,
+                     linestyle="--", alpha=0.5)
+ax_soc_week.set_xlabel("Hour of week")
+ax_soc_week.set_ylabel("SOC [MWh]")
+ax_soc_week.set_title(f"SOC during week {worst_week} ({start_date} – {end_date})")
+ax_soc_week.set_xlim(0, len(dw) - 1)
+ax_soc_week.set_ylim(0, BAT_CAPACITY_MWH * 1.1)
+ax_soc_week.yaxis.grid(True, linewidth=0.4, alpha=0.5)
+ax_soc_week.set_axisbelow(True)
+
+fig_soc.tight_layout()
+fig_soc.savefig(paths.images_path / "53_battery_soc.png", dpi=150,
+                bbox_inches="tight")
+show()
+
+# %% [markdown]
+# ```{figure} ../../output/images/53_battery_soc.png
+# :name: fig-53-battery-soc
+# Battery state of charge over the full simulation period (top) and during
+# the worst gas usage week (bottom). The dashed line marks full capacity.
 # ```
 
 # %% [markdown]
 # ### RE production vs demand — aggregate comparison
-#
-# Before looking at the temporal dynamics, check whether total RE production
-# is even sufficient to cover demand in aggregate. If RE < demand on an
-# annual basis, the cumulative balance will drift downward structurally.
 
 # %%
-re_prod_annual = sum(annual_energy[t]["produced"] for t in INSTALLED_CAP)
-re_useful_annual = sum(annual_energy[t]["useful"] for t in INSTALLED_CAP)
+re_prod_annual = sum(annual_energy[t]["produced"] for t in re_techs)
+re_useful_annual = sum(annual_energy[t]["useful"] for t in re_techs)
 
 fig_agg, ax_agg = plt.subplots(figsize=(7, 5))
-bar_labels = ["RE produced\n(potential)", "RE useful\n(after curtailment)", "Demand"]
+bar_labels = ["RE produced\n(potential)", "RE useful\n(direct + battery)", "Demand"]
 bar_vals = [re_prod_annual, re_useful_annual, total_demand_mwh]
-bar_colors = ["#2ca02c", "#4a90d9", "#333333"]
-bars_agg = ax_agg.bar(bar_labels, bar_vals, color=bar_colors, alpha=0.85, width=0.55)
+bar_colors_agg = ["#2ca02c", "#4a90d9", "#333333"]
+bars_agg = ax_agg.bar(bar_labels, bar_vals, color=bar_colors_agg, alpha=0.85, width=0.55)
 for bar, val in zip(bars_agg, bar_vals):
     ax_agg.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 20,
                 f"{val:,.0f}", ha="center", va="bottom", fontsize=10, fontweight="bold")
@@ -827,7 +1086,8 @@ ax_agg.axhline(total_demand_mwh, color="#333333", linewidth=1, linestyle="--", a
 ax_agg.set_ylabel("Energy [MWh / yr]")
 re_ratio = re_prod_annual / total_demand_mwh
 ax_agg.set_title(f"RE potential vs demand — RE covers {re_ratio:.0%} of demand\n"
-                 f"(curtailment wastes {re_prod_annual - re_useful_annual:,.0f} MWh/yr)")
+                 f"(curtailment: {total_curtailed:,.0f} MWh, "
+                 f"RT loss: {total_rt_loss:,.0f} MWh)")
 ax_agg.yaxis.grid(True, linewidth=0.4, alpha=0.6)
 ax_agg.set_axisbelow(True)
 ax_agg.set_ylim(0, max(bar_vals) * 1.15)
@@ -839,26 +1099,24 @@ show()
 # %% [markdown]
 # ```{figure} ../../output/images/53_re_vs_demand.png
 # :name: fig-53-re-vs-demand
-# Aggregate annual comparison of potential RE production, useful RE (after
-# curtailment), and demand. If RE produced < demand, the cumulative balance
-# will trend downward over time and drawdowns will grow structurally.
+# Aggregate annual comparison of potential RE production, useful RE (direct
+# use plus battery-mediated delivery), and demand. Curtailment and
+# round-trip losses reduce the useful fraction.
 # ```
 
 # %% [markdown]
-# ## Cumulative RE balance and drawdown analysis
+# ## Cumulative RE balance and shortfall analysis
 #
 # The cumulative balance series tracks `cumsum(RE_raw - demand)` over the full
-# simulation period. When this series rises, RE output exceeds demand (surplus
-# that would be curtailed or stored); when it falls, demand exceeds RE
-# (requiring gas backup). The maximum drawdown — the largest peak-to-trough
-# decline — quantifies the worst sustained period where renewables
-# progressively fall behind demand.
+# simulation period to show the structural relationship between renewable
+# production and demand. With battery storage, shortfall episodes are defined
+# as contiguous periods where gas backup is needed (RE + battery insufficient).
 
 # %%
 re_balance = (dispatch["re_total_raw"] - dispatch["demand"]).cumsum()
 
 running_max = re_balance.cummax()
-drawdown = re_balance - running_max  # ≤ 0
+drawdown = re_balance - running_max
 
 trough_time = drawdown.idxmin()
 trough_val = re_balance[trough_time]
@@ -867,7 +1125,7 @@ peak_time = re_balance[:trough_time].idxmax()
 magnitude = peak_val - trough_val
 duration_hours = (trough_time - peak_time) / pd.Timedelta("1h")
 
-print("Cumulative RE balance — maximum drawdown:")
+print("Cumulative RE balance — maximum drawdown (structural, before battery):")
 print(f"  Peak:      {peak_time}  (balance = {peak_val:+,.1f} MWh)")
 print(f"  Trough:    {trough_time}  (balance = {trough_val:+,.1f} MWh)")
 print(f"  Magnitude: {magnitude:,.1f} MWh  ({duration_hours / 24:.1f} days)")
@@ -893,7 +1151,7 @@ ax_bal.annotate(f"Trough\n{trough_time.strftime('%d %b %Y')}\n"
                 textcoords="offset points", fontsize=8, color="tomato")
 ax_bal.set_ylabel("Cumulative balance [MWh]")
 ax_bal.set_title(f"Cumulative RE production minus demand "
-                 f"({SIM_YEARS[0]}–{SIM_YEARS[-1]})")
+                 f"({SIM_YEARS[0]}–{SIM_YEARS[-1]}, structural)")
 ax_bal.yaxis.grid(True, linewidth=0.4, alpha=0.5)
 ax_bal.set_axisbelow(True)
 
@@ -902,6 +1160,9 @@ ax_dd.fill_between(drawdown.index, drawdown.values, 0,
                    color="#4a90d9", alpha=0.4, linewidth=0)
 ax_dd.plot(drawdown.index, drawdown.values, color="#4a90d9", linewidth=0.6)
 ax_dd.axhline(0, color="black", linewidth=0.6, linestyle="--")
+ax_dd.axhline(-BAT_CAPACITY_MWH, color=TECH_COLORS["battery"], linewidth=1.2,
+              linestyle="--", alpha=0.8,
+              label=f"Battery capacity: {BAT_CAPACITY_MWH:.0f} MWh")
 ax_dd.scatter([trough_time], [drawdown[trough_time]], color="tomato", zorder=5, s=40)
 ax_dd.annotate(f"Max drawdown: {magnitude:,.0f} MWh\n"
                f"{peak_time.strftime('%b %Y')} → {trough_time.strftime('%b %Y')}"
@@ -911,7 +1172,9 @@ ax_dd.annotate(f"Max drawdown: {magnitude:,.0f} MWh\n"
                fontsize=8, color="tomato", va="top")
 ax_dd.set_ylabel("Drawdown [MWh]")
 ax_dd.set_xlabel("Date")
-ax_dd.set_title("RE drawdown from cumulative peak (shortfall vs demand)")
+ax_dd.set_title("RE drawdown from cumulative peak — battery covers "
+                f"drawdowns ≤ {BAT_CAPACITY_MWH:.0f} MWh")
+ax_dd.legend(loc="lower left", fontsize=9)
 ax_dd.yaxis.grid(True, linewidth=0.4, alpha=0.5)
 ax_dd.set_axisbelow(True)
 
@@ -923,114 +1186,109 @@ show()
 # %% [markdown]
 # ```{figure} ../../output/images/53_re_cumulative_balance.png
 # :name: fig-53-re-cumulative-balance
-# Top: cumulative balance of total RE production minus demand. Positive
-# (green) means RE has been ahead of demand cumulatively; negative (red)
-# means demand has outpaced RE. Bottom: drawdown from the running
-# cumulative peak — the maximum drawdown quantifies the worst sustained
-# period where renewables progressively failed to keep up with demand.
+# Top: cumulative balance of total RE production minus demand (structural).
+# Bottom: drawdown from the running cumulative peak. The dashed green line
+# marks the battery capacity — drawdowns within this range can be buffered
+# by the battery; deeper drawdowns require gas backup.
 # ```
 
 # %% [markdown]
-# ### Top-5 RE shortfall episodes
+# ### Top-5 gas shortfall episodes
 #
-# Each episode is a contiguous period where the cumulative balance stays
-# below its running maximum. The magnitude is the peak-to-trough energy
-# deficit (MWh per MW of demand).
+# Each episode is a contiguous period where gas backup is needed (RE + battery
+# cannot cover demand). The magnitude is the cumulative gas energy in each
+# episode.
 
 # %%
 TOP_N = 5
 
 
-def find_top_drawdowns(balance: pd.Series, n: int = TOP_N) -> pd.DataFrame:
-    """Return top-N drawdown episodes ranked by magnitude."""
-    running_max = balance.cummax()
-    dd = balance - running_max  # ≤ 0
+def find_top_gas_episodes(gas_series: np.ndarray, index: pd.DatetimeIndex,
+                          n: int = TOP_N) -> pd.DataFrame:
+    """Return top-N contiguous gas usage episodes ranked by cumulative gas."""
+    is_gas = gas_series > 1e-9
+    ep_start = is_gas & ~np.roll(is_gas, 1)
+    ep_start[0] = is_gas[0]
+    ep_end = ~is_gas & np.roll(is_gas, 1)
+    ep_end[0] = False
 
-    in_dd = dd < 0
-    ep_start = in_dd & ~in_dd.shift(1, fill_value=False)
-    ep_end = ~in_dd & in_dd.shift(1, fill_value=False)
-
-    starts = balance.index[ep_start].tolist()
-    ends = balance.index[ep_end].tolist()
-    if len(starts) > len(ends):  # series ends mid-drawdown
-        ends.append(balance.index[-1])
+    starts = np.where(ep_start)[0].tolist()
+    ends = np.where(ep_end)[0].tolist()
+    if is_gas[-1] and (len(ends) == 0 or ends[-1] <= starts[-1]):
+        ends.append(len(gas_series))
 
     rows = []
-    for s, e in zip(starts, ends):
-        trough_t = dd[s:e].idxmin()
-        peak_v = running_max[s]
-        trough_v = balance[trough_t]
-        mag = peak_v - trough_v
-
-        candidates = balance[:s][balance[:s] >= peak_v]
-        peak_t = candidates.index[-1] if len(candidates) else s
-
+    for s_idx, e_idx in zip(starts, ends):
+        cum_gas = gas_series[s_idx:e_idx].sum()
+        peak_gas = gas_series[s_idx:e_idx].max()
+        duration_h = e_idx - s_idx
         rows.append({
-            "peak_time": peak_t,
-            "trough_time": trough_t,
-            "recovery_time": e,
-            "magnitude_mwh": mag,
-            "peak_to_trough_days": (trough_t - peak_t) / pd.Timedelta("1D"),
-            "total_episode_days": (e - peak_t) / pd.Timedelta("1D"),
+            "start_time": index[s_idx],
+            "end_time": index[min(e_idx - 1, len(index) - 1)],
+            "cumulative_gas_mwh": cum_gas,
+            "peak_gas_mw": peak_gas,
+            "duration_hours": duration_h,
+            "duration_days": duration_h / 24,
         })
 
     return (
         pd.DataFrame(rows)
-        .sort_values("magnitude_mwh", ascending=False)
+        .sort_values("cumulative_gas_mwh", ascending=False)
         .head(n)
         .reset_index(drop=True)
     )
 
 
-top_dd = find_top_drawdowns(re_balance)
+top_gas = find_top_gas_episodes(gas_hourly, dispatch.index)
 
-print(f"\nTop-{TOP_N} RE shortfall episodes:")
-for i, row in top_dd.iterrows():
-    print(f"  #{i+1}  {row['peak_time'].strftime('%d %b %Y')} → "
-          f"{row['trough_time'].strftime('%d %b %Y')}  "
-          f"magnitude {row['magnitude_mwh']:,.0f} MWh  "
-          f"duration {row['peak_to_trough_days']:.0f} d  "
-          f"(recovery after {row['total_episode_days']:.0f} d)")
+print(f"\nTop-{TOP_N} gas shortfall episodes (RE + battery insufficient):")
+for i, row in top_gas.iterrows():
+    print(f"  #{i+1}  {row['start_time'].strftime('%d %b %Y')} → "
+          f"{row['end_time'].strftime('%d %b %Y')}  "
+          f"gas {row['cumulative_gas_mwh']:,.1f} MWh  "
+          f"peak {row['peak_gas_mw']:.3f} MW  "
+          f"duration {row['duration_days']:.1f} d")
 
 # %%
 fig_dd, (ax_mag, ax_dur) = plt.subplots(1, 2, figsize=(14, 4.5))
 
 labels = [
-    f"#{i+1}  {r['peak_time'].strftime('%b %Y')} → {r['trough_time'].strftime('%b %Y')}"
-    for i, (_, r) in enumerate(top_dd.iterrows())
+    f"#{i+1}  {r['start_time'].strftime('%b %Y')} → {r['end_time'].strftime('%b %Y')}"
+    for i, (_, r) in enumerate(top_gas.iterrows())
 ]
-y = range(len(top_dd))
+y = range(len(top_gas))
 
 # Magnitude panel
-ax_mag.barh(list(y), top_dd["magnitude_mwh"], color="#4a90d9",
+ax_mag.barh(list(y), top_gas["cumulative_gas_mwh"], color=TECH_COLORS["gas"],
             edgecolor="white", linewidth=0.5)
 ax_mag.set_yticks(list(y))
 ax_mag.set_yticklabels(labels, fontsize=8)
 ax_mag.invert_yaxis()
-ax_mag.set_xlabel("Magnitude [MWh]")
-ax_mag.set_title("RE shortfall depth (energy deficit)")
+ax_mag.set_xlabel("Cumulative gas [MWh]")
+ax_mag.set_title("Gas shortfall depth (after battery)")
 ax_mag.xaxis.grid(True, linewidth=0.4, alpha=0.6)
 ax_mag.set_axisbelow(True)
-for yi, v in zip(y, top_dd["magnitude_mwh"]):
-    ax_mag.text(v + top_dd["magnitude_mwh"].max() * 0.01, yi,
-                f"{v:,.0f}", va="center", fontsize=8)
+for yi, v in zip(y, top_gas["cumulative_gas_mwh"]):
+    ax_mag.text(v + top_gas["cumulative_gas_mwh"].max() * 0.01, yi,
+                f"{v:,.1f}", va="center", fontsize=8)
 
 # Duration panel
-ax_dur.barh(list(y), top_dd["peak_to_trough_days"], color="#4a90d9",
+ax_dur.barh(list(y), top_gas["duration_days"], color=TECH_COLORS["gas"],
             edgecolor="white", linewidth=0.5, alpha=0.7)
 ax_dur.set_yticks(list(y))
 ax_dur.set_yticklabels(labels, fontsize=8)
 ax_dur.invert_yaxis()
-ax_dur.set_xlabel("Peak-to-trough duration [days]")
-ax_dur.set_title("RE shortfall duration")
+ax_dur.set_xlabel("Episode duration [days]")
+ax_dur.set_title("Gas shortfall duration")
 ax_dur.xaxis.grid(True, linewidth=0.4, alpha=0.6)
 ax_dur.set_axisbelow(True)
-for yi, v in zip(y, top_dd["peak_to_trough_days"]):
-    ax_dur.text(v + top_dd["peak_to_trough_days"].max() * 0.01, yi,
-                f"{v:.0f} d", va="center", fontsize=8)
+for yi, v in zip(y, top_gas["duration_days"]):
+    ax_dur.text(v + top_gas["duration_days"].max() * 0.01, yi,
+                f"{v:.1f} d", va="center", fontsize=8)
 
-fig_dd.suptitle(f"Top-{TOP_N} RE shortfall episodes "
-                f"({SIM_YEARS[0]}–{SIM_YEARS[-1]}, {RE_SCALING:.0f}× RE capacity)",
+fig_dd.suptitle(f"Top-{TOP_N} gas shortfall episodes "
+                f"({SIM_YEARS[0]}–{SIM_YEARS[-1]}, {RE_SCALING:.0f}× RE, "
+                f"{BAT_CAPACITY_MWH:.0f} MWh battery)",
                 fontsize=11)
 fig_dd.tight_layout()
 fig_dd.savefig(paths.images_path / "53_re_shortfall_episodes.png", dpi=150,
@@ -1040,11 +1298,10 @@ show()
 # %% [markdown]
 # ```{figure} ../../output/images/53_re_shortfall_episodes.png
 # :name: fig-53-re-shortfall-episodes
-# Top-5 episodes where cumulative RE production fell furthest behind
-# cumulative demand. Left: energy deficit magnitude. Right: duration from
-# the onset of the deficit to the deepest point. These episodes represent
-# the worst sustained periods where renewables alone could not keep up with
-# demand, requiring either storage or dispatchable backup.
+# Top-5 episodes where gas backup was needed despite battery storage. Left:
+# cumulative gas energy in each episode. Right: episode duration. These
+# represent the worst sustained periods where renewables plus the 4-hour
+# battery could not keep up with demand.
 # ```
 
 # %%

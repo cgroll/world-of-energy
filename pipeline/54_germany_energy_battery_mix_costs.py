@@ -156,41 +156,39 @@ TECH_COLORS = {
 # %% [markdown]
 # ## Installed capacities and battery sizing
 #
-# Germany end-2024 approximate installed capacities normalised to 1 MW of
-# constant demand (~57 GW average load, ~500 TWh/yr):
+# Capacities are taken directly from the LP optimisation in script 55
+# (`55_germany_energy_battery_optimization.py`), which minimises annualised
+# system cost subject to gas covering at most 10 % of annual demand.
 #
-# | Technology    | Installed (DE) | Per 1 MW demand |
-# |---------------|---------------:|----------------:|
-# | Solar PV      |       96 GW    |        1.68 MW  |
-# | Wind onshore  |       62 GW    |        1.09 MW  |
-# | Wind offshore |        9 GW    |        0.16 MW  |
-#
-# Battery: 4-hour duration at 1 MW rated power → 4 MWh usable capacity.
+# | Technology    | Optimal capacity (per 1 MW demand) |
+# |---------------|-----------------------------------:|
+# | Solar PV      |                           5.4904 MW |
+# | Wind onshore  |                           3.3824 MW |
+# | Wind offshore |                           0.1513 MW |
+# | Battery       |              1.3414 MW / 5.3656 MWh |
 
 # %%
-AVG_DEMAND_GW = 57.0
-RE_SCALING = 3.0
-
 INSTALLED_CAP = {
-    "solar_pv_utility": 96.0 / AVG_DEMAND_GW * RE_SCALING,
-    "wind_onshore":     62.0 / AVG_DEMAND_GW * RE_SCALING,
-    "wind_offshore":     9.0 / AVG_DEMAND_GW * RE_SCALING,
+    "solar_pv_utility": 5.4904,   # MW — from script-55 LP optimum
+    "wind_onshore":     3.3824,
+    "wind_offshore":    0.1513,
 }
 DEMAND_MW = 1.0
 
-BAT_POWER_MW = 1.0
+BAT_POWER_MW = 1.3414            # MW — from script-55 LP optimum
 BAT_DURATION_H = 4
 BAT_CAPACITY_MWH = BAT_POWER_MW * BAT_DURATION_H
+
+CONFIG_LABEL = "LP-optimal mix (≤10 % gas)"
 
 # Derived battery efficiencies: split RT losses equally between charge/discharge
 EFF_IN = np.sqrt(BAT["rt_efficiency"])
 EFF_OUT = np.sqrt(BAT["rt_efficiency"])
 
-print(f"RE scaling factor: {RE_SCALING:.1f}x\n")
 for tech, cap in INSTALLED_CAP.items():
-    print(f"{RE_COSTS[tech]['label']:20s}  {cap:.3f} MW per MW demand")
-print(f"{'Total RE':20s}  {sum(INSTALLED_CAP.values()):.3f} MW per MW demand")
-print(f"\nBattery: {BAT_POWER_MW:.1f} MW / {BAT_CAPACITY_MWH:.1f} MWh "
+    print(f"{RE_COSTS[tech]['label']:20s}  {cap:.4f} MW per MW demand")
+print(f"{'Total RE':20s}  {sum(INSTALLED_CAP.values()):.4f} MW per MW demand")
+print(f"\nBattery: {BAT_POWER_MW:.4f} MW / {BAT_CAPACITY_MWH:.4f} MWh "
       f"({BAT_DURATION_H}h, η_rt={BAT['rt_efficiency']:.0%}, "
       f"η_in={EFF_IN:.4f}, η_out={EFF_OUT:.4f})")
 
@@ -932,7 +930,7 @@ ax_cost.text(x_sys, bottom_s + total_annual_cost * 0.01,
              fontsize=9, fontweight="bold")
 
 ax_cost.set_ylabel("Annual cost [EUR / yr]")
-ax_cost.set_title(f"Annualised system costs (1 MW demand, {RE_SCALING:.0f}× RE)")
+ax_cost.set_title(f"Annualised system costs (1 MW demand, {CONFIG_LABEL})")
 ax_cost.set_xticks(list(x_ind) + [x_sys])
 ax_cost.set_xticklabels(all_labels + ["System\ntotal"], fontsize=8, rotation=25, ha="right")
 ax_cost.yaxis.grid(True, linewidth=0.4, alpha=0.6)
@@ -1118,7 +1116,7 @@ ax_stor.yaxis.grid(True, linewidth=0.4, alpha=0.6)
 ax_stor.set_axisbelow(True)
 ax_stor.set_ylim(0, BAT_CAPACITY_MWH * 1.35)
 
-fig_cap.suptitle(f"System sizing (1 MW demand, {RE_SCALING:.0f}× RE)", fontsize=12)
+fig_cap.suptitle(f"System sizing (1 MW demand, {CONFIG_LABEL})", fontsize=12)
 fig_cap.tight_layout()
 fig_cap.savefig(paths.images_path / "54_installed_capacities.png", dpi=150,
                 bbox_inches="tight")
@@ -1282,7 +1280,7 @@ ax_u.annotate(f"gap filled by gas\n{total_demand - re_useful:,.0f} MWh "
               ha="center", fontsize=8, color=TECH_COLORS["gas"])
 
 ax_u.set_ylabel("Energy [MWh / yr]")
-ax_u.set_title(f"RE utilisation overview ({RE_SCALING:.0f}× RE, {BAT_CAPACITY_MWH:.0f} MWh battery)")
+ax_u.set_title(f"RE utilisation overview ({CONFIG_LABEL}, {BAT_CAPACITY_MWH:.1f} MWh battery)")
 ax_u.yaxis.grid(True, linewidth=0.4, alpha=0.6)
 ax_u.set_axisbelow(True)
 ax_u.set_ylim(0, max(bar_vals) * 1.12)
@@ -1480,8 +1478,8 @@ for yi, v in zip(y_ep, top_sys_dd["peak_to_trough_days"]):
                    f"{v:.1f} d", va="center", fontsize=8)
 
 fig_ep.suptitle(f"Top-5 system drawdown episodes — RE + battery vs demand "
-                f"({SIM_YEARS[0]}–{SIM_YEARS[-1]}, {RE_SCALING:.0f}× RE, "
-                f"{BAT_CAPACITY_MWH:.0f} MWh battery)", fontsize=11)
+                f"({SIM_YEARS[0]}–{SIM_YEARS[-1]}, {CONFIG_LABEL}, "
+                f"{BAT_CAPACITY_MWH:.1f} MWh battery)", fontsize=11)
 fig_ep.tight_layout()
 fig_ep.savefig(paths.images_path / "54_system_drawdown_episodes.png", dpi=150,
                bbox_inches="tight")
@@ -1743,7 +1741,7 @@ ax_cm.text(x_sys_cm, bot_cm + total_cost_mwh * 0.01,
            fontsize=9, fontweight="bold")
 
 ax_cm.set_ylabel("Cost [EUR / MWh demand]")
-ax_cm.set_title(f"System costs per MWh of demand served (1 MW, {RE_SCALING:.0f}× RE)")
+ax_cm.set_title(f"System costs per MWh of demand served (1 MW, {CONFIG_LABEL})")
 ax_cm.set_xticks(list(x_ind_cm) + [x_sys_cm])
 ax_cm.set_xticklabels(all_labels + ["System\ntotal"], fontsize=8, rotation=25, ha="right")
 ax_cm.yaxis.grid(True, linewidth=0.4, alpha=0.6)

@@ -1624,12 +1624,20 @@ stages:
     outs:
     - path: book/notebooks/45_RE_drawdowns.ipynb
       hash: md5
-      md5: de82b3d4aaa12d3ef0a633af538669ab
+      md5: c206e4fb3d720614c3bfda7e9941f513
       size: 36221
+    - path: data/processed/re_drawdowns.parquet
+      hash: md5
+      md5: bbea9b42d5b553d3b2afc7083bf57bce
+      size: 4807
     - path: output/images/45_cumulative_balance.png
       hash: md5
       md5: 153570dfa8b4e76cbcb4e6a8d79b8ff3
       size: 254204
+    - path: output/images/45_drawdown_scatter.png
+      hash: md5
+      md5: f775313a279a4cae4f6b59bb7907ac50
+      size: 60488
     - path: output/images/45_drawdown_series.png
       hash: md5
       md5: 4af2f544b5a84ded2490cff03154a9e8
@@ -1638,6 +1646,30 @@ stages:
       hash: md5
       md5: af7f39e015aa5ed8af2656313e4174f0
       size: 187324
+    - path: output/images/45_solar_pv_lowest_rolling.png
+      hash: md5
+      md5: ecd7ab8c7733b82b13350ea36e63239e
+      size: 125713
+    - path: output/images/45_solar_pv_rolling.png
+      hash: md5
+      md5: ae8dcef57e2bf27b3ab59c1a0cb5b6d5
+      size: 255919
+    - path: output/images/45_wind_offshore_lowest_rolling.png
+      hash: md5
+      md5: c88faa6fcc91b9ec30bd04062bc6d0a2
+      size: 136554
+    - path: output/images/45_wind_offshore_rolling.png
+      hash: md5
+      md5: 0a23b5039023852f89efdbbe85a30392
+      size: 338814
+    - path: output/images/45_wind_onshore_lowest_rolling.png
+      hash: md5
+      md5: b8e010308f5bbeec33af2ecdb8679c63
+      size: 137201
+    - path: output/images/45_wind_onshore_rolling.png
+      hash: md5
+      md5: cd90d0c24d2f7eb8ef64bb11748a0e92
+      size: 285457
   process_germany_energy_battery_mix_costs:
     cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
       --output book/notebooks/54_germany_energy_battery_mix_costs.ipynb pipeline/54_germany_energy_battery_mix_costs.py
@@ -1656,54 +1688,105 @@ stages:
       size: 356
     - path: pipeline/54_germany_energy_battery_mix_costs.py
       hash: md5
-      md5: fbecf1840788d76193d5e741d3a74ced
-      size: 56978
+      md5: 776c805eac3ad6dca982ae9593a522a3
+      size: 67645
     outs:
     - path: book/notebooks/54_germany_energy_battery_mix_costs.ipynb
       hash: md5
-      md5: 6ab0a107b4c4b8d94f28bc02488bc403
-      size: 94715
+      md5: b8380269c2904e92ef061c0d8dca6770
+      size: 111435
     - path: output/images/54_annual_costs.png
       hash: md5
-      md5: 6806a11b5da66117f79f3d85e6ec628e
-      size: 65225
+      md5: c38675c6f75439609be77c0e8d1500e3
+      size: 67838
     - path: output/images/54_battery_throughput.png
       hash: md5
-      md5: f49642837d495aebc567847d9195dad9
-      size: 45099
+      md5: ff52c9fd0580e119f73e0084eccdc959
+      size: 46360
     - path: output/images/54_demand_fulfilment.png
       hash: md5
-      md5: 54e6d3df2cfece835952040c0dd004bd
-      size: 71217
+      md5: f2f4d2e76ecd3f3876afcedc168a2cbb
+      size: 70934
     - path: output/images/54_dispatch_balance.png
       hash: md5
-      md5: 9810cb0460c9e98c026fba5b5c21449b
-      size: 135229
+      md5: 7018a0e72e48e42998ec0e9830364e90
+      size: 132600
     - path: output/images/54_energy_fate.png
       hash: md5
-      md5: 52412b5d5898e5a8aa8f91f6698b9dc8
-      size: 75441
+      md5: 4a7ba93560191e6f24016cb414ee9975
+      size: 76538
     - path: output/images/54_installed_capacities.png
       hash: md5
-      md5: 54455062cc4b0173c476713df604f0fa
-      size: 76549
+      md5: 901bd0ee911f9d25ea82cdb64378fb14
+      size: 82455
     - path: output/images/54_lcoe_comparison.png
       hash: md5
-      md5: c17d2f9cfafbdd2149295f2add026c54
-      size: 65746
+      md5: 620e2d24741091830b5ad0d1cd7d7828
+      size: 65183
     - path: output/images/54_re_utilisation.png
       hash: md5
-      md5: 03e426f19eb13816799954e1e1df1202
-      size: 62746
+      md5: 9731ba64157709ca117d63b7aef96d26
+      size: 66035
     - path: output/images/54_soc.png
       hash: md5
-      md5: 3e4b0f1ea04de02b080a041d16b4c288
-      size: 279496
+      md5: b9d7b4b5657165aeddb671e281878a4f
+      size: 291085
     - path: output/images/54_system_drawdown.png
       hash: md5
-      md5: b76ca132e289a0dc0b17823127c9cfe3
-      size: 209551
+      md5: f9d4bd9068fd01a9de21c369bb31858d
+      size: 202756
     - path: output/images/54_system_drawdown_episodes.png
       hash: md5
-      md5: 1b492e48a2865c390f85a7cbfef873b1
-      size: 78128
+      md5: a4c4ba4149ad49e7e75aca86f85de6b6
+      size: 79073
+  process_RE_ddown_jetstream:
+    cmd: "MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy
+      --output book/notebooks/46_RE_ddown_jetstream.ipynb pipeline/46_RE_ddown_jetstream.py
+      && uv run python -c \"import nbformat; nb = nbformat.read('book/notebooks/46_RE_ddown_jetstream.ipynb',
+      as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw'
+      and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/46_RE_ddown_jetstream.ipynb')\"\
+      \n"
+    deps:
+    - path: data/downloads/era5/monthly_aggregates/zarr/era5_monthly.zarr
+      hash: md5
+      md5: 582beb9fd99af742c27acdd663ac01c1.dir
+      size: 3562653332
+      nfiles: 956
+    - path: data/processed/pecd/pecd_regions.parquet
+      hash: md5
+      md5: 6a4b45ce2c25bc3c40a37d4a75645c5a
+      size: 616016135
+    - path: pipeline/46_RE_ddown_jetstream.py
+      hash: md5
+      md5: 8cf3edb34a71affd26562ce7fbf5c274
+      size: 8591
+    outs:
+    - path: book/notebooks/46_RE_ddown_jetstream.ipynb
+      hash: md5
+      md5: 4c8c33e0fdf3d4f8c6793e6199dd1089
+      size: 15036
+    - path: output/images/46_solar_pv_jetstream.png
+      hash: md5
+      md5: 6922e4c403dd8fe2cc2c04d97ad4e83b
+      size: 623646
+    - path: output/images/46_wind_offshore_jetstream.png
+      hash: md5
+      md5: 1bbae85cb775686790019fc306ea224c
+      size: 1142540
+    - path: output/images/46_wind_onshore_jetstream.png
+      hash: md5
+      md5: 96504941cbc4bb74dd7f3438a7e94ac6
+      size: 1113591
+  download_z500:
+    cmd: python pipeline/60_z500_download.py
+    deps:
+    - path: pipeline/60_z500_download.py
+      hash: md5
+      md5: 2f0d645e55fdac17f65c45129424e3cc
+      size: 6535
+    outs:
+    - path: data/downloads/z500/
+      hash: md5
+      md5: 6fc84bbcab9eff5814f4e1d41f6257cc.dir
+      size: 1133644375
+      nfiles: 365

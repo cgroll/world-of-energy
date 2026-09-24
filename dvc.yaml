@@ -358,6 +358,13 @@ stages:
           persist: true
       - data/downloads/era5/nao_jetstream/era5_nao_jetstream_2009-2010.nc:
           persist: true
+  download_z500:
+    cmd: python pipeline/60_z500_download.py
+    deps:
+      - pipeline/60_z500_download.py
+    outs:
+      - data/downloads/z500/:
+          persist: true
   process_validate_pv_capacity_data:
     cmd: >
       MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/31_validate_pv_capacity_data.ipynb pipeline/31_validate_pv_capacity_data.py &&
@@ -713,4 +720,29 @@ stages:
       - output/images/54_system_drawdown.png:
           cache: false
       - output/images/54_system_drawdown_episodes.png:
+          cache: false
+  process_germany_energy_battery_optimization:
+    cmd: >
+      MPLBACKEND=Agg uv run jupytext --to notebook --execute --set-kernel world-of-energy --output book/notebooks/55_germany_energy_battery_optimization.ipynb pipeline/55_germany_energy_battery_optimization.py &&
+      uv run python -c "import nbformat; nb = nbformat.read('book/notebooks/55_germany_energy_battery_optimization.ipynb', as_version=4); nb.cells = [c for c in nb.cells if not (c.cell_type == 'raw' and 'jupytext' in c.source)]; nbformat.write(nb, 'book/notebooks/55_germany_energy_battery_optimization.ipynb')"
+    deps:
+      - pipeline/55_germany_energy_battery_optimization.py
+      - data/processed/pecd/pecd_regions.parquet
+      - data/processed/pecd_fraunhofer_scaling_factors.csv
+    outs:
+      - book/notebooks/55_germany_energy_battery_optimization.ipynb:
+          cache: false
+      - output/images/55_optimal_capacities.png:
+          cache: false
+      - output/images/55_dispatch_week.png:
+          cache: false
+      - output/images/55_soc.png:
+          cache: false
+      - output/images/55_annual_costs.png:
+          cache: false
+      - output/images/55_lcoe_comparison.png:
+          cache: false
+      - output/images/55_demand_fulfilment.png:
+          cache: false
+      - output/images/55_re_utilisation.png:
           cache: false

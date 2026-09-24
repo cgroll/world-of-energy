@@ -100,26 +100,18 @@ demand_pred  = demand_preds["demand_baseline_mw"].rename("demand_mw")
 print(f"Demand      : {demand_pred.index[0]} → {demand_pred.index[-1]}  ({len(demand_pred):,} rows)")
 
 # %% [markdown]
-# ## Select most recent complete April–March meteorological year
+# ## Select period: 2022–2023 calendar years
 
 # %%
-shared_idx = cf_solar.index.intersection(cf_onshore.index).intersection(demand_pred.index)
+N_YEARS      = 2
+period_label = "2022–2023"
+start_dt     = pd.Timestamp("2022-01-01")
+end_dt       = pd.Timestamp("2024-01-01")
 
-# Walk backwards through available April years; take the first with ≥ 8 000 hours
-opt_year: int | None = None
-for start_yr in sorted(shared_idx.year.unique(), reverse=True):
-    start_dt  = pd.Timestamp(f"{start_yr}-04-01")
-    end_dt    = pd.Timestamp(f"{start_yr + 1}-04-01")
-    period_idx = shared_idx[(shared_idx >= start_dt) & (shared_idx < end_dt)]
-    if len(period_idx) >= 8_000:
-        opt_year  = start_yr
-        snapshots = period_idx
-        break
+all_idx   = cf_solar.index.intersection(cf_onshore.index).intersection(demand_pred.index)
+snapshots = all_idx[(all_idx >= start_dt) & (all_idx < end_dt)]
+assert len(snapshots) >= 17_000, f"Expected ~17 520 h for 2022–2023, got {len(snapshots)}"
 
-assert opt_year is not None, "No complete April–March year found in the shared data index"
-
-start_dt = pd.Timestamp(f"{opt_year}-04-01")
-end_dt   = pd.Timestamp(f"{opt_year + 1}-04-01")
 print(f"Optimisation period : {start_dt.date()} → {(end_dt - pd.Timedelta(hours=1)).date()}")
 print(f"Snapshots           : {len(snapshots):,} hours")
 
@@ -203,14 +195,12 @@ n.add("Load", "load", bus="DE", p_set=demand)
 n.add("Generator", "solar", bus="DE",
       p_nom_extendable=True,
       p_max_pu=cf_s,
-      capital_cost=solar_ann_cost,
-      marginal_cost=0.)
+      capital_cost=solar_ann_cost)
 
 n.add("Generator", "wind_onshore", bus="DE",
       p_nom_extendable=True,
       p_max_pu=cf_on,
-      capital_cost=onshore_ann_cost,
-      marginal_cost=0.)
+      capital_cost=onshore_ann_cost)
 
 # --- Storage units (extendable) ---
 n.add("StorageUnit", "battery", bus="DE",
@@ -281,10 +271,11 @@ total_demand_mwh = demand.sum()
 avail_re = cf_s * cap_mw.get("solar", 0) + cf_on * cap_mw.get("wind_onshore", 0)
 curtail_mwh = (avail_re - n.generators_t.p[GEN_TECH].sum(axis=1)).clip(lower=0).sum()
 
-# System LCOE
-system_lcoe = n.objective / total_demand_mwh
+# System LCOE: use capital costs only (n.objective includes curtailment penalty terms)
+total_capital_cost = ann_cost_by_tech.sum()
+system_lcoe = total_capital_cost / (total_demand_mwh / N_YEARS)
 
-print(f"\nTotal system cost : {n.objective / 1e9:.3f} B€/yr")
+print(f"\nTotal system cost : {total_capital_cost / 1e9:.3f} B€/yr")
 print(f"System LCOE       : {system_lcoe:.1f} €/MWh")
 print(f"Total demand      : {total_demand_mwh / 1e6:.2f} TWh")
 print(f"Backup energy     : {backup_mwh / 1e3:.1f} GWh  ({backup_mwh / total_demand_mwh * 100:.3f}% of demand)")
@@ -299,8 +290,28 @@ for tech, mw in cap_mw.items():
 
 print("\nAnnualised costs by technology:")
 for tech, cost in ann_cost_by_tech.items():
-    share = cost / n.objective * 100 if n.objective > 0 else 0
+    share = cost / total_capital_cost * 100 if total_capital_cost > 0 else 0
     print(f"  {tech:<20}: {cost / 1e6:>7.1f} M€/yr  ({share:.1f}%)")
+
+# %% [markdown]
+# ## Write optimal capacities to disk
+
+# %%
+cap_out = pd.DataFrame({
+    "p_nom_opt_mw":     cap_mw,
+    "energy_cap_mwh":   cap_mw * pd.Series({
+        **{g: 0.0 for g in GEN_TECH},
+        **{s: n.storage_units.loc[s, "max_hours"] for s in STO_TECH},
+    }),
+    "max_hours":        pd.Series({
+        **{g: float("nan") for g in GEN_TECH},
+        **{s: n.storage_units.loc[s, "max_hours"] for s in STO_TECH},
+    }),
+    "ann_cost_eur_yr":  ann_cost_by_tech,
+})
+cap_out.index.name = "technology"
+cap_out.to_parquet(paths.copper_plate_opt_capacities_de_file)
+print(f"Wrote optimal capacities → {paths.copper_plate_opt_capacities_de_file}")
 
 # %% [markdown]
 # ## Chart 1 — Optimal installed capacities
@@ -331,8 +342,8 @@ for bar, val in zip(bars, cap_gw.values):
             f"{val:.1f} GW", va="center", fontsize=10, fontweight="bold")
 ax.set_xlabel("Installed capacity (GW)")
 ax.set_title(
-    f"Optimal copper-plate energy mix — Germany  ({opt_year}-04 → {opt_year + 1}-03)\n"
-    f"System LCOE: {system_lcoe:.0f} €/MWh | Total cost: {n.objective / 1e9:.2f} B€/yr",
+    f"Optimal copper-plate energy mix — Germany  ({period_label})\n"
+    f"System LCOE: {system_lcoe:.0f} €/MWh | Total cost: {total_capital_cost / 1e9:.2f} B€/yr",
     fontsize=10,
 )
 ax.xaxis.grid(True, linewidth=0.4, alpha=0.6)
@@ -380,7 +391,7 @@ lcoe_components = {
     "hydrogen storage":      11e3 * _h2_tank_kwh_per_mw * annuity(30) * h2_p_nom,
     "hydrogen turbine":      800e3 * (annuity(25) + FOM_RATE) * h2_p_nom,
 }
-lcoe_comp = {k: v / total_demand_mwh for k, v in lcoe_components.items()}
+lcoe_comp = {k: v / (total_demand_mwh / N_YEARS) for k, v in lcoe_components.items()}
 
 fig, ax = plt.subplots(figsize=(5, 6))
 bottom = 0.
@@ -390,7 +401,7 @@ for label, val in lcoe_comp.items():
 
 ax.set_ylabel("Average system cost [EUR/MWh]")
 ax.set_title(
-    f"github.com/PyPSA/WHOBS cost breakdown\nGermany  ({opt_year}-04 → {opt_year + 1}-03)",
+    f"github.com/PyPSA/WHOBS cost breakdown\nGermany  ({period_label})",
     fontsize=10,
 )
 ax.legend(fontsize=8, bbox_to_anchor=(1.02, 1), loc="upper left")
@@ -421,8 +432,8 @@ for s in STO_TECH:
     dispatch[s + "_charge"]   = p_s.clip(upper=0)
 
 # Choose representative weeks
-summer_start = pd.Timestamp(f"{opt_year}-07-10")
-winter_start = pd.Timestamp(f"{opt_year + 1}-01-13")
+summer_start = pd.Timestamp("2022-07-10")
+winter_start = pd.Timestamp("2023-01-13")
 
 fig, axes = plt.subplots(2, 1, figsize=(16, 10), sharex=False)
 
@@ -472,7 +483,7 @@ for ax, week_start, season in zip(axes, [summer_start, winter_start], ["Summer",
     ax.set_axisbelow(True)
 
 fig.suptitle(
-    f"Hourly generation mix — copper-plate optimum, Germany {opt_year}–{opt_year + 1}",
+    f"Hourly generation mix — copper-plate optimum, Germany {period_label}",
     fontsize=11,
 )
 fig.tight_layout()
@@ -532,7 +543,7 @@ ax.set_xticks(x)
 ax.set_xticklabels(MONTH_LABELS)
 ax.set_ylabel("Average power (GW)")
 ax.set_title(
-    f"Monthly average generation mix — copper-plate optimum, Germany {opt_year}–{opt_year + 1}",
+    f"Monthly average generation mix — copper-plate optimum, Germany {period_label}",
     fontsize=11,
 )
 ax.legend(fontsize=9, loc="upper right")
@@ -589,7 +600,7 @@ for ax, s, color in zip(axes, STO_TECH, ["#3498db", "#9b59b6"]):
     ax.set_axisbelow(True)
 
 fig.suptitle(
-    f"Storage state of charge — copper-plate optimum, Germany {opt_year}–{opt_year + 1}",
+    f"Storage state of charge — copper-plate optimum, Germany {period_label}",
     fontsize=11,
 )
 fig.tight_layout()
@@ -600,10 +611,53 @@ show()
 # ```{figure} ../../output/images/42_storage_soc.png
 # :name: fig-42-storage-soc
 # Daily state of charge (%) for battery (top) and hydrogen (bottom) storage.
-# The shaded band shows the daily min–max range; the solid line is the daily
-# mean. Battery storage cycles rapidly (daily solar pattern), while hydrogen
-# shows a slower seasonal pattern: charging in summer when solar surplus is
-# large and discharging in winter to cover the renewable deficit.
+# ```
+
+# %% [markdown]
+# ## Chart 6 — Daily curtailment
+
+# %%
+curtail_series = (avail_re - n.generators_t.p[GEN_TECH].sum(axis=1)).clip(lower=0)
+curtail_daily  = curtail_series.resample("D").mean() / 1e3   # GW average
+
+# Verify curtailment only occurs when electrolyser is at capacity or tank is full.
+# h2 charging power = negative values in storage_units_t.p
+h2_charge = n.storage_units_t.p["hydrogen"].clip(upper=0).abs()
+h2_p_nom  = n.storage_units.loc["hydrogen", "p_nom_opt"]
+h2_soc    = n.storage_units_t.state_of_charge["hydrogen"]
+h2_cap    = h2_p_nom * n.storage_units.loc["hydrogen", "max_hours"]
+
+curtail_hours  = curtail_series[curtail_series > 1].index   # >1 MW to ignore numerical noise
+is_power_limit = h2_charge.reindex(curtail_hours) >= h2_p_nom * 0.999
+is_tank_full   = h2_soc.reindex(curtail_hours)    >= h2_cap  * 0.999
+explained      = (is_power_limit | is_tank_full).sum()
+print(f"\nCurtailment diagnostic ({len(curtail_hours)} hours with curtailment > 1 MW):")
+print(f"  Electrolyser at power limit : {is_power_limit.sum():>6,} h")
+print(f"  Tank full                   : {is_tank_full.sum():>6,} h")
+print(f"  Neither (perfect foresight) : {len(curtail_hours) - explained:>6,} h")
+
+fig, ax = plt.subplots(figsize=(16, 4))
+ax.fill_between(curtail_daily.index, curtail_daily.values, alpha=0.7,
+                color="#e74c3c", linewidth=0)
+ax.plot(curtail_daily.index, curtail_daily.values, color="#c0392b", linewidth=0.6)
+ax.set_ylabel("Curtailed power (GW, daily avg)")
+ax.set_title(
+    f"Daily average curtailment — Germany {period_label}  "
+    f"(total: {curtail_mwh / 1e6:.0f} TWh, "
+    f"{curtail_mwh / (avail_re.sum()) * 100:.0f}% of available RE)",
+    fontsize=10,
+)
+ax.yaxis.grid(True, linewidth=0.4, alpha=0.6)
+ax.set_axisbelow(True)
+fig.tight_layout()
+fig.savefig(paths.images_path / "42_curtailment.png", dpi=150, bbox_inches="tight")
+show()
+
+# %% [markdown]
+# ```{figure} ../../output/images/42_curtailment.png
+# :name: fig-42-curtailment
+# Daily average curtailed power (GW). Peaks indicate hours where surplus
+# renewable generation exceeded storage charging capacity.
 # ```
 
 # %% [markdown]
@@ -611,19 +665,19 @@ show()
 
 # %%
 print("=" * 72)
-print(f"COPPER-PLATE OPTIMAL MIX — Germany  {opt_year}-04 → {opt_year + 1}-03")
+print(f"COPPER-PLATE OPTIMAL MIX — Germany  {period_label}")
 print("=" * 72)
 print(f"\n{'Technology':<22} {'Capacity':>10} {'Energy cap':>12} {'Ann. cost':>12} {'Share':>7}")
 print("-" * 72)
 for t in techs_ordered:
     mw   = cap_mw[t]
     cost = ann_cost_by_tech[t]
-    share = cost / n.objective * 100 if n.objective > 0 else 0
+    share = cost / total_capital_cost * 100 if total_capital_cost > 0 else 0
     ecap  = f"{cap_energy_gwh[t]:.0f} GWh" if t in cap_energy_gwh.index else ""
     print(f"  {TECH_LABELS.get(t, t):<20} {mw/1e3:>8.2f} GW  {ecap:>10}  "
           f"{cost/1e6:>9.1f} M€  {share:>5.1f}%")
 print("-" * 72)
-print(f"  {'Total':<20} {'':>10}  {'':>10}  {n.objective/1e6:>9.1f} M€  100.0%")
+print(f"  {'Total':<20} {'':>10}  {'':>10}  {total_capital_cost/1e6:>9.1f} M€  100.0%")
 print(f"\nSystem LCOE       : {system_lcoe:.1f} €/MWh")
 print(f"Backup used       : {backup_mwh/1e3:.2f} GWh  ({backup_mwh/total_demand_mwh*100:.4f}% of demand)")
 print(f"Curtailment       : {curtail_mwh/1e6:.2f} TWh  ({curtail_mwh/total_demand_mwh*100:.1f}%)")
